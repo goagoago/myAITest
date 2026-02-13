@@ -4,7 +4,7 @@
   "framework": "vite",
   "functions": {
     "api/*.js": {
-      "runtime": "edge"
+      "runtime": "now-php@1.0"
     }
   },
   "rewrites": [

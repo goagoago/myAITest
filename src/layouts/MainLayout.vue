@@ -111,13 +111,13 @@ onUnmounted(() => {
           <span>AI Box</span>
         </div>
         <!-- <p class="footer__text">Powered by 智谱 GLM-4 · 永久免费使用</p> -->
-        <div class="footer__links">
+        <!-- <div class="footer__links">
           <a href="#">关于</a>
           <span>·</span>
           <a href="#">隐私</a>
           <span>·</span>
           <a href="#">条款</a>
-        </div>
+        </div> -->
       </div>
     </footer>
   </div>
