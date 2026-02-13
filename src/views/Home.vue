@@ -140,9 +140,9 @@ const handleMouseLeave = (e) => {
             <span>立即体验</span>
             <ArrowRight :size="18" class="btn-arrow" />
           </button>
-          <button class="btn-secondary">
+          <!-- <button class="btn-secondary">
             <span>了解更多</span>
-          </button>
+          </button> -->
         </div>
       </div>
 

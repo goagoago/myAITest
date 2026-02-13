@@ -2,7 +2,6 @@ import { ref } from 'vue'
 
 // 智谱API配置
 const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
-const ZHIPU_API_KEY = '94c09f3d19b582cafaa8700d63524cbc.4vAoySH9Q0l7xCQW'
 
 export function useChat() {
   const loading = ref(false)
@@ -37,11 +36,16 @@ export function useChat() {
           body: JSON.stringify({ ...requestBody, stream: true }),
         })
       } else {
+        // 开发环境：从环境变量获取 API Key
+        const apiKey = import.meta.env.VITE_ZHIPU_API_KEY
+        if (!apiKey) {
+          throw new Error('请在 .env.local 文件中配置 VITE_ZHIPU_API_KEY')
+        }
         response = await fetch(ZHIPU_API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ZHIPU_API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
           },
           body: JSON.stringify(requestBody),
         })
@@ -116,11 +120,16 @@ export function useChat() {
           body: JSON.stringify({ messages }),
         })
       } else {
+        // 开发环境：从环境变量获取 API Key
+        const apiKey = import.meta.env.VITE_ZHIPU_API_KEY
+        if (!apiKey) {
+          throw new Error('请在 .env.local 文件中配置 VITE_ZHIPU_API_KEY')
+        }
         response = await fetch(ZHIPU_API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ZHIPU_API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
           },
           body: JSON.stringify(requestBody),
         })

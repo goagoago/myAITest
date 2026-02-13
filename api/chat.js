@@ -26,8 +26,14 @@ export default async function handler(request) {
   try {
     const { messages, stream = false } = await request.json()
 
-    // 从环境变量获取API Key，如果没有则使用默认值
-    const apiKey = process.env.ZHIPU_API_KEY || '94c09f3d19b582cafaa8700d63524cbc.4vAoySH9Q0l7xCQW'
+    // 从环境变量获取 API Key（必须在 Vercel 项目设置中配置）
+    const apiKey = process.env.ZHIPU_API_KEY
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: '服务端未配置 ZHIPU_API_KEY 环境变量' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      })
+    }
 
     const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
       method: 'POST',
