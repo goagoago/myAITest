@@ -11,6 +11,7 @@ const mousePos = ref({ x: 0, y: 0 })
 const navItems = [
   { path: '/', label: '首页', icon: Home },
   { path: '/watermark-removal', label: '去水印', icon: Eraser },
+  { path: '/ai-studio', label: 'AI 创作', icon: Sparkles },
   { path: '/travel', label: '旅行规划', icon: Plane },
   { path: '/writer', label: '写作助手', icon: PenTool },
   { path: '/translator', label: '翻译专家', icon: Globe },

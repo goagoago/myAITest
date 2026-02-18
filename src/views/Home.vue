@@ -24,10 +24,10 @@ const tools = [
     path: '/ai-studio',
     icon: Wand2,
     name: 'AI 创作',
-    desc: 'AI图片与视频生成，输入文字即可创作精美视觉内容',
+    desc: 'AI图片、视频与搞笑视频生成，输入文字或上传图片即可创作',
     gradient: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
     shadowColor: 'rgba(236, 72, 153, 0.4)',
-    features: ['图片生成', '视频生成', 'FLUX模型'],
+    features: ['图片生成', '视频生成', '搞笑视频'],
   },
   {
     id: 'travel',

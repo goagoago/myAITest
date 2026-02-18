@@ -2,9 +2,11 @@
 import { ref, computed } from 'vue'
 import { useImage } from '../composables/useImage'
 import { useVideo } from '../composables/useVideo'
+import { useImageToVideo } from '../composables/useImageToVideo'
 import {
   Image, Video, Sparkles, Wand2, Download, RefreshCw, Loader2,
-  ImagePlus, Film, Palette, Maximize2, Clock, Check, X, AlertCircle
+  ImagePlus, Film, Palette, Maximize2, Clock, Check, X, AlertCircle,
+  Clapperboard, Upload
 } from 'lucide-vue-next'
 
 // 当前激活的Tab
@@ -35,9 +37,27 @@ const {
   reset: resetVideo
 } = useVideo()
 
+// 搞笑视频（图生视频）
+const {
+  loading: funnyLoading,
+  error: funnyError,
+  videoUrl: funnyVideoUrl,
+  status: funnyStatus,
+  progress: funnyProgress,
+  generateVideo: generateFunnyVideo,
+  cancel: cancelFunny,
+  reset: resetFunny
+} = useImageToVideo()
+
+const funnyImageUrl = ref('')
+const funnyFile = ref(null)
+const funnyIsDragging = ref(false)
+const funnyPrompt = ref('')
+
 // 历史记录
 const imageHistory = ref([])
 const videoHistory = ref([])
+const funnyHistory = ref([])
 
 // 图片尺寸选项
 const imageSizes = [
@@ -113,6 +133,102 @@ const handleGenerateVideo = async () => {
   }
 }
 
+// 搞笑预设提示词
+const funnyPresets = [
+  { label: '魔性尬舞', prompt: '图中的角色突然站起来跳起了魔性洗脑的社会摇舞蹈，身体扭动幅度越来越大，表情却非常严肃认真，周围的东西都被震得抖动。伴随着动次打次的强劲节拍电子舞曲BGM，脚步踩在地板上发出咚咚咚的声音' },
+  { label: '被吓一跳', prompt: '画面中的角色正在悠闲地待着，突然被吓了一大跳，身体猛地弹起来，眼睛瞪大嘴巴大张，然后慌乱四处逃窜。伴随着突然出现的巨大惊吓音效"啊！"的尖叫声，碰撞东西的砰砰声，还有急促的脚步声' },
+  { label: '嘴炮说唱', prompt: '图中角色突然转向镜头，张嘴开始了一段激情澎湃的说唱，嘴巴快速开合，配合夸张手势和点头，表情时而凶狠时而得意。伴随着嘻哈说唱的节拍声和低音贝斯，角色发出快速有力的说唱人声' },
+  { label: '突然发癫', prompt: '画面中的角色本来很正常，突然开始发癫失控般地手舞足蹈乱蹦乱跳，做出各种搞怪动作，表情极度夸张。伴随着疯狂加速的搞笑音效，叮叮咚咚的喜剧配乐，和角色发出的"哇哈哈"大笑声' },
+  { label: '吃货暴走', prompt: '图中角色看到面前出现美食，立刻双眼放光疯狂大口吃起来，腮帮子鼓得像仓鼠，吃到好吃的瞬间陶醉翻白眼。伴随着夸张的咀嚼声、吧唧吧唧的吃东西声、满足的"嗯~好吃"的呻吟声' },
+  { label: '猛男跳水', prompt: '图中的角色做出跳水准备动作，深吸一口气，然后以搞笑姿势纵身一跃，在空中做出滑稽翻转，最后重重落水。伴随着深呼吸声、起跳时嗖的风声、空中翻转的呼呼声，最后巨大的"噗通"落水声和水花飞溅声' },
+  { label: '鬼畜变脸', prompt: '画面中的角色面部开始发生夸张变化，表情在愤怒、惊恐、开心、悲伤之间疯狂切换，速度越来越快，五官扭曲变形。伴随着每次变脸时"咻"的快速切换音效，越来越快的鼓点节奏' },
+  { label: '社死现场', prompt: '图中的角色做了尴尬的事突然意识到有人在看，表情从自信瞬间变成极度尴尬，脸越来越红，手足无措。伴随着突然安静下来的死寂声，然后是尴尬的咳嗽声，远处传来哄堂大笑声' },
+  { label: '原地起飞', prompt: '图中的角色身体突然不受控制地飘起来，在空中翻滚旋转，表情从惊讶变成恐惧再变成享受，头发衣服被风吹乱。伴随着火箭发射般嗖嗖的上升音效，呼呼的风声，角色发出"啊啊啊"的叫喊声' },
+  { label: '灵魂歌手', prompt: '图中的角色突然闭上眼睛开始深情演唱，表情极其投入陶醉，身体随节奏摇摆，时而高音嘶吼时而低音呢喃。伴随着角色唱出的夸张歌声，走调但非常卖力，背景有演唱会的欢呼声和掌声' },
+]
+
+// 搞笑视频 - 文件处理
+const handleFunnyFileSelect = (e) => {
+  const file = e.target.files?.[0]
+  if (file) processFunnyFile(file)
+}
+
+const handleFunnyDrop = (e) => {
+  e.preventDefault()
+  funnyIsDragging.value = false
+  const file = e.dataTransfer?.files?.[0]
+  if (file) processFunnyFile(file)
+}
+
+const handleFunnyDragOver = (e) => {
+  e.preventDefault()
+  funnyIsDragging.value = true
+}
+
+const handleFunnyDragLeave = () => {
+  funnyIsDragging.value = false
+}
+
+const handleFunnyPaste = (e) => {
+  if (activeTab.value !== 'funny') return
+  const items = e.clipboardData?.items
+  if (!items) return
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (file) processFunnyFile(file)
+      break
+    }
+  }
+}
+
+const processFunnyFile = (file) => {
+  if (!file.type.startsWith('image/')) return
+  if (file.size > 5 * 1024 * 1024) return
+  funnyFile.value = file
+  funnyImageUrl.value = URL.createObjectURL(file)
+  funnyVideoUrl.value = ''
+}
+
+const funnyFileSize = computed(() => {
+  if (!funnyFile.value) return ''
+  const size = funnyFile.value.size
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
+})
+
+// 搞笑视频 - 生成
+const handleGenerateFunny = async () => {
+  if (!funnyFile.value || funnyLoading.value) return
+  const finalPrompt = funnyPrompt.value.trim() || '让图中的角色突然活过来，做出令人爆笑的搞怪动作和夸张表情，动作幅度很大越来越离谱。伴随着搞笑的喜剧音效，角色发出夸张的叫喊声和笑声，背景有欢快的喜剧配乐'
+
+  try {
+    const url = await generateFunnyVideo(funnyFile.value, finalPrompt)
+
+    funnyHistory.value.unshift({
+      id: Date.now(),
+      imageUrl: funnyImageUrl.value,
+      videoUrl: url,
+      prompt: finalPrompt,
+      time: new Date().toLocaleTimeString(),
+    })
+
+    if (funnyHistory.value.length > 6) {
+      funnyHistory.value = funnyHistory.value.slice(0, 6)
+    }
+  } catch (e) {
+    console.error('搞笑视频生成失败:', e)
+  }
+}
+
+const resetFunnyAll = () => {
+  resetFunny()
+  funnyImageUrl.value = ''
+  funnyFile.value = null
+  funnyPrompt.value = ''
+}
+
 // 使用示例
 const useExample = (example, type) => {
   if (type === 'image') {
@@ -150,6 +266,20 @@ const statusText = computed(() => {
   }
   return statusMap[videoStatus.value] || ''
 })
+
+const funnyStatusText = computed(() => {
+  const map = {
+    uploading: '正在处理图片...',
+    submitting: '正在提交请求...',
+    processing: '视频生成中，请耐心等待（约30-60秒）...',
+    completed: '生成完成！',
+    failed: '生成失败',
+    timeout: '生成超时',
+    cancelled: '已取消',
+    error: '发生错误',
+  }
+  return map[funnyStatus.value] || ''
+})
 </script>
 
 <template>
@@ -186,6 +316,13 @@ const statusText = computed(() => {
       >
         <Video :size="20" />
         <span>AI 视频</span>
+      </button>
+      <button
+        :class="['tab', { active: activeTab === 'funny' }]"
+        @click="activeTab = 'funny'"
+      >
+        <Clapperboard :size="20" />
+        <span>搞笑视频</span>
       </button>
     </div>
 
@@ -431,6 +568,184 @@ const statusText = computed(() => {
               @click="videoUrl = item.url"
             >
               <video :src="item.url" muted></video>
+              <div class="play-overlay">
+                <Film :size="24" />
+              </div>
+              <div class="history-info">
+                <p class="history-prompt">{{ item.prompt }}</p>
+                <span class="history-time">{{ item.time }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 搞笑视频（图生视频） -->
+      <div v-show="activeTab === 'funny'" class="panel" @paste="handleFunnyPaste">
+        <div class="panel__input">
+          <!-- 左侧输入 -->
+          <div class="input-section">
+            <!-- 上传区域 -->
+            <div
+              v-if="!funnyImageUrl"
+              class="funny-upload"
+              :class="{ 'funny-upload--drag': funnyIsDragging }"
+              @drop="handleFunnyDrop"
+              @dragover="handleFunnyDragOver"
+              @dragleave="handleFunnyDragLeave"
+              @click="$refs.funnyFileInput.click()"
+            >
+              <input
+                ref="funnyFileInput"
+                type="file"
+                accept="image/*"
+                style="display:none"
+                @change="handleFunnyFileSelect"
+              />
+              <div class="funny-upload__icon">
+                <Upload :size="36" />
+              </div>
+              <p class="funny-upload__text">上传你想让它"动起来"的图片</p>
+              <p class="funny-upload__hint">支持 JPG、PNG、WebP，最大 5MB | Ctrl+V 粘贴</p>
+            </div>
+
+            <!-- 图片预览 -->
+            <div v-else class="funny-preview">
+              <div class="funny-preview__header">
+                <div class="funny-preview__label">
+                  <Image :size="16" />
+                  <span>原始图片</span>
+                  <span class="funny-preview__size">{{ funnyFileSize }}</span>
+                </div>
+                <button class="funny-preview__close" @click="resetFunnyAll" :disabled="funnyLoading">
+                  <X :size="16" />
+                </button>
+              </div>
+              <div class="funny-preview__img">
+                <img :src="funnyImageUrl" alt="原始图片" />
+              </div>
+              <button
+                class="funny-reselect"
+                @click="$refs.funnyFileInput2.click()"
+                :disabled="funnyLoading"
+              >
+                <Upload :size="16" />
+                <span>重新选择</span>
+              </button>
+              <input
+                ref="funnyFileInput2"
+                type="file"
+                accept="image/*"
+                style="display:none"
+                @change="handleFunnyFileSelect"
+              />
+            </div>
+
+            <!-- 提示词 -->
+            <div class="funny-prompt">
+              <label class="input-label">
+                <Wand2 :size="16" />
+                <span>描述你想要的动态效果</span>
+              </label>
+              <textarea
+                v-model="funnyPrompt"
+                class="textarea"
+                placeholder="不填也行，AI会自动搞笑！也可以输入你的脑洞..."
+                rows="3"
+                :disabled="funnyLoading"
+              ></textarea>
+            </div>
+
+            <!-- 搞笑预设 -->
+            <div class="funny-presets">
+              <span class="examples-label">搞笑特效：</span>
+              <div class="examples-list">
+                <button
+                  v-for="preset in funnyPresets"
+                  :key="preset.label"
+                  class="example-btn"
+                  @click="funnyPrompt = preset.prompt"
+                  :disabled="funnyLoading"
+                >
+                  {{ preset.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- 按钮 -->
+            <div class="btn-group">
+              <button
+                class="generate-btn"
+                :disabled="!funnyFile || funnyLoading"
+                @click="handleGenerateFunny"
+              >
+                <Loader2 v-if="funnyLoading" :size="20" class="spin" />
+                <Sparkles v-else :size="20" />
+                <span>{{ funnyLoading ? '生成中...' : '生成搞笑视频' }}</span>
+              </button>
+              <button v-if="funnyLoading" class="cancel-btn" @click="cancelFunny">
+                <X :size="18" />
+                <span>取消</span>
+              </button>
+            </div>
+
+            <!-- 进度 -->
+            <div v-if="funnyLoading" class="progress-section">
+              <div class="progress-bar">
+                <div class="progress-fill progress-fill--animated" :style="{ width: funnyProgress + '%' }"></div>
+              </div>
+              <div class="progress-status">
+                <span class="status-text">{{ funnyStatusText }}</span>
+                <span class="status-percent">{{ funnyProgress }}%</span>
+              </div>
+            </div>
+
+            <!-- 错误 -->
+            <div v-if="funnyError" class="error-msg">
+              <AlertCircle :size="16" />
+              <span>{{ funnyError }}</span>
+            </div>
+          </div>
+
+          <!-- 右侧结果 -->
+          <div class="result-section">
+            <div v-if="funnyVideoUrl" class="result-video">
+              <video :src="funnyVideoUrl" controls autoplay loop></video>
+              <div class="result-actions">
+                <button class="action-btn" @click="downloadFile(funnyVideoUrl, `funny-video-${Date.now()}.mp4`)">
+                  <Download :size="18" />
+                  <span>下载视频</span>
+                </button>
+                <button class="action-btn" @click="resetFunnyAll">
+                  <RefreshCw :size="18" />
+                  <span>重新制作</span>
+                </button>
+              </div>
+            </div>
+            <div v-else class="result-placeholder">
+              <div class="placeholder-icon">
+                <Film :size="48" />
+              </div>
+              <p>生成的搞笑视频将在这里播放</p>
+              <span class="placeholder-tip">视频生成通常需要 30-60 秒</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 历史记录 -->
+        <div v-if="funnyHistory.length" class="history">
+          <h3 class="history-title">
+            <Clock :size="16" />
+            <span>生成记录</span>
+          </h3>
+          <div class="history-grid history-grid--video">
+            <div
+              v-for="item in funnyHistory"
+              :key="item.id"
+              class="history-item history-item--video"
+              @click="funnyVideoUrl = item.videoUrl; funnyImageUrl = item.imageUrl"
+            >
+              <video :src="item.videoUrl" muted></video>
               <div class="play-overlay">
                 <Film :size="24" />
               </div>
@@ -1025,6 +1340,158 @@ const statusText = computed(() => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   搞笑视频上传区
+   ═══════════════════════════════════════════════════════════ */
+
+.funny-upload {
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.funny-upload:hover,
+.funny-upload--drag {
+  border-color: rgba(251, 146, 60, 0.5);
+  background: rgba(251, 146, 60, 0.05);
+}
+
+.funny-upload__icon {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(251, 146, 60, 0.1);
+  border-radius: 20px;
+  margin: 0 auto 16px;
+  color: #fb923c;
+  transition: all 0.3s;
+}
+
+.funny-upload:hover .funny-upload__icon {
+  transform: scale(1.05);
+  background: rgba(251, 146, 60, 0.15);
+}
+
+.funny-upload__text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.funny-upload__hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* 搞笑视频预览 */
+.funny-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.funny-preview__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.funny-preview__label svg {
+  color: #fb923c;
+}
+
+.funny-preview__size {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.funny-preview__close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.funny-preview__close:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.funny-preview__close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.funny-preview__img {
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  margin-bottom: 12px;
+}
+
+.funny-preview__img img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  display: block;
+}
+
+.funny-reselect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.funny-reselect:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.funny-reselect:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.funny-prompt {
+  margin-top: 16px;
+}
+
+.funny-presets {
+  margin-top: 16px;
 }
 
 /* ═══════════════════════════════════════════════════════════

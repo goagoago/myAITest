@@ -19,7 +19,10 @@
       "Bash(npm run dev)",
       "WebFetch(domain:docs.siliconflow.cn)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:www.showapi.com)"
+      "WebFetch(domain:www.showapi.com)",
+      "WebFetch(domain:docs.bigmodel.cn)",
+      "Bash(npx vite build)",
+      "WebFetch(domain:www.siliconflow.com)"
     ]
   }
 }

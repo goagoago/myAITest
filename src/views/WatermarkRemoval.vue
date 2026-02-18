@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick, onBeforeUnmount } from 'vue'
 import { useWatermarkRemoval } from '../composables/useWatermarkRemoval'
 import {
   Eraser, Sparkles, Upload, Download, RefreshCw, Loader2,
-  Image, AlertCircle, Clock, X, ZoomIn, ArrowLeftRight, Wand2
+  Image, AlertCircle, Clock, X, ZoomIn, ArrowLeftRight, Wand2,
+  Paintbrush, Trash2, Maximize
 } from 'lucide-vue-next'
 
 const {
@@ -12,6 +13,7 @@ const {
   resultImageUrl,
   progress,
   removeWatermark,
+  removeWatermarkByMask,
   reset
 } = useWatermarkRemoval()
 
@@ -23,6 +25,15 @@ const customPrompt = ref('')
 const showAdvanced = ref(false)
 const compareMode = ref(false)
 const comparePosition = ref(50)
+
+// 涂抹模式
+const maskMode = ref(true) // true=局部涂抹模式, false=全图模式
+const brushSize = ref(20)
+const isDrawing = ref(false)
+const hasMask = ref(false) // 是否已涂抹
+const maskCanvasRef = ref(null)
+const previewImgRef = ref(null)
+const maskContainerRef = ref(null)
 
 // 历史记录
 const history = ref([])
@@ -73,17 +84,107 @@ const handlePaste = (e) => {
 
 // 处理文件
 const processFile = (file) => {
-  if (!file.type.startsWith('image/')) {
-    return
-  }
-  // 限制 10MB
-  if (file.size > 10 * 1024 * 1024) {
-    return
-  }
+  if (!file.type.startsWith('image/')) return
+  if (file.size > 10 * 1024 * 1024) return
   originalFile.value = file
   originalImageUrl.value = URL.createObjectURL(file)
   resultImageUrl.value = ''
   compareMode.value = false
+  hasMask.value = false
+  // 等图片渲染后初始化 canvas
+  nextTick(() => {
+    initMaskCanvas()
+  })
+}
+
+// 初始化涂抹画布
+const initMaskCanvas = () => {
+  const img = previewImgRef.value
+  const canvas = maskCanvasRef.value
+  const container = maskContainerRef.value
+  if (!img || !canvas || !container) return
+
+  const setup = () => {
+    // 获取图片实际渲染尺寸（由 max-width/max-height CSS 控制）
+    const dispW = img.clientWidth
+    const dispH = img.clientHeight
+
+    canvas.width = dispW
+    canvas.height = dispH
+    canvas.style.width = dispW + 'px'
+    canvas.style.height = dispH + 'px'
+    hasMask.value = false
+  }
+
+  if (img.complete && img.naturalWidth > 0) {
+    setup()
+  } else {
+    img.onload = setup
+  }
+}
+
+// 涂抹绘制
+const getPos = (e) => {
+  const canvas = maskCanvasRef.value
+  if (!canvas) return null
+  const rect = canvas.getBoundingClientRect()
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY
+  return {
+    x: clientX - rect.left,
+    y: clientY - rect.top,
+  }
+}
+
+const startDraw = (e) => {
+  if (!maskMode.value || loading.value) return
+  e.preventDefault()
+  isDrawing.value = true
+  const pos = getPos(e)
+  if (!pos) return
+  // 画一个小圆点作为起始点（大小与笔刷一致）
+  const ctx = maskCanvasRef.value.getContext('2d')
+  ctx.fillStyle = 'rgba(255, 80, 80, 0.45)'
+  ctx.beginPath()
+  ctx.arc(pos.x, pos.y, brushSize.value / 2, 0, Math.PI * 2)
+  ctx.fill()
+  // 记录起始位置，用于后续 lineTo
+  lastPos = { x: pos.x, y: pos.y }
+  hasMask.value = true
+}
+
+let lastPos = null
+
+const draw = (e) => {
+  if (!isDrawing.value || !lastPos) return
+  e.preventDefault()
+  const pos = getPos(e)
+  if (!pos) return
+  const ctx = maskCanvasRef.value.getContext('2d')
+  ctx.beginPath()
+  ctx.moveTo(lastPos.x, lastPos.y)
+  ctx.lineTo(pos.x, pos.y)
+  ctx.strokeStyle = 'rgba(255, 80, 80, 0.45)'
+  ctx.lineWidth = brushSize.value
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.stroke()
+  lastPos = { x: pos.x, y: pos.y }
+  hasMask.value = true
+}
+
+const endDraw = () => {
+  isDrawing.value = false
+  lastPos = null
+}
+
+// 清除涂抹
+const clearMask = () => {
+  const canvas = maskCanvasRef.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  hasMask.value = false
 }
 
 // 开始去水印
@@ -92,7 +193,22 @@ const handleRemoveWatermark = async () => {
 
   try {
     const prompt = customPrompt.value.trim() || undefined
-    const url = await removeWatermark(originalFile.value, prompt)
+    let url
+
+    if (maskMode.value && hasMask.value) {
+      // 局部模式
+      const canvas = maskCanvasRef.value
+      url = await removeWatermarkByMask(
+        originalFile.value,
+        canvas,
+        canvas.width,
+        canvas.height,
+        prompt
+      )
+    } else {
+      // 全图模式
+      url = await removeWatermark(originalFile.value, prompt)
+    }
 
     history.value.unshift({
       id: Date.now(),
@@ -132,6 +248,7 @@ const resetAll = () => {
   originalFile.value = null
   customPrompt.value = ''
   compareMode.value = false
+  hasMask.value = false
 }
 
 // 使用预设提示词
@@ -154,6 +271,17 @@ const fileSize = computed(() => {
   if (size < 1024) return `${size} B`
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
+})
+
+// 监听窗口大小变化重新初始化 canvas
+const handleResize = () => {
+  if (originalImageUrl.value) {
+    nextTick(() => initMaskCanvas())
+  }
+}
+window.addEventListener('resize', handleResize)
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
@@ -206,7 +334,7 @@ const fileSize = computed(() => {
             <p class="upload-hint">也可以直接 Ctrl+V 粘贴图片</p>
           </div>
 
-          <!-- 已上传图片预览 -->
+          <!-- 已上传图片预览 + 涂抹画布 -->
           <div v-else class="preview-section">
             <div class="preview-header">
               <div class="preview-label">
@@ -218,8 +346,76 @@ const fileSize = computed(() => {
                 <X :size="16" />
               </button>
             </div>
-            <div class="preview-image">
-              <img :src="originalImageUrl" alt="原始图片" />
+
+            <!-- 模式切换 -->
+            <div class="mode-switch">
+              <button
+                :class="['mode-btn', { active: maskMode }]"
+                @click="maskMode = true"
+                :disabled="loading"
+              >
+                <Paintbrush :size="14" />
+                <span>涂抹去除</span>
+              </button>
+              <button
+                :class="['mode-btn', { active: !maskMode }]"
+                @click="maskMode = false"
+                :disabled="loading"
+              >
+                <Maximize :size="14" />
+                <span>全图处理</span>
+              </button>
+            </div>
+
+            <!-- 图片 + 涂抹画布容器 -->
+            <div class="mask-container" ref="maskContainerRef">
+              <div class="mask-wrapper">
+                <img
+                  ref="previewImgRef"
+                  :src="originalImageUrl"
+                  alt="原始图片"
+                  class="mask-image"
+                />
+                <canvas
+                  v-show="maskMode"
+                  ref="maskCanvasRef"
+                  class="mask-canvas"
+                  :class="{ 'mask-canvas--active': maskMode && !loading }"
+                  @mousedown="startDraw"
+                  @mousemove="draw"
+                  @mouseup="endDraw"
+                  @mouseleave="endDraw"
+                  @touchstart="startDraw"
+                  @touchmove="draw"
+                  @touchend="endDraw"
+                ></canvas>
+              </div>
+              <!-- 涂抹提示 -->
+              <div v-if="maskMode && !hasMask && !loading" class="mask-hint">
+                <Paintbrush :size="16" />
+                <span>在水印位置涂抹标记</span>
+              </div>
+            </div>
+
+            <!-- 笔刷工具栏（涂抹模式） -->
+            <div v-if="maskMode" class="brush-toolbar">
+              <div class="brush-slider-group">
+                <span class="brush-label">笔刷大小</span>
+                <input
+                  type="range"
+                  class="brush-slider"
+                  v-model.number="brushSize"
+                  min="4"
+                  max="60"
+                  step="1"
+                  :disabled="loading"
+                />
+                <span class="brush-preview" :style="{ width: brushSize + 'px', height: brushSize + 'px' }"></span>
+              </div>
+              <button class="brush-clear" @click="clearMask" :disabled="loading || !hasMask">
+                <Trash2 :size="14" />
+                <span>清除涂抹</span>
+              </button>
             </div>
 
             <!-- 重新选择 -->
@@ -281,12 +477,12 @@ const fileSize = computed(() => {
           <!-- 操作按钮 -->
           <button
             class="generate-btn"
-            :disabled="!originalFile || loading"
+            :disabled="!originalFile || loading || (maskMode && !hasMask)"
             @click="handleRemoveWatermark"
           >
             <Loader2 v-if="loading" :size="20" class="spin" />
             <Sparkles v-else :size="20" />
-            <span>{{ loading ? '处理中...' : '开始去水印' }}</span>
+            <span>{{ loading ? '处理中...' : (maskMode ? '去除涂抹区域水印' : '全图去水印') }}</span>
           </button>
 
           <!-- 进度条 -->
@@ -509,14 +705,14 @@ const fileSize = computed(() => {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   预览区域
+   预览区域 + 涂抹画布
    ═══════════════════════════════════════════════════════════ */
 
 .preview-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .preview-label {
@@ -566,18 +762,201 @@ const fileSize = computed(() => {
   cursor: not-allowed;
 }
 
-.preview-image {
+/* 模式切换 */
+.mode-switch {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.mode-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.mode-btn.active {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.mode-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 涂抹画布容器 */
+.mask-container {
+  position: relative;
   border-radius: 16px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.2);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.preview-image img {
-  width: 100%;
-  max-height: 300px;
-  object-fit: contain;
+.mask-wrapper {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.mask-image {
   display: block;
+  max-width: 100%;
+  max-height: 300px;
+}
+
+.mask-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.mask-canvas--active {
+  cursor: crosshair;
+}
+
+.mask-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+  animation: mask-hint-fade 3s ease 1s forwards;
+}
+
+@keyframes mask-hint-fade {
+  to { opacity: 0; }
+}
+
+/* 笔刷工具栏 */
+.brush-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.brush-slider-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.brush-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.brush-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.brush-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #34d399;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.4);
+  transition: transform 0.15s;
+}
+
+.brush-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.brush-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #34d399;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.4);
+}
+
+.brush-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.brush-preview {
+  display: inline-block;
+  border-radius: 50%;
+  background: rgba(255, 80, 80, 0.45);
+  border: 1px solid rgba(255, 80, 80, 0.6);
+  flex-shrink: 0;
+  min-width: 4px;
+  min-height: 4px;
+  transition: width 0.1s, height 0.1s;
+}
+
+.brush-clear {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.brush-clear:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.brush-clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .reselect-btn {

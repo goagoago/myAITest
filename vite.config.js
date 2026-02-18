@@ -52,6 +52,23 @@ function watermarkRemovalMiddleware() {
           const result = await response.json()
           console.log('[Watermark Removal API Response]', JSON.stringify(result).slice(0, 200))
 
+          // 将返回的图片URL下载转为base64，避免前端跨域问题
+          const imageUrl = result.images?.[0]?.url
+          if (imageUrl) {
+            try {
+              const imgResp = await fetch(imageUrl)
+              if (imgResp.ok) {
+                const arrayBuffer = await imgResp.arrayBuffer()
+                const contentType = imgResp.headers.get('content-type') || 'image/png'
+                const base64 = Buffer.from(arrayBuffer).toString('base64')
+                result.images[0].url = `data:${contentType};base64,${base64}`
+              }
+            } catch (imgErr) {
+              console.error('[Watermark Image Download Error]', imgErr)
+              // 下载失败则保留原始URL
+            }
+          }
+
           res.setHeader('Content-Type', 'application/json')
           res.setHeader('Access-Control-Allow-Origin', '*')
           res.end(JSON.stringify(result))
@@ -91,10 +108,18 @@ function videoApiMiddleware() {
 
           if (action === 'submit') {
             apiUrl = `${ZHIPU_API_BASE}/videos/generations`
-            apiBody = JSON.stringify({
+            const mode = url.searchParams.get('mode')
+            const videoParams = {
               model: 'cogvideox-flash',
               prompt: data.prompt,
-            })
+            }
+            // 图生视频模式：传入 image_url，开启音频，速度优先
+            if (mode === 'i2v' && data.image_url) {
+              videoParams.image_url = data.image_url
+              videoParams.with_audio = true
+              videoParams.quality = 'speed'
+            }
+            apiBody = JSON.stringify(videoParams)
           } else if (action === 'status') {
             apiUrl = `${ZHIPU_API_BASE}/async-result/${data.requestId}`
             apiBody = null
