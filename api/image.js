@@ -1,4 +1,4 @@
-// Vercel Edge Function - 代理智谱API请求
+// Vercel Edge Function - 代理硅基流动图片生成API
 export const config = {
   runtime: 'edge',
 }
@@ -19,24 +19,35 @@ export default async function handler(request) {
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     })
   }
 
   try {
     const body = await request.json()
-    const { messages, stream = false, model = 'glm-4-flash', temperature = 0.7, max_tokens = 8192 } = body
+    const {
+      prompt,
+      model = 'black-forest-labs/FLUX.1-schnell',
+      image_size = '1024x1024',
+      num_inference_steps = 20,
+    } = body
 
-    // 从环境变量获取 API Key（必须在 Vercel 项目设置中配置）
-    const apiKey = process.env.ZHIPU_API_KEY
+    if (!prompt) {
+      return new Response(JSON.stringify({ error: '请提供图片描述' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    const apiKey = process.env.SILICONFLOW_API_KEY
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: '服务端未配置 ZHIPU_API_KEY 环境变量' }), {
+      return new Response(JSON.stringify({ error: '服务端未配置 SILICONFLOW_API_KEY 环境变量' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       })
     }
 
-    const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+    const response = await fetch('https://api.siliconflow.cn/v1/images/generations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -44,53 +55,30 @@ export default async function handler(request) {
       },
       body: JSON.stringify({
         model,
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
-        temperature,
-        max_tokens,
-        stream,
+        prompt,
+        image_size,
+        num_inference_steps,
       }),
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('API Error:', errorText)
+      console.error('SiliconFlow API Error:', errorText)
       return new Response(JSON.stringify({ error: `API Error: ${response.status}`, detail: errorText }), {
         status: response.status,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       })
     }
 
-    // 流式响应
-    if (stream) {
-      return new Response(response.body, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'Access-Control-Allow-Origin': '*',
-        },
-      })
-    }
-
-    // 普通响应
     const data = await response.json()
     return new Response(JSON.stringify(data), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     })
   } catch (error) {
     console.error('Handler Error:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     })
   }
 }

@@ -3,6 +3,15 @@ import { ref } from 'vue'
 // 智谱API配置
 const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
 
+// 从环境变量获取 API Key
+const getApiKey = () => {
+  const key = import.meta.env.VITE_ZHIPU_API_KEY
+  if (!key) {
+    throw new Error('请配置 VITE_ZHIPU_API_KEY 环境变量')
+  }
+  return key
+}
+
 export function useChat() {
   const loading = ref(false)
   const error = ref(null)
@@ -17,8 +26,6 @@ export function useChat() {
     streamingText.value = ''
 
     try {
-      const isProd = import.meta.env.PROD
-
       const requestBody = {
         model: 'glm-4-flash',
         messages: messages.map(m => ({ role: m.role, content: m.content })),
@@ -27,29 +34,14 @@ export function useChat() {
         stream: true,
       }
 
-      let response
-
-      if (isProd) {
-        response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...requestBody, stream: true }),
-        })
-      } else {
-        // 开发环境：从环境变量获取 API Key
-        const apiKey = import.meta.env.VITE_ZHIPU_API_KEY
-        if (!apiKey) {
-          throw new Error('请在 .env.local 文件中配置 VITE_ZHIPU_API_KEY')
-        }
-        response = await fetch(ZHIPU_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify(requestBody),
-        })
-      }
+      const response = await fetch(ZHIPU_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getApiKey()}`,
+        },
+        body: JSON.stringify(requestBody),
+      })
 
       if (!response.ok) {
         const errData = await response.json()
@@ -102,8 +94,6 @@ export function useChat() {
     result.value = ''
 
     try {
-      const isProd = import.meta.env.PROD
-
       const requestBody = {
         model: 'glm-4-flash',
         messages: messages.map(m => ({ role: m.role, content: m.content })),
@@ -111,29 +101,14 @@ export function useChat() {
         max_tokens: 8192,
       }
 
-      let response
-
-      if (isProd) {
-        response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages }),
-        })
-      } else {
-        // 开发环境：从环境变量获取 API Key
-        const apiKey = import.meta.env.VITE_ZHIPU_API_KEY
-        if (!apiKey) {
-          throw new Error('请在 .env.local 文件中配置 VITE_ZHIPU_API_KEY')
-        }
-        response = await fetch(ZHIPU_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify(requestBody),
-        })
-      }
+      const response = await fetch(ZHIPU_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getApiKey()}`,
+        },
+        body: JSON.stringify(requestBody),
+      })
 
       if (!response.ok) {
         const errData = await response.json()

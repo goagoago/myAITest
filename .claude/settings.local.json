@@ -16,7 +16,10 @@
       "WebSearch",
       "Bash(dir:*)",
       "WebFetch(domain:open.bigmodel.cn)",
-      "Bash(npm run dev)"
+      "Bash(npm run dev)",
+      "WebFetch(domain:docs.siliconflow.cn)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.showapi.com)"
     ]
   }
 }

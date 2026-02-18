@@ -3,12 +3,22 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plane, PenTool, Globe, Lightbulb, ArrowRight, Zap, Shield, Sparkles, Clock,
-  ChevronRight, Star, Users, TrendingUp
+  ChevronRight, Star, Users, TrendingUp, Wand2
 } from 'lucide-vue-next'
 
 const router = useRouter()
 
 const tools = [
+  {
+    id: 'ai-studio',
+    path: '/ai-studio',
+    icon: Wand2,
+    name: 'AI 创作',
+    desc: 'AI图片与视频生成，输入文字即可创作精美视觉内容',
+    gradient: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
+    shadowColor: 'rgba(236, 72, 153, 0.4)',
+    features: ['图片生成', '视频生成', 'FLUX模型'],
+  },
   {
     id: 'travel',
     path: '/travel',

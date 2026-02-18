@@ -26,6 +26,11 @@ const routes = [
     name: 'Mind',
     component: () => import('../views/Mind.vue'),
   },
+  {
+    path: '/ai-studio',
+    name: 'AIStudio',
+    component: () => import('../views/AIStudio.vue'),
+  },
 ]
 
 export default createRouter({
