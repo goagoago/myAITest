@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plane, PenTool, Globe, Lightbulb, ArrowRight, Zap, Shield, Sparkles, Clock,
@@ -15,8 +15,8 @@ const tools = [
     icon: Eraser,
     name: '图片去水印',
     desc: '智能识别并去除各类复杂水印，一键还原清晰图片',
-    gradient: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)',
-    shadowColor: 'rgba(16, 185, 129, 0.4)',
+    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    shadowColor: 'rgba(16, 185, 129, 0.35)',
     features: ['复杂水印', 'Logo去除', '智能修复'],
   },
   {
@@ -25,8 +25,8 @@ const tools = [
     icon: Wand2,
     name: 'AI 创作',
     desc: 'AI图片、视频与搞笑视频生成，输入文字或上传图片即可创作',
-    gradient: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
-    shadowColor: 'rgba(236, 72, 153, 0.4)',
+    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    shadowColor: 'rgba(245, 158, 11, 0.35)',
     features: ['图片生成', '视频生成', '搞笑视频'],
   },
   {
@@ -35,8 +35,8 @@ const tools = [
     icon: Plane,
     name: '旅行规划',
     desc: '智能生成个性化旅行行程方案，让每一次出行都完美',
-    gradient: 'linear-gradient(135deg, #ff6b6b 0%, #feca57 100%)',
-    shadowColor: 'rgba(255, 107, 107, 0.4)',
+    gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+    shadowColor: 'rgba(239, 68, 68, 0.35)',
     features: ['行程规划', '预算估算', '景点推荐'],
   },
   {
@@ -45,8 +45,8 @@ const tools = [
     icon: PenTool,
     name: '写作助手',
     desc: '文章润色、续写、风格改写，让你的文字更有力量',
-    gradient: 'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)',
-    shadowColor: 'rgba(108, 92, 231, 0.4)',
+    gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+    shadowColor: 'rgba(249, 115, 22, 0.35)',
     features: ['智能润色', '风格转换', '内容续写'],
   },
   {
@@ -55,8 +55,8 @@ const tools = [
     icon: Globe,
     name: '翻译专家',
     desc: '多语言智能翻译与本地化，打破语言的边界',
-    gradient: 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)',
-    shadowColor: 'rgba(9, 132, 227, 0.4)',
+    gradient: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+    shadowColor: 'rgba(20, 184, 166, 0.35)',
     features: ['多语言支持', '语境理解', '专业术语'],
   },
   {
@@ -65,8 +65,8 @@ const tools = [
     icon: Lightbulb,
     name: '头脑风暴',
     desc: '创意激发与思维拓展工具，让灵感源源不断',
-    gradient: 'linear-gradient(135deg, #55efc4 0%, #00b894 100%)',
-    shadowColor: 'rgba(0, 184, 148, 0.4)',
+    gradient: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
+    shadowColor: 'rgba(234, 179, 8, 0.35)',
     features: ['创意发散', 'SWOT分析', '思维导图'],
   },
 ]
@@ -83,39 +83,6 @@ const stats = [
   { value: '99.9%', label: '满意度', icon: Star },
   { value: '50ms', label: '平均响应', icon: TrendingUp },
 ]
-
-const hoveredCard = ref(null)
-const cardRefs = ref({})
-
-const handleMouseMove = (e, id) => {
-  const card = e.currentTarget
-  const rect = card.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
-  const centerX = rect.width / 2
-  const centerY = rect.height / 2
-  const rotateX = (y - centerY) / 15
-  const rotateY = (centerX - x) / 15
-
-  card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`
-
-  // 更新光标位置
-  const glowEl = card.querySelector('.card-glow')
-  if (glowEl) {
-    glowEl.style.left = `${x}px`
-    glowEl.style.top = `${y}px`
-    glowEl.style.opacity = '1'
-  }
-}
-
-const handleMouseLeave = (e) => {
-  e.currentTarget.style.transform = ''
-  hoveredCard.value = null
-  const glowEl = e.currentTarget.querySelector('.card-glow')
-  if (glowEl) {
-    glowEl.style.opacity = '0'
-  }
-}
 </script>
 
 <template>
@@ -166,12 +133,6 @@ const handleMouseLeave = (e) => {
         </div>
       </div>
 
-      <!-- 装饰元素 -->
-      <div class="hero__decoration">
-        <div class="decoration-ring decoration-ring--1"></div>
-        <div class="decoration-ring decoration-ring--2"></div>
-        <div class="decoration-ring decoration-ring--3"></div>
-      </div>
     </section>
 
     <!-- 工具卡片 -->
@@ -189,13 +150,7 @@ const handleMouseLeave = (e) => {
           class="tool-card"
           :style="{ '--index': index, '--gradient': tool.gradient, '--shadow-color': tool.shadowColor }"
           @click="router.push(tool.path)"
-          @mouseenter="hoveredCard = tool.id"
-          @mousemove="(e) => handleMouseMove(e, tool.id)"
-          @mouseleave="handleMouseLeave"
         >
-          <!-- 光标跟随光晕 -->
-          <div class="card-glow"></div>
-
           <!-- 背景装饰 -->
           <div class="tool-card__bg"></div>
 
@@ -285,8 +240,8 @@ const handleMouseLeave = (e) => {
   align-items: center;
   gap: 10px;
   padding: 10px 20px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(240, 147, 251, 0.15));
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(245, 158, 11, 0.12));
+  border: 1px solid rgba(16, 185, 129, 0.18);
   border-radius: 50px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -325,7 +280,7 @@ const handleMouseLeave = (e) => {
 
 .hero__title-highlight {
   display: block;
-  background: linear-gradient(135deg, #667eea 0%, #f093fb 40%, #4facfe 70%, #43e97b 100%);
+  background: linear-gradient(135deg, #34d399 0%, #10b981 35%, #f59e0b 70%, #fbbf24 100%);
   background-size: 300% 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -417,7 +372,7 @@ const handleMouseLeave = (e) => {
 
 .btn-primary:hover {
   transform: translateY(-3px);
-  box-shadow: 0 20px 40px -10px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 20px 40px -10px rgba(16, 185, 129, 0.4);
 }
 
 .btn-primary:hover::before {
@@ -453,50 +408,6 @@ const handleMouseLeave = (e) => {
   color: var(--text-primary);
 }
 
-/* 装饰环 */
-.hero__decoration {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.decoration-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transform: translate(-50%, -50%);
-  animation: ring-rotate 30s linear infinite;
-}
-
-.decoration-ring--1 {
-  width: 500px;
-  height: 500px;
-}
-
-.decoration-ring--2 {
-  width: 700px;
-  height: 700px;
-  animation-direction: reverse;
-  animation-duration: 40s;
-}
-
-.decoration-ring--3 {
-  width: 900px;
-  height: 900px;
-  animation-duration: 50s;
-}
-
-@keyframes ring-rotate {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
 /* ═══════════════════════════════════════════════════════════
    通用区块样式
    ═══════════════════════════════════════════════════════════ */
@@ -509,8 +420,8 @@ const handleMouseLeave = (e) => {
 .section-tag {
   display: inline-block;
   padding: 8px 16px;
-  background: rgba(102, 126, 234, 0.1);
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 50px;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -560,22 +471,9 @@ const handleMouseLeave = (e) => {
 }
 
 .tool-card:hover {
+  transform: translateY(-4px);
   border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 25px 80px -20px var(--shadow-color);
-}
-
-/* 卡片光晕 */
-.card-glow {
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, var(--shadow-color) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: 0;
+  box-shadow: 0 25px 60px -20px var(--shadow-color);
 }
 
 /* 背景装饰 */
@@ -586,10 +484,10 @@ const handleMouseLeave = (e) => {
   width: 300px;
   height: 300px;
   background: var(--gradient);
-  filter: blur(80px);
   opacity: 0;
   transition: opacity 0.5s;
   z-index: 0;
+  border-radius: 50%;
 }
 
 .tool-card:hover .tool-card__bg {
@@ -708,8 +606,8 @@ const handleMouseLeave = (e) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(240, 147, 251, 0.15));
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(245, 158, 11, 0.12));
+  border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 16px;
   margin: 0 auto 20px;
   transition: all 0.4s;
@@ -783,7 +681,7 @@ const handleMouseLeave = (e) => {
   left: 50%;
   width: 600px;
   height: 300px;
-  background: radial-gradient(ellipse, rgba(102, 126, 234, 0.2) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }

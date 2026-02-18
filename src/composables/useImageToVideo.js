@@ -11,6 +11,7 @@ export function useImageToVideo() {
   const requestId = ref('')
 
   let pollTimer = null
+  let cancelled = false
 
   /**
    * 将 File 对象转为 base64 data URI
@@ -25,6 +26,8 @@ export function useImageToVideo() {
   }
 
   const submitVideo = async (prompt, imageBase64, retryCount = 0) => {
+    if (cancelled) throw new Error('已取消')
+
     const response = await fetch(`${VIDEO_API_URL}?action=submit&mode=i2v`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -32,9 +35,18 @@ export function useImageToVideo() {
     })
 
     if (response.status === 429 && retryCount < 3) {
-      console.log(`[I2V] 提交限流，${10 + retryCount * 10}秒后重试...`)
-      await new Promise(r => setTimeout(r, (10 + retryCount * 10) * 1000))
+      const waitSec = 10 + retryCount * 10
+      status.value = 'rate_limited'
+      error.value = `模型访问量过大，${waitSec}秒后自动重试（第${retryCount + 1}次）...`
+      console.log(`[I2V] 提交限流，${waitSec}秒后重试...`)
+      await new Promise(r => setTimeout(r, waitSec * 1000))
+      if (cancelled) throw new Error('已取消')
+      error.value = null
       return submitVideo(prompt, imageBase64, retryCount + 1)
+    }
+
+    if (response.status === 429) {
+      throw new Error('模型当前访问量过大，请稍后再试')
     }
 
     if (!response.ok) {
@@ -48,6 +60,8 @@ export function useImageToVideo() {
   }
 
   const checkStatus = async (rid, retryCount = 0) => {
+    if (cancelled) throw new Error('已取消')
+
     const response = await fetch(`${VIDEO_API_URL}?action=status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -55,9 +69,15 @@ export function useImageToVideo() {
     })
 
     if (response.status === 429 && retryCount < 3) {
-      console.log(`[I2V] 限流，${5 + retryCount * 5}秒后重试...`)
-      await new Promise(r => setTimeout(r, (5 + retryCount * 5) * 1000))
+      const waitSec = 5 + retryCount * 5
+      console.log(`[I2V] 限流，${waitSec}秒后重试...`)
+      await new Promise(r => setTimeout(r, waitSec * 1000))
+      if (cancelled) throw new Error('已取消')
       return checkStatus(rid, retryCount + 1)
+    }
+
+    if (response.status === 429) {
+      throw new Error('模型当前访问量过大，请稍后再试')
     }
 
     if (!response.ok) {
@@ -79,10 +99,12 @@ export function useImageToVideo() {
     videoUrl.value = ''
     status.value = 'uploading'
     progress.value = 5
+    cancelled = false
 
     try {
       // 图片转 base64
       const imageBase64 = await fileToBase64(file)
+      if (cancelled) return
       status.value = 'submitting'
       progress.value = 10
 
@@ -98,6 +120,12 @@ export function useImageToVideo() {
         const maxAttempts = 120
 
         const poll = async () => {
+          if (cancelled) {
+            clearInterval(pollTimer)
+            pollTimer = null
+            return
+          }
+
           try {
             attempts++
             const result = await checkStatus(rid)
@@ -133,6 +161,7 @@ export function useImageToVideo() {
               reject(new Error('视频生成超时，请稍后重试'))
             }
           } catch (e) {
+            if (cancelled) return
             clearInterval(pollTimer)
             pollTimer = null
             status.value = 'error'
@@ -145,6 +174,7 @@ export function useImageToVideo() {
         pollTimer = setInterval(poll, 5000)
       })
     } catch (e) {
+      if (cancelled) return
       error.value = e.message
       status.value = 'error'
       loading.value = false
@@ -153,12 +183,14 @@ export function useImageToVideo() {
   }
 
   const cancel = () => {
+    cancelled = true
     if (pollTimer) {
       clearInterval(pollTimer)
       pollTimer = null
     }
     loading.value = false
     status.value = 'cancelled'
+    error.value = null
   }
 
   const reset = () => {

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useImage } from '../composables/useImage'
 import { useVideo } from '../composables/useVideo'
 import { useImageToVideo } from '../composables/useImageToVideo'
@@ -258,6 +258,7 @@ const statusText = computed(() => {
   const statusMap = {
     submitting: '正在提交请求...',
     processing: '视频生成中，请耐心等待...',
+    rate_limited: '模型繁忙，等待重试中...',
     completed: '生成完成！',
     failed: '生成失败',
     timeout: '生成超时',
@@ -272,6 +273,7 @@ const funnyStatusText = computed(() => {
     uploading: '正在处理图片...',
     submitting: '正在提交请求...',
     processing: '视频生成中，请耐心等待（约30-60秒）...',
+    rate_limited: '模型繁忙，等待重试中...',
     completed: '生成完成！',
     failed: '生成失败',
     timeout: '生成超时',
@@ -279,6 +281,12 @@ const funnyStatusText = computed(() => {
     error: '发生错误',
   }
   return map[funnyStatus.value] || ''
+})
+
+// 离开页面时取消所有进行中的请求
+onBeforeUnmount(() => {
+  cancelVideo()
+  cancelFunny()
 })
 </script>
 
@@ -782,17 +790,17 @@ const funnyStatusText = computed(() => {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(239, 68, 68, 0.15));
-  border: 1px solid rgba(236, 72, 153, 0.3);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(245, 158, 11, 0.12));
+  border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: 50px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #f472b6;
+  color: #34d399;
   margin-bottom: 24px;
 }
 
 .header__badge svg {
-  color: #f472b6;
+  color: #34d399;
 }
 
 .header__title {
@@ -804,7 +812,7 @@ const funnyStatusText = computed(() => {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #ec4899 0%, #f43f5e 50%, #f97316 100%);
+  background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #f59e0b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -847,13 +855,13 @@ const funnyStatusText = computed(() => {
 }
 
 .tab.active {
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(239, 68, 68, 0.15));
-  border-color: rgba(236, 72, 153, 0.4);
-  color: #f472b6;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(245, 158, 11, 0.15));
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
 }
 
 .tab.active svg {
-  color: #f472b6;
+  color: #34d399;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -910,8 +918,8 @@ const funnyStatusText = computed(() => {
 
 .textarea:focus {
   outline: none;
-  border-color: rgba(236, 72, 153, 0.5);
-  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .textarea:disabled {
@@ -950,9 +958,9 @@ const funnyStatusText = computed(() => {
 }
 
 .size-btn.active {
-  background: rgba(236, 72, 153, 0.15);
-  border-color: rgba(236, 72, 153, 0.4);
-  color: #f472b6;
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
 }
 
 .size-btn:disabled {
@@ -994,9 +1002,9 @@ const funnyStatusText = computed(() => {
 }
 
 .example-btn:hover:not(:disabled) {
-  background: rgba(236, 72, 153, 0.1);
-  border-color: rgba(236, 72, 153, 0.3);
-  color: #f472b6;
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
 }
 
 .example-btn:disabled {
@@ -1033,7 +1041,7 @@ const funnyStatusText = computed(() => {
   justify-content: center;
   gap: 10px;
   padding: 16px 32px;
-  background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border: none;
   border-radius: 16px;
   font-size: 1rem;
@@ -1050,7 +1058,7 @@ const funnyStatusText = computed(() => {
 
 .generate-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 15px 40px -10px rgba(236, 72, 153, 0.5);
+  box-shadow: 0 15px 40px -10px rgba(16, 185, 129, 0.5);
 }
 
 .generate-btn:disabled {
@@ -1089,13 +1097,13 @@ const funnyStatusText = computed(() => {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ec4899, #f43f5e);
+  background: linear-gradient(90deg, #10b981, #059669);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
 
 .progress-fill--animated {
-  background: linear-gradient(90deg, #ec4899, #f43f5e, #ec4899);
+  background: linear-gradient(90deg, #10b981, #059669, #10b981);
   background-size: 200% 100%;
   animation: progress-shine 2s linear infinite;
 }
@@ -1121,7 +1129,7 @@ const funnyStatusText = computed(() => {
 }
 
 .status-percent {
-  color: #f472b6;
+  color: #34d399;
   font-weight: 600;
 }
 
