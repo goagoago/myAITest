@@ -50,16 +50,25 @@ export default async function handler(request) {
         })
       }
 
+      const mode = url.searchParams.get('mode')
+      const videoParams = {
+        model: 'cogvideox-flash',
+        prompt,
+      }
+      // 图生视频模式：传入 image_url，开启音频，速度优先
+      if (mode === 'i2v' && body.image_url) {
+        videoParams.image_url = body.image_url
+        videoParams.with_audio = true
+        videoParams.quality = 'speed'
+      }
+
       const response = await fetch(`${ZHIPU_API_BASE}/videos/generations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({
-          model: 'cogvideox-flash',  // 免费模型
-          prompt,
-        }),
+        body: JSON.stringify(videoParams),
       })
 
       if (!response.ok) {
