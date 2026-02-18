@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Home, Plane, PenTool, Globe, Lightbulb, Sparkles, Zap } from 'lucide-vue-next'
+import { Home, Plane, PenTool, Globe, Lightbulb, Sparkles, Zap, Eraser } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -10,6 +10,7 @@ const mousePos = ref({ x: 0, y: 0 })
 
 const navItems = [
   { path: '/', label: '首页', icon: Home },
+  { path: '/watermark-removal', label: '去水印', icon: Eraser },
   { path: '/travel', label: '旅行规划', icon: Plane },
   { path: '/writer', label: '写作助手', icon: PenTool },
   { path: '/translator', label: '翻译专家', icon: Globe },

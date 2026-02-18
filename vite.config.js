@@ -5,6 +5,67 @@ const SILICONFLOW_API_KEY = process.env.SILICONFLOW_API_KEY || 'sk-aujkenkkrywvl
 const ZHIPU_API_KEY = process.env.ZHIPU_API_KEY || '94c09f3d19b582cafaa8700d63524cbc.4vAoySH9Q0l7xCQW'
 const ZHIPU_API_BASE = 'https://open.bigmodel.cn/api/paas/v4'
 
+// 图片去水印API中间件
+function watermarkRemovalMiddleware() {
+  return {
+    name: 'watermark-removal-middleware',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url !== '/api/watermark-removal' || req.method !== 'POST') {
+          return next()
+        }
+
+        // 解析请求体（base64图片可能很大，需要加大限制）
+        let body = ''
+        for await (const chunk of req) {
+          body += chunk
+        }
+
+        try {
+          const data = JSON.parse(body)
+
+          const response = await fetch('https://api.siliconflow.cn/v1/images/generations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${SILICONFLOW_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: 'Qwen/Qwen-Image-Edit',
+              prompt: data.prompt,
+              image: data.image,
+              num_inference_steps: 50,
+              guidance_scale: 7.5,
+            }),
+          })
+
+          if (!response.ok) {
+            const errorText = await response.text()
+            console.error('[Watermark Removal API Error]', response.status, errorText)
+            res.statusCode = response.status
+            res.setHeader('Content-Type', 'application/json')
+            res.setHeader('Access-Control-Allow-Origin', '*')
+            res.end(JSON.stringify({ error: `API错误: ${response.status}`, detail: errorText }))
+            return
+          }
+
+          const result = await response.json()
+          console.log('[Watermark Removal API Response]', JSON.stringify(result).slice(0, 200))
+
+          res.setHeader('Content-Type', 'application/json')
+          res.setHeader('Access-Control-Allow-Origin', '*')
+          res.end(JSON.stringify(result))
+        } catch (error) {
+          console.error('[Watermark Removal Error]', error)
+          res.statusCode = 500
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: error.message }))
+        }
+      })
+    }
+  }
+}
+
 // 视频API中间件
 function videoApiMiddleware() {
   return {
@@ -94,7 +155,7 @@ function videoApiMiddleware() {
 }
 
 export default defineConfig({
-  plugins: [vue(), videoApiMiddleware()],
+  plugins: [vue(), watermarkRemovalMiddleware(), videoApiMiddleware()],
   server: {
     proxy: {
       // 智谱聊天API代理

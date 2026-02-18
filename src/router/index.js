@@ -31,6 +31,11 @@ const routes = [
     name: 'AIStudio',
     component: () => import('../views/AIStudio.vue'),
   },
+  {
+    path: '/watermark-removal',
+    name: 'WatermarkRemoval',
+    component: () => import('../views/WatermarkRemoval.vue'),
+  },
 ]
 
 export default createRouter({

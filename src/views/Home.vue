@@ -3,12 +3,22 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plane, PenTool, Globe, Lightbulb, ArrowRight, Zap, Shield, Sparkles, Clock,
-  ChevronRight, Star, Users, TrendingUp, Wand2
+  ChevronRight, Star, Users, TrendingUp, Wand2, Eraser
 } from 'lucide-vue-next'
 
 const router = useRouter()
 
 const tools = [
+  {
+    id: 'watermark-removal',
+    path: '/watermark-removal',
+    icon: Eraser,
+    name: '图片去水印',
+    desc: '智能识别并去除各类复杂水印，一键还原清晰图片',
+    gradient: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)',
+    shadowColor: 'rgba(16, 185, 129, 0.4)',
+    features: ['复杂水印', 'Logo去除', '智能修复'],
+  },
   {
     id: 'ai-studio',
     path: '/ai-studio',
