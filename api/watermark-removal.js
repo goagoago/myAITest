@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '请提供图片' })
     }
 
-    const steps = Math.min(Math.max(parseInt(num_inference_steps) || 50, 20), 100)
+    const steps = Math.min(Math.max(parseInt(num_inference_steps) || 50, 20), 50)
     const guidance = Math.min(Math.max(parseFloat(guidance_scale) || 7.5, 1), 20)
 
     const response = await fetch('https://api.siliconflow.cn/v1/images/generations', {
