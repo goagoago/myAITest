@@ -25,11 +25,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt, image } = req.body
+    const { prompt, image, num_inference_steps, guidance_scale } = req.body
 
     if (!image) {
       return res.status(400).json({ error: '请提供图片' })
     }
+
+    const steps = Math.min(Math.max(parseInt(num_inference_steps) || 50, 20), 100)
+    const guidance = Math.min(Math.max(parseFloat(guidance_scale) || 7.5, 1), 20)
 
     const response = await fetch('https://api.siliconflow.cn/v1/images/generations', {
       method: 'POST',
@@ -41,8 +44,8 @@ export default async function handler(req, res) {
         model: 'Qwen/Qwen-Image-Edit',
         prompt: prompt || 'Remove all watermarks, logos, text overlays, and semi-transparent marks from this image.',
         image,
-        num_inference_steps: 50,
-        guidance_scale: 7.5,
+        num_inference_steps: steps,
+        guidance_scale: guidance,
       }),
     })
 

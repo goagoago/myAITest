@@ -3,71 +3,126 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plane, PenTool, Globe, Lightbulb, ArrowRight, Zap, Shield, Sparkles, Clock,
-  ChevronRight, Star, Users, TrendingUp, Wand2, Eraser
+  ChevronRight, Star, Users, TrendingUp, Wand2, Eraser, FileText, ImageDown, MonitorPlay,
+  Image, Wrench, Bot
 } from 'lucide-vue-next'
 
 const router = useRouter()
 
-const tools = [
+const toolCategories = [
   {
-    id: 'watermark-removal',
-    path: '/watermark-removal',
-    icon: Eraser,
-    name: '图片去水印',
-    desc: '智能识别并去除各类复杂水印，一键还原清晰图片',
-    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-    shadowColor: 'rgba(16, 185, 129, 0.35)',
-    features: ['复杂水印', 'Logo去除', '智能修复'],
+    id: 'image',
+    label: '图片工具',
+    icon: Image,
+    desc: '图片处理与优化',
+    tools: [
+      {
+        id: 'watermark-removal',
+        path: '/watermark-removal',
+        icon: Eraser,
+        name: '图片去水印',
+        desc: '智能识别并去除各类复杂水印，一键还原清晰图片',
+        gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        shadowColor: 'rgba(16, 185, 129, 0.35)',
+        features: ['复杂水印', 'Logo去除', '智能修复'],
+      },
+      {
+        id: 'image-compress',
+        path: '/image-compress',
+        icon: ImageDown,
+        name: '图片压缩',
+        desc: '多种压缩方式可选，智能压缩、质量调节、尺寸缩放、目标大小',
+        gradient: 'linear-gradient(135deg, #22c55e 0%, #06b6d4 100%)',
+        shadowColor: 'rgba(34, 197, 94, 0.35)',
+        features: ['智能压缩', '格式转换', '目标大小'],
+      },
+    ],
   },
   {
-    id: 'ai-studio',
-    path: '/ai-studio',
-    icon: Wand2,
-    name: 'AI 创作',
-    desc: 'AI图片、视频与搞笑视频生成，输入文字或上传图片即可创作',
-    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-    shadowColor: 'rgba(245, 158, 11, 0.35)',
-    features: ['图片生成', '视频生成', '搞笑视频'],
+    id: 'utility',
+    label: '实用工具',
+    icon: Wrench,
+    desc: '文档与媒体处理',
+    tools: [
+      {
+        id: 'doc-convert',
+        path: '/doc-convert',
+        icon: FileText,
+        name: '文档转换',
+        desc: 'PDF 与 Word 格式互转，纯浏览器端处理，安全快速',
+        gradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+        shadowColor: 'rgba(59, 130, 246, 0.35)',
+        features: ['PDF转Word', 'Word转PDF', '本地处理'],
+      },
+      {
+        id: 'screen-record',
+        path: '/screen-record',
+        icon: MonitorPlay,
+        name: '屏幕录制',
+        desc: '浏览器端录屏，支持系统声音和麦克风，无需安装插件',
+        gradient: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
+        shadowColor: 'rgba(239, 68, 68, 0.35)',
+        features: ['屏幕录制', '音频录制', '暂停/继续'],
+      },
+    ],
   },
   {
-    id: 'travel',
-    path: '/travel',
-    icon: Plane,
-    name: '旅行规划',
-    desc: '智能生成个性化旅行行程方案，让每一次出行都完美',
-    gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-    shadowColor: 'rgba(239, 68, 68, 0.35)',
-    features: ['行程规划', '预算估算', '景点推荐'],
-  },
-  {
-    id: 'writer',
-    path: '/writer',
-    icon: PenTool,
-    name: '写作助手',
-    desc: '文章润色、续写、风格改写，让你的文字更有力量',
-    gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-    shadowColor: 'rgba(249, 115, 22, 0.35)',
-    features: ['智能润色', '风格转换', '内容续写'],
-  },
-  {
-    id: 'translator',
-    path: '/translator',
-    icon: Globe,
-    name: '翻译专家',
-    desc: '多语言智能翻译与本地化，打破语言的边界',
-    gradient: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
-    shadowColor: 'rgba(20, 184, 166, 0.35)',
-    features: ['多语言支持', '语境理解', '专业术语'],
-  },
-  {
-    id: 'mind',
-    path: '/mind',
-    icon: Lightbulb,
-    name: '头脑风暴',
-    desc: '创意激发与思维拓展工具，让灵感源源不断',
-    gradient: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
-    shadowColor: 'rgba(234, 179, 8, 0.35)',
-    features: ['创意发散', 'SWOT分析', '思维导图'],
+    id: 'ai',
+    label: 'AI 助手',
+    icon: Bot,
+    desc: '智能AI创作与辅助',
+    tools: [
+      {
+        id: 'ai-studio',
+        path: '/ai-studio',
+        icon: Wand2,
+        name: 'AI 创作',
+        desc: 'AI图片、视频与搞笑视频生成，输入文字或上传图片即可创作',
+        gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+        shadowColor: 'rgba(245, 158, 11, 0.35)',
+        features: ['图片生成', '视频生成', '搞笑视频'],
+      },
+      {
+        id: 'travel',
+        path: '/travel',
+        icon: Plane,
+        name: '旅行规划',
+        desc: '智能生成个性化旅行行程方案，让每一次出行都完美',
+        gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+        shadowColor: 'rgba(239, 68, 68, 0.35)',
+        features: ['行程规划', '预算估算', '景点推荐'],
+      },
+      {
+        id: 'writer',
+        path: '/writer',
+        icon: PenTool,
+        name: '写作助手',
+        desc: '文章润色、续写、风格改写，让你的文字更有力量',
+        gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+        shadowColor: 'rgba(249, 115, 22, 0.35)',
+        features: ['智能润色', '风格转换', '内容续写'],
+      },
+      {
+        id: 'translator',
+        path: '/translator',
+        icon: Globe,
+        name: '翻译专家',
+        desc: '多语言智能翻译与本地化，打破语言的边界',
+        gradient: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+        shadowColor: 'rgba(20, 184, 166, 0.35)',
+        features: ['多语言支持', '语境理解', '专业术语'],
+      },
+      {
+        id: 'mind',
+        path: '/mind',
+        icon: Lightbulb,
+        name: '头脑风暴',
+        desc: '创意激发与思维拓展工具，让灵感源源不断',
+        gradient: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
+        shadowColor: 'rgba(234, 179, 8, 0.35)',
+        features: ['创意发散', 'SWOT分析', '思维导图'],
+      },
+    ],
   },
 ]
 
@@ -135,45 +190,57 @@ const stats = [
 
     </section>
 
-    <!-- 工具卡片 -->
+    <!-- 工具卡片（按分类） -->
     <section class="tools">
       <div class="section-header">
         <span class="section-tag">智能工具</span>
         <h2 class="section-title">选择你需要的 AI 能力</h2>
-        <p class="section-desc">四大核心功能，满足你的各种需求</p>
+        <p class="section-desc">三大分类，九款工具，满足你的各种需求</p>
       </div>
 
-      <div class="tools__grid">
-        <button
-          v-for="(tool, index) in tools"
-          :key="tool.id"
-          class="tool-card"
-          :style="{ '--index': index, '--gradient': tool.gradient, '--shadow-color': tool.shadowColor }"
-          @click="router.push(tool.path)"
-        >
-          <!-- 背景装饰 -->
-          <div class="tool-card__bg"></div>
-
-          <!-- 内容 -->
-          <div class="tool-card__content">
-            <div class="tool-card__icon">
-              <component :is="tool.icon" :size="28" />
-            </div>
-
-            <h3 class="tool-card__name">{{ tool.name }}</h3>
-            <p class="tool-card__desc">{{ tool.desc }}</p>
-
-            <!-- 功能标签 -->
-            <div class="tool-card__tags">
-              <span v-for="feat in tool.features" :key="feat" class="tag">{{ feat }}</span>
-            </div>
-
-            <!-- 箭头 -->
-            <div class="tool-card__arrow">
-              <ChevronRight :size="20" />
-            </div>
+      <div v-for="(category, catIdx) in toolCategories" :key="category.id" class="tools__category">
+        <div class="category-header" :style="{ '--cat-index': catIdx }">
+          <div class="category-header__icon">
+            <component :is="category.icon" :size="20" />
           </div>
-        </button>
+          <div class="category-header__text">
+            <h3 class="category-header__title">{{ category.label }}</h3>
+            <p class="category-header__desc">{{ category.desc }}</p>
+          </div>
+        </div>
+
+        <div class="tools__grid" :class="{ 'tools__grid--wide': category.tools.length > 2 }">
+          <button
+            v-for="(tool, index) in category.tools"
+            :key="tool.id"
+            class="tool-card"
+            :style="{ '--index': catIdx * 3 + index, '--gradient': tool.gradient, '--shadow-color': tool.shadowColor }"
+            @click="router.push(tool.path)"
+          >
+            <!-- 背景装饰 -->
+            <div class="tool-card__bg"></div>
+
+            <!-- 内容 -->
+            <div class="tool-card__content">
+              <div class="tool-card__icon">
+                <component :is="tool.icon" :size="28" />
+              </div>
+
+              <h3 class="tool-card__name">{{ tool.name }}</h3>
+              <p class="tool-card__desc">{{ tool.desc }}</p>
+
+              <!-- 功能标签 -->
+              <div class="tool-card__tags">
+                <span v-for="feat in tool.features" :key="feat" class="tag">{{ feat }}</span>
+              </div>
+
+              <!-- 箭头 -->
+              <div class="tool-card__arrow">
+                <ChevronRight :size="20" />
+              </div>
+            </div>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -451,10 +518,60 @@ const stats = [
   padding: 60px 0 100px;
 }
 
+.tools__category {
+  margin-bottom: 48px;
+}
+
+.tools__category:last-child {
+  margin-bottom: 0;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  animation: fadeInUp 0.6s ease calc(var(--cat-index) * 0.15s + 0.1s) backwards;
+}
+
+.category-header__icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 12px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.category-header__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.category-header__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.category-header__desc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
 .tools__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 28px;
+  gap: 24px;
+}
+
+.tools__grid--wide {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .tool-card {
@@ -691,8 +808,9 @@ const stats = [
    ═══════════════════════════════════════════════════════════ */
 
 @media (max-width: 1000px) {
-  .tools__grid {
-    grid-template-columns: 1fr;
+  .tools__grid,
+  .tools__grid--wide {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .features__grid {
@@ -741,6 +859,11 @@ const stats = [
 
   .tool-card {
     padding: 28px;
+  }
+
+  .tools__grid,
+  .tools__grid--wide {
+    grid-template-columns: 1fr;
   }
 
   .cta__title {

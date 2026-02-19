@@ -36,6 +36,21 @@ const routes = [
     name: 'WatermarkRemoval',
     component: () => import('../views/WatermarkRemoval.vue'),
   },
+  {
+    path: '/doc-convert',
+    name: 'DocConvert',
+    component: () => import('../views/DocConvert.vue'),
+  },
+  {
+    path: '/image-compress',
+    name: 'ImageCompress',
+    component: () => import('../views/ImageCompress.vue'),
+  },
+  {
+    path: '/screen-record',
+    name: 'ScreenRecord',
+    component: () => import('../views/ScreenRecord.vue'),
+  },
 ]
 
 export default createRouter({

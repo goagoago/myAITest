@@ -4,7 +4,7 @@ import { useWatermarkRemoval } from '../composables/useWatermarkRemoval'
 import {
   Eraser, Sparkles, Upload, Download, RefreshCw, Loader2,
   Image, AlertCircle, Clock, X, ZoomIn, ArrowLeftRight, Wand2,
-  Paintbrush, Trash2, Maximize
+  Paintbrush, Trash2, Maximize, Zap, SlidersHorizontal, RotateCw
 } from 'lucide-vue-next'
 
 const {
@@ -35,15 +35,26 @@ const maskCanvasRef = ref(null)
 const previewImgRef = ref(null)
 const maskContainerRef = ref(null)
 
+// 全图模式参数
+const processQuality = ref('standard') // 'fast' | 'standard' | 'high'
+const twoPass = ref(false)
+
+const qualityOptions = [
+  { id: 'fast', label: '快速', desc: '速度优先，适合轻度水印', icon: Zap },
+  { id: 'standard', label: '标准', desc: '质量与速度平衡', icon: SlidersHorizontal },
+  { id: 'high', label: '精细', desc: '分块处理，效果最佳（较慢）', icon: Sparkles },
+]
+
 // 历史记录
 const history = ref([])
 
 // 预设提示词
 const presetPrompts = [
-  { label: '通用水印', prompt: 'Remove all watermarks, logos, text overlays, and semi-transparent marks from this image. Restore the background naturally. Keep the original image content, colors, and details intact.' },
-  { label: '文字水印', prompt: 'Remove all text watermarks and text overlays from this image. Restore the areas behind the text naturally while preserving the original image quality.' },
-  { label: 'Logo水印', prompt: 'Remove all logo watermarks and brand marks from this image. Fill in the removed areas with natural background content that matches the surrounding pixels.' },
-  { label: '半透明水印', prompt: 'Remove all semi-transparent watermarks and overlay patterns from this image. Restore the original colors and details beneath the watermarks.' },
+  { label: '通用水印', prompt: 'Completely remove all watermarks, logos, text overlays, and semi-transparent marks from this image. Restore the background naturally with correct colors, textures, and lighting. Preserve the original image content, fine details, and sharpness.' },
+  { label: '文字水印', prompt: 'Remove all text watermarks, text overlays, and written marks from this image. Restore the areas behind the text naturally while preserving the original image quality, colors, and textures.' },
+  { label: 'Logo水印', prompt: 'Remove all logo watermarks, brand marks, and graphic overlays from this image. Fill in the removed areas with natural background content that seamlessly matches the surrounding pixels in color, texture, and lighting.' },
+  { label: '半透明水印', prompt: 'Remove all semi-transparent watermarks, repeated pattern watermarks, and tiled overlay marks from this image. Restore the original colors, contrast, and details beneath the watermarks completely.' },
+  { label: '密集平铺水印', prompt: 'Remove all tiled, repeated, and grid-pattern watermarks covering the entire image. These watermarks appear as repeated text or logos across the whole image. Remove every instance and restore the clean original image beneath.' },
 ]
 
 // 处理文件选择
@@ -206,8 +217,11 @@ const handleRemoveWatermark = async () => {
         prompt
       )
     } else {
-      // 全图模式
-      url = await removeWatermark(originalFile.value, prompt)
+      // 全图模式（带高级选项）
+      url = await removeWatermark(originalFile.value, prompt, {
+        quality: processQuality.value,
+        twoPass: twoPass.value,
+      })
     }
 
     history.value.unshift({
@@ -434,6 +448,42 @@ onBeforeUnmount(() => {
               class="upload-input"
               @change="handleFileSelect"
             />
+          </div>
+
+          <!-- 全图模式设置 -->
+          <div v-if="!maskMode && originalImageUrl" class="fullimg-settings">
+            <div class="fullimg-section">
+              <span class="fullimg-label">处理质量</span>
+              <div class="quality-grid">
+                <button
+                  v-for="opt in qualityOptions"
+                  :key="opt.id"
+                  :class="['quality-btn', { 'quality-btn--active': processQuality === opt.id }]"
+                  @click="processQuality = opt.id"
+                  :disabled="loading"
+                >
+                  <component :is="opt.icon" :size="16" class="quality-btn__icon" />
+                  <span class="quality-btn__label">{{ opt.label }}</span>
+                  <span class="quality-btn__desc">{{ opt.desc }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="fullimg-section">
+              <label class="twopass-toggle" :class="{ disabled: loading }">
+                <input type="checkbox" v-model="twoPass" :disabled="loading" />
+                <span class="twopass-switch"></span>
+                <span class="twopass-text">
+                  <RotateCw :size="14" />
+                  <span>二次精修处理</span>
+                </span>
+                <span class="twopass-desc">对检测到的水印区域再处理一次，清除残留痕迹</span>
+              </label>
+            </div>
+
+            <div class="fullimg-info">
+              <span>全图模式会自动检测水印位置，只处理水印区域，不影响其他内容</span>
+            </div>
           </div>
 
           <!-- 高级设置 -->
@@ -983,6 +1033,153 @@ onBeforeUnmount(() => {
 .reselect-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   全图模式设置
+   ═══════════════════════════════════════════════════════════ */
+
+.fullimg-settings {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+.fullimg-section {
+  margin-bottom: 16px;
+}
+
+.fullimg-section:last-child {
+  margin-bottom: 0;
+}
+
+.fullimg-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.quality-grid {
+  display: flex;
+  gap: 6px;
+}
+
+.quality-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.quality-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.quality-btn--active {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.quality-btn--active .quality-btn__icon { color: #34d399; }
+
+.quality-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.quality-btn__icon { color: var(--text-muted); }
+
+.quality-btn__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.quality-btn__desc {
+  font-size: 0.5625rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.fullimg-info {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 10px;
+  font-size: 0.75rem;
+  color: rgba(52, 211, 153, 0.85);
+  line-height: 1.5;
+}
+
+.twopass-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.twopass-toggle.disabled { opacity: 0.5; cursor: not-allowed; }
+
+.twopass-toggle input { display: none; }
+
+.twopass-switch {
+  width: 36px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.twopass-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.twopass-toggle input:checked ~ .twopass-switch {
+  background: #34d399;
+}
+
+.twopass-toggle input:checked ~ .twopass-switch::after {
+  transform: translateX(16px);
+}
+
+.twopass-text {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.twopass-text svg { color: var(--text-muted); }
+
+.twopass-desc {
+  width: 100%;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  padding-left: 44px;
 }
 
 /* ═══════════════════════════════════════════════════════════

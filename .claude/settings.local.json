@@ -22,7 +22,10 @@
       "WebFetch(domain:www.showapi.com)",
       "WebFetch(domain:docs.bigmodel.cn)",
       "Bash(npx vite build)",
-      "WebFetch(domain:www.siliconflow.com)"
+      "WebFetch(domain:www.siliconflow.com)",
+      "Bash(pnpm add pdfjs-dist docx file-saver mammoth html2pdf.js)",
+      "Bash(pnpm build)",
+      "Bash(ls \"/Users/simonyu/Desktop/我的项目/myAITest/node_modules/.pnpm/\"*pdfjs*\"/node_modules/pdfjs-dist/build/\")"
     ]
   }
 }
