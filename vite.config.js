@@ -181,6 +181,9 @@ function videoApiMiddleware() {
 
 export default defineConfig({
   plugins: [vue(), watermarkRemovalMiddleware(), videoApiMiddleware()],
+  optimizeDeps: {
+    exclude: ['@imgly/background-removal'],
+  },
   server: {
     proxy: {
       // 智谱聊天API代理

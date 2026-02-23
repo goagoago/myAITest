@@ -3,7 +3,8 @@ import { ref, computed } from 'vue'
 import { useDocConvert } from '../composables/useDocConvert'
 import {
   FileText, Upload, Loader2, AlertCircle, RefreshCw,
-  ArrowRightLeft, FileUp, Download, CheckCircle2, X
+  ArrowRightLeft, FileUp, Download, CheckCircle2, X,
+  FileCode, FileImage, Code2, ImagePlus, Images
 } from 'lucide-vue-next'
 
 const {
@@ -13,22 +14,95 @@ const {
   convertedFileName,
   convertPdfToWord,
   convertWordToPdf,
+  convertMarkdownToPdf,
+  convertMarkdownToWord,
+  convertHtmlToPdf,
+  convertImagesToPdf,
+  convertPdfToImages,
   reset
 } = useDocConvert()
 
-// 当前模式: 'pdf2word' | 'word2pdf'
+// 转换模式配置
+const modes = [
+  {
+    id: 'pdf2word',
+    label: 'PDF → Word',
+    icon: FileText,
+    accept: '.pdf',
+    acceptLabel: 'PDF',
+    desc: '提取文本生成 Word',
+    color: '#3b82f6',
+    multiple: false,
+  },
+  {
+    id: 'word2pdf',
+    label: 'Word → PDF',
+    icon: ArrowRightLeft,
+    accept: '.doc,.docx',
+    acceptLabel: 'Word',
+    desc: '保留排版导出 PDF',
+    color: '#8b5cf6',
+    multiple: false,
+  },
+  {
+    id: 'md2pdf',
+    label: 'Markdown → PDF',
+    icon: FileCode,
+    accept: '.md,.markdown',
+    acceptLabel: 'Markdown',
+    desc: '渲染格式生成 PDF',
+    color: '#10b981',
+    multiple: false,
+  },
+  {
+    id: 'md2word',
+    label: 'Markdown → Word',
+    icon: Code2,
+    accept: '.md,.markdown',
+    acceptLabel: 'Markdown',
+    desc: '解析标记生成 Word',
+    color: '#14b8a6',
+    multiple: false,
+  },
+  {
+    id: 'html2pdf',
+    label: 'HTML → PDF',
+    icon: FileCode,
+    accept: '.html,.htm',
+    acceptLabel: 'HTML',
+    desc: '网页内容转为 PDF',
+    color: '#f97316',
+    multiple: false,
+  },
+  {
+    id: 'img2pdf',
+    label: '图片 → PDF',
+    icon: ImagePlus,
+    accept: 'image/png,image/jpeg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif',
+    acceptLabel: '图片',
+    desc: '多张图片合并为 PDF',
+    color: '#ec4899',
+    multiple: true,
+  },
+  {
+    id: 'pdf2img',
+    label: 'PDF → 图片',
+    icon: Images,
+    accept: '.pdf',
+    acceptLabel: 'PDF',
+    desc: '逐页导出为 PNG 图',
+    color: '#eab308',
+    multiple: false,
+  },
+]
+
 const mode = ref('pdf2word')
 const selectedFile = ref(null)
+const selectedFiles = ref([])
 const isDragging = ref(false)
 const converted = ref(false)
 
-const acceptType = computed(() =>
-  mode.value === 'pdf2word' ? '.pdf' : '.doc,.docx'
-)
-
-const acceptLabel = computed(() =>
-  mode.value === 'pdf2word' ? 'PDF' : 'Word'
-)
+const currentMode = computed(() => modes.find(m => m.id === mode.value))
 
 const switchMode = (newMode) => {
   if (loading.value) return
@@ -37,15 +111,25 @@ const switchMode = (newMode) => {
 }
 
 const handleFileSelect = (e) => {
-  const file = e.target.files?.[0]
-  if (file) processFile(file)
+  const files = e.target.files
+  if (!files || files.length === 0) return
+  if (currentMode.value.multiple) {
+    processFiles(Array.from(files))
+  } else {
+    processFile(files[0])
+  }
 }
 
 const handleDrop = (e) => {
   e.preventDefault()
   isDragging.value = false
-  const file = e.dataTransfer?.files?.[0]
-  if (file) processFile(file)
+  const files = e.dataTransfer?.files
+  if (!files || files.length === 0) return
+  if (currentMode.value.multiple) {
+    processFiles(Array.from(files))
+  } else {
+    processFile(files[0])
+  }
 }
 
 const handleDragOver = (e) => {
@@ -58,36 +142,74 @@ const handleDragLeave = () => {
 }
 
 const processFile = (file) => {
-  if (mode.value === 'pdf2word') {
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-      return
-    }
-  } else {
-    if (!file.name.toLowerCase().match(/\.docx?$/)) {
-      return
-    }
-  }
-  if (file.size > 50 * 1024 * 1024) return
+  if (file.size > 100 * 1024 * 1024) return
   selectedFile.value = file
+  selectedFiles.value = [file]
+  converted.value = false
+  reset()
+}
+
+const processFiles = (files) => {
+  if (files.some(f => f.size > 100 * 1024 * 1024)) return
+  selectedFiles.value = files
+  selectedFile.value = files[0]
   converted.value = false
   reset()
 }
 
 const fileSize = computed(() => {
+  if (currentMode.value.multiple && selectedFiles.value.length > 0) {
+    const total = selectedFiles.value.reduce((sum, f) => sum + f.size, 0)
+    return formatSize(total)
+  }
   if (!selectedFile.value) return ''
-  const size = selectedFile.value.size
+  return formatSize(selectedFile.value.size)
+})
+
+const formatSize = (size) => {
   if (size < 1024) return `${size} B`
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const fileDisplayName = computed(() => {
+  if (currentMode.value.multiple && selectedFiles.value.length > 1) {
+    return `${selectedFiles.value.length} 个文件`
+  }
+  return selectedFile.value?.name || ''
 })
 
 const handleConvert = async () => {
-  if (!selectedFile.value || loading.value) return
+  if (loading.value) return
+  if (currentMode.value.multiple) {
+    if (selectedFiles.value.length === 0) return
+  } else {
+    if (!selectedFile.value) return
+  }
+
   try {
-    if (mode.value === 'pdf2word') {
-      await convertPdfToWord(selectedFile.value)
-    } else {
-      await convertWordToPdf(selectedFile.value)
+    switch (mode.value) {
+      case 'pdf2word':
+        await convertPdfToWord(selectedFile.value)
+        break
+      case 'word2pdf':
+        await convertWordToPdf(selectedFile.value)
+        break
+      case 'md2pdf':
+        await convertMarkdownToPdf(selectedFile.value)
+        break
+      case 'md2word':
+        await convertMarkdownToWord(selectedFile.value)
+        break
+      case 'html2pdf':
+        await convertHtmlToPdf(selectedFile.value)
+        break
+      case 'img2pdf':
+        await convertImagesToPdf(selectedFiles.value)
+        break
+      case 'pdf2img':
+        await convertPdfToImages(selectedFile.value)
+        break
     }
     converted.value = true
   } catch (e) {
@@ -95,9 +217,23 @@ const handleConvert = async () => {
   }
 }
 
+const convertBtnLabel = computed(() => {
+  const map = {
+    pdf2word: '转换为 Word',
+    word2pdf: '转换为 PDF',
+    md2pdf: '转换为 PDF',
+    md2word: '转换为 Word',
+    html2pdf: '转换为 PDF',
+    img2pdf: '合并为 PDF',
+    pdf2img: '导出为图片',
+  }
+  return map[mode.value] || '开始转换'
+})
+
 const resetAll = () => {
   reset()
   selectedFile.value = null
+  selectedFiles.value = []
   converted.value = false
 }
 </script>
@@ -112,32 +248,30 @@ const resetAll = () => {
           <span>文档转换</span>
         </div>
         <h1 class="header__title">
-          <span>PDF / Word </span>
-          <span class="gradient-text">格式互转</span>
+          <span>全能文档 </span>
+          <span class="gradient-text">格式转换</span>
         </h1>
         <p class="header__desc">
-          纯浏览器端转换，无需上传服务器，安全快速
+          支持 7 种转换模式，纯浏览器端处理，无需上传服务器
         </p>
       </div>
     </header>
 
-    <!-- 模式切换 -->
-    <div class="mode-tabs">
+    <!-- 模式选择卡片 -->
+    <div class="mode-grid">
       <button
-        :class="['mode-tab', { 'mode-tab--active': mode === 'pdf2word' }]"
-        @click="switchMode('pdf2word')"
+        v-for="m in modes"
+        :key="m.id"
+        :class="['mode-card', { 'mode-card--active': mode === m.id }]"
+        @click="switchMode(m.id)"
         :disabled="loading"
+        :style="{ '--mode-color': m.color }"
       >
-        <FileText :size="18" />
-        <span>PDF → Word</span>
-      </button>
-      <button
-        :class="['mode-tab', { 'mode-tab--active': mode === 'word2pdf' }]"
-        @click="switchMode('word2pdf')"
-        :disabled="loading"
-      >
-        <ArrowRightLeft :size="18" />
-        <span>Word → PDF</span>
+        <div class="mode-card__icon">
+          <component :is="m.icon" :size="20" />
+        </div>
+        <span class="mode-card__label">{{ m.label }}</span>
+        <span class="mode-card__desc">{{ m.desc }}</span>
       </button>
     </div>
 
@@ -145,7 +279,7 @@ const resetAll = () => {
     <div class="main-panel">
       <!-- 上传区域 -->
       <div
-        v-if="!selectedFile"
+        v-if="selectedFiles.length === 0"
         class="upload-zone"
         :class="{ 'upload-zone--drag': isDragging }"
         @drop="handleDrop"
@@ -156,25 +290,28 @@ const resetAll = () => {
         <input
           ref="fileInput"
           type="file"
-          :accept="acceptType"
+          :accept="currentMode.accept"
+          :multiple="currentMode.multiple"
           class="upload-input"
           @change="handleFileSelect"
         />
-        <div class="upload-icon">
+        <div class="upload-icon" :style="{ background: `${currentMode.color}15`, color: currentMode.color }">
           <Upload :size="40" />
         </div>
-        <p class="upload-text">点击上传或拖拽 {{ acceptLabel }} 文件到此处</p>
-        <p class="upload-hint">最大 50MB</p>
+        <p class="upload-text">
+          {{ currentMode.multiple ? '点击上传或拖拽多张图片到此处' : `点击上传或拖拽 ${currentMode.acceptLabel} 文件到此处` }}
+        </p>
+        <p class="upload-hint">最大 100MB{{ currentMode.multiple ? '，支持多选' : '' }}</p>
       </div>
 
       <!-- 已选文件 -->
       <div v-else class="file-info">
         <div class="file-card">
-          <div class="file-card__icon">
+          <div class="file-card__icon" :style="{ background: `${currentMode.color}20`, color: currentMode.color }">
             <FileUp :size="32" />
           </div>
           <div class="file-card__detail">
-            <p class="file-card__name">{{ selectedFile.name }}</p>
+            <p class="file-card__name">{{ fileDisplayName }}</p>
             <p class="file-card__size">{{ fileSize }}</p>
           </div>
           <button class="file-card__close" @click="resetAll" :disabled="loading">
@@ -182,21 +319,34 @@ const resetAll = () => {
           </button>
         </div>
 
+        <!-- 多文件列表 -->
+        <div v-if="currentMode.multiple && selectedFiles.length > 1" class="file-list">
+          <div v-for="(f, idx) in selectedFiles" :key="idx" class="file-list__item">
+            <FileImage :size="16" />
+            <span class="file-list__name">{{ f.name }}</span>
+            <span class="file-list__size">{{ formatSize(f.size) }}</span>
+          </div>
+        </div>
+
         <!-- 转换按钮 -->
         <button
           v-if="!converted"
           class="convert-btn"
           :disabled="loading"
+          :style="{ background: loading ? '' : `linear-gradient(135deg, ${currentMode.color} 0%, ${currentMode.color}cc 100%)` }"
           @click="handleConvert"
         >
           <Loader2 v-if="loading" :size="20" class="spin" />
           <ArrowRightLeft v-else :size="20" />
-          <span>{{ loading ? '转换中...' : (mode === 'pdf2word' ? '转换为 Word' : '转换为 PDF') }}</span>
+          <span>{{ loading ? '转换中...' : convertBtnLabel }}</span>
         </button>
 
         <!-- 进度条 -->
         <div v-if="loading" class="progress-bar">
-          <div class="progress-fill" :style="{ width: progress + '%' }"></div>
+          <div
+            class="progress-fill"
+            :style="{ width: progress + '%', background: `linear-gradient(90deg, ${currentMode.color}, ${currentMode.color}cc)` }"
+          ></div>
         </div>
 
         <!-- 转换成功 -->
@@ -238,6 +388,11 @@ const resetAll = () => {
         <p>基于浏览器端技术，秒级完成文档格式转换</p>
       </div>
       <div class="feature-item">
+        <div class="feature-icon">📄</div>
+        <h3>7 种模式</h3>
+        <p>PDF、Word、Markdown、HTML、图片多种格式互转</p>
+      </div>
+      <div class="feature-item">
         <div class="feature-icon">🆓</div>
         <h3>完全免费</h3>
         <p>无需注册、无次数限制、永久免费使用</p>
@@ -248,7 +403,7 @@ const resetAll = () => {
 
 <style scoped>
 .doc-convert {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 0 32px 80px;
 }
@@ -297,46 +452,71 @@ const resetAll = () => {
   color: var(--text-secondary);
 }
 
-/* 模式切换 */
-.mode-tabs {
-  display: flex;
-  gap: 8px;
-  padding: 6px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+/* 模式选择卡片网格 */
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
   margin-bottom: 32px;
 }
 
-.mode-tab {
-  flex: 1;
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 8px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.mode-card:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateY(-2px);
+}
+
+.mode-card--active {
+  border-color: var(--mode-color) !important;
+  background: color-mix(in srgb, var(--mode-color) 8%, transparent) !important;
+  box-shadow: 0 4px 20px -6px var(--mode-color);
+}
+
+.mode-card--active .mode-card__icon {
+  background: var(--mode-color);
+  color: white;
+}
+
+.mode-card__icon {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
   color: var(--text-secondary);
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
   transition: all 0.3s;
 }
 
-.mode-tab:hover:not(:disabled) {
+.mode-card__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
 }
 
-.mode-tab--active {
-  color: #60a5fa;
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
+.mode-card__desc {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.3;
 }
 
-.mode-tab:disabled {
+.mode-card:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -385,7 +565,6 @@ const resetAll = () => {
 
 .upload-zone:hover .upload-icon {
   transform: scale(1.05);
-  background: rgba(59, 130, 246, 0.15);
 }
 
 .upload-text {
@@ -419,9 +598,7 @@ const resetAll = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
   border-radius: 14px;
-  color: #60a5fa;
   flex-shrink: 0;
 }
 
@@ -469,6 +646,42 @@ const resetAll = () => {
 .file-card__close:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* 多文件列表 */
+.file-list {
+  max-height: 160px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding: 4px;
+}
+
+.file-list__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  transition: background 0.2s;
+}
+
+.file-list__item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.file-list__name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-list__size {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
 /* 转换按钮 */
@@ -579,12 +792,12 @@ const resetAll = () => {
 /* 功能说明 */
 .features-section {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
 }
 
 .feature-item {
-  padding: 28px 20px;
+  padding: 28px 16px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
@@ -627,6 +840,12 @@ const resetAll = () => {
 }
 
 /* 响应式 */
+@media (max-width: 800px) {
+  .mode-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 700px) {
   .doc-convert {
     padding: 0 20px 60px;
@@ -636,12 +855,31 @@ const resetAll = () => {
     font-size: 2rem;
   }
 
+  .mode-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .mode-card {
+    padding: 12px 6px;
+  }
+
+  .mode-card__desc {
+    display: none;
+  }
+
   .features-section {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .result-actions {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .features-section {
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Home, Plane, PenTool, Globe, Lightbulb, Sparkles, Zap, Eraser, FileText,
-  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X
+  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -20,6 +20,7 @@ const navGroups = [
     children: [
       { path: '/watermark-removal', label: '去水印', icon: Eraser, desc: '智能去除水印' },
       { path: '/image-compress', label: '图片压缩', icon: ImageDown, desc: '多模式压缩' },
+      { path: '/id-photo', label: '证件照', icon: Camera, desc: '证件照制作' },
     ],
   },
   {
@@ -27,7 +28,7 @@ const navGroups = [
     label: '实用工具',
     icon: Wrench,
     children: [
-      { path: '/doc-convert', label: '文档转换', icon: FileText, desc: 'PDF与Word互转' },
+      { path: '/doc-convert', label: '文档转换', icon: FileText, desc: '7种格式互转' },
       { path: '/screen-record', label: '屏幕录制', icon: MonitorPlay, desc: '浏览器端录屏' },
     ],
   },

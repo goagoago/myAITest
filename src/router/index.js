@@ -51,6 +51,11 @@ const routes = [
     name: 'ScreenRecord',
     component: () => import('../views/ScreenRecord.vue'),
   },
+  {
+    path: '/id-photo',
+    name: 'IdPhoto',
+    component: () => import('../views/IdPhoto.vue'),
+  },
 ]
 
 export default createRouter({

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import {
   Plane, PenTool, Globe, Lightbulb, ArrowRight, Zap, Shield, Sparkles, Clock,
   ChevronRight, Star, Users, TrendingUp, Wand2, Eraser, FileText, ImageDown, MonitorPlay,
-  Image, Wrench, Bot
+  Image, Wrench, Bot, Camera
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -36,6 +36,16 @@ const toolCategories = [
         shadowColor: 'rgba(34, 197, 94, 0.35)',
         features: ['智能压缩', '格式转换', '目标大小'],
       },
+      {
+        id: 'id-photo',
+        path: '/id-photo',
+        icon: Camera,
+        name: '证件照制作',
+        desc: '一寸二寸等标准尺寸，自定义像素，更换背景色，裁剪调整，排版打印',
+        gradient: 'linear-gradient(135deg, #14b8a6 0%, #10b981 100%)',
+        shadowColor: 'rgba(20, 184, 166, 0.35)',
+        features: ['标准尺寸', '换背景色', '排版打印'],
+      },
     ],
   },
   {
@@ -49,10 +59,10 @@ const toolCategories = [
         path: '/doc-convert',
         icon: FileText,
         name: '文档转换',
-        desc: 'PDF 与 Word 格式互转，纯浏览器端处理，安全快速',
+        desc: '支持 PDF、Word、Markdown、HTML、图片等 7 种格式互转，纯浏览器端处理',
         gradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
         shadowColor: 'rgba(59, 130, 246, 0.35)',
-        features: ['PDF转Word', 'Word转PDF', '本地处理'],
+        features: ['PDF互转', 'Markdown转换', '图片合并PDF'],
       },
       {
         id: 'screen-record',
@@ -195,7 +205,7 @@ const stats = [
       <div class="section-header">
         <span class="section-tag">智能工具</span>
         <h2 class="section-title">选择你需要的 AI 能力</h2>
-        <p class="section-desc">三大分类，九款工具，满足你的各种需求</p>
+        <p class="section-desc">三大分类，多款工具，满足你的各种需求</p>
       </div>
 
       <div v-for="(category, catIdx) in toolCategories" :key="category.id" class="tools__category">
