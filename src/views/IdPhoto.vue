@@ -403,7 +403,7 @@ onUnmounted(() => {
     </div>
 
     <!-- 功能说明 -->
-    <div class="features-section">
+    <!-- <div class="features-section">
       <div class="feature-item">
         <div class="feature-icon">🤖</div>
         <h3>AI 抠图</h3>
@@ -424,7 +424,7 @@ onUnmounted(() => {
         <h3>隐私安全</h3>
         <p>AI 模型在浏览器本地运行，照片不会上传服务器</p>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 
