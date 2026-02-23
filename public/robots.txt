@@ -1,0 +1,29 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://www.2074912.xyz/sitemap.xml
+
+# Google
+User-agent: Googlebot
+Allow: /
+
+# Baidu
+User-agent: Baiduspider
+Allow: /
+
+# Bing
+User-agent: Bingbot
+Allow: /
+
+# Sogou
+User-agent: Sogou web spider
+Allow: /
+
+# 360
+User-agent: 360Spider
+Allow: /
+
+# Yandex
+User-agent: YandexBot
+Allow: /

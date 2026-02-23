@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-const SILICONFLOW_API_KEY = process.env.SILICONFLOW_API_KEY || 'sk-aujkenkkrywvltydrzdvpbyfdflnneypmgetxfveicjcqxbw'
-const ZHIPU_API_KEY = process.env.ZHIPU_API_KEY || '94c09f3d19b582cafaa8700d63524cbc.4vAoySH9Q0l7xCQW'
+// API Keys 只从环境变量读取，不要硬编码！
+// 本地开发时在项目根目录创建 .env.local 文件写入密钥
+const SILICONFLOW_API_KEY = process.env.SILICONFLOW_API_KEY || ''
+const ZHIPU_API_KEY = process.env.ZHIPU_API_KEY || ''
 const ZHIPU_API_BASE = 'https://open.bigmodel.cn/api/paas/v4'
 
 // 图片去水印API中间件

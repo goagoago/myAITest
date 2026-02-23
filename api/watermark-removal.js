@@ -5,11 +5,21 @@ export const config = {
   maxDuration: 60,
 }
 
-export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*')
+const ALLOWED_ORIGINS = [
+  'https://www.2074912.xyz',
+  'https://2074912.xyz',
+]
+
+function setCorsHeaders(req, res) {
+  const origin = req.headers.origin || ''
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  res.setHeader('Access-Control-Allow-Origin', allowed)
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+}
+
+export default async function handler(req, res) {
+  setCorsHeaders(req, res)
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end()
@@ -27,8 +37,13 @@ export default async function handler(req, res) {
   try {
     const { prompt, image, num_inference_steps, guidance_scale } = req.body
 
-    if (!image) {
+    if (!image || typeof image !== 'string') {
       return res.status(400).json({ error: '请提供图片' })
+    }
+
+    // 限制 base64 图片大小（约 10MB）
+    if (image.length > 14_000_000) {
+      return res.status(400).json({ error: '图片过大，请上传小于 10MB 的图片' })
     }
 
     const steps = Math.min(Math.max(parseInt(num_inference_steps) || 50, 20), 50)
@@ -42,7 +57,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'Qwen/Qwen-Image-Edit',
-        prompt: prompt || 'Remove all watermarks, logos, text overlays, and semi-transparent marks from this image.',
+        prompt: typeof prompt === 'string' ? prompt.slice(0, 2000) : 'Remove all watermarks from this image.',
         image,
         num_inference_steps: steps,
         guidance_scale: guidance,
@@ -52,11 +67,10 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errorText = await response.text()
       console.error('[Watermark Removal API Error]', response.status, errorText)
-      return res.status(response.status).json({ error: `API错误: ${response.status}`, detail: errorText })
+      return res.status(response.status).json({ error: `API错误: ${response.status}` })
     }
 
     const result = await response.json()
-    console.log('[Watermark Removal API Response]', JSON.stringify(result).slice(0, 200))
 
     // 将返回的图片URL下载转为base64，避免前端跨域问题
     const imageUrl = result.images?.[0]?.url
@@ -71,13 +85,12 @@ export default async function handler(req, res) {
         }
       } catch (imgErr) {
         console.error('[Watermark Image Download Error]', imgErr)
-        // 下载失败则保留原始URL
       }
     }
 
     return res.status(200).json(result)
   } catch (error) {
     console.error('[Watermark Removal Error]', error)
-    return res.status(500).json({ error: error.message })
+    return res.status(500).json({ error: '服务器内部错误' })
   }
 }

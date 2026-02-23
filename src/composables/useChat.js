@@ -1,17 +1,9 @@
 import { ref } from 'vue'
 
-// 智谱API配置
-const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
-
-// 从环境变量获取 API Key
-const getApiKey = () => {
-  const key = import.meta.env.VITE_ZHIPU_API_KEY
-  if (!key) {
-    throw new Error('请配置 VITE_ZHIPU_API_KEY 环境变量')
-  }
-  return key
-}
-
+/**
+ * 聊天 composable
+ * 通过服务端代理 /api/chat 调用 AI 接口，API Key 不暴露到前端
+ */
 export function useChat() {
   const loading = ref(false)
   const error = ref(null)
@@ -26,26 +18,20 @@ export function useChat() {
     streamingText.value = ''
 
     try {
-      const requestBody = {
-        model: 'glm-4-flash',
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
-        temperature: 0.7,
-        max_tokens: 8192,
-        stream: true,
-      }
-
-      const response = await fetch(ZHIPU_API_URL, {
+      const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getApiKey()}`,
-        },
-        body: JSON.stringify(requestBody),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          temperature: 0.7,
+          max_tokens: 8192,
+          stream: true,
+        }),
       })
 
       if (!response.ok) {
-        const errData = await response.json()
-        throw new Error(errData.error?.message || errData.msg || `HTTP ${response.status}`)
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error?.message || errData.error || `HTTP ${response.status}`)
       }
 
       const reader = response.body.getReader()
@@ -94,25 +80,19 @@ export function useChat() {
     result.value = ''
 
     try {
-      const requestBody = {
-        model: 'glm-4-flash',
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
-        temperature: 0.7,
-        max_tokens: 8192,
-      }
-
-      const response = await fetch(ZHIPU_API_URL, {
+      const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getApiKey()}`,
-        },
-        body: JSON.stringify(requestBody),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          temperature: 0.7,
+          max_tokens: 8192,
+        }),
       })
 
       if (!response.ok) {
-        const errData = await response.json()
-        throw new Error(errData.error?.message || errData.msg || `HTTP ${response.status}`)
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error?.message || errData.error || `HTTP ${response.status}`)
       }
 
       const data = await response.json()
