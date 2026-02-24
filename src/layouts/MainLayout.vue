@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Home, Plane, PenTool, Globe, Lightbulb, Sparkles, Zap, Eraser, FileText,
-  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera
+  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera, QrCode, ScanLine, Scissors
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -21,6 +21,7 @@ const navGroups = [
       { path: '/watermark-removal', label: '去水印', icon: Eraser, desc: '智能去除水印' },
       { path: '/image-compress', label: '图片压缩', icon: ImageDown, desc: '多模式压缩' },
       { path: '/id-photo', label: '证件照', icon: Camera, desc: '证件照制作' },
+      { path: '/remove-bg', label: 'AI抠图', icon: Scissors, desc: '智能去除背景' },
     ],
   },
   {
@@ -30,6 +31,8 @@ const navGroups = [
     children: [
       { path: '/doc-convert', label: '文档转换', icon: FileText, desc: '7种格式互转' },
       { path: '/screen-record', label: '屏幕录制', icon: MonitorPlay, desc: '浏览器端录屏' },
+      { path: '/qr-code', label: 'QR码生成', icon: QrCode, desc: '二维码生成美化' },
+      { path: '/ocr', label: 'OCR识别', icon: ScanLine, desc: '图片文字识别' },
     ],
   },
   {

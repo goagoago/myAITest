@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import {
   Plane, PenTool, Globe, Lightbulb, ArrowRight, Zap, Shield, Sparkles, Clock,
   ChevronRight, Star, Users, TrendingUp, Wand2, Eraser, FileText, ImageDown, MonitorPlay,
-  Image, Wrench, Bot, Camera
+  Image, Wrench, Bot, Camera, QrCode, ScanLine, Scissors
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -46,6 +46,16 @@ const toolCategories = [
         shadowColor: 'rgba(20, 184, 166, 0.35)',
         features: ['标准尺寸', '换背景色', '排版打印'],
       },
+      {
+        id: 'remove-bg',
+        path: '/remove-bg',
+        icon: Scissors,
+        name: 'AI 抠图',
+        desc: 'AI 智能识别主体，一键去除背景，支持透明背景或自定义纯色背景替换',
+        gradient: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+        shadowColor: 'rgba(168, 85, 247, 0.35)',
+        features: ['智能抠图', '透明背景', '换背景色'],
+      },
     ],
   },
   {
@@ -73,6 +83,26 @@ const toolCategories = [
         gradient: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
         shadowColor: 'rgba(239, 68, 68, 0.35)',
         features: ['屏幕录制', '音频录制', '暂停/继续'],
+      },
+      {
+        id: 'qr-code',
+        path: '/qr-code',
+        icon: QrCode,
+        name: 'QR码生成',
+        desc: '自定义颜色与Logo，生成高清二维码图片，支持多种容错等级',
+        gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+        shadowColor: 'rgba(139, 92, 246, 0.35)',
+        features: ['自定义颜色', 'Logo嵌入', '高清下载'],
+      },
+      {
+        id: 'ocr',
+        path: '/ocr',
+        icon: ScanLine,
+        name: 'OCR文字识别',
+        desc: '上传图片即可提取文字内容，支持中英文等多语言识别，纯浏览器端处理',
+        gradient: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)',
+        shadowColor: 'rgba(6, 182, 212, 0.35)',
+        features: ['中英文识别', '图片转文字', '安全无上传'],
       },
     ],
   },

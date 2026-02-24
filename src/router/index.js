@@ -56,6 +56,21 @@ const routes = [
     name: 'IdPhoto',
     component: () => import('../views/IdPhoto.vue'),
   },
+  {
+    path: '/qr-code',
+    name: 'QrCode',
+    component: () => import('../views/QrCode.vue'),
+  },
+  {
+    path: '/ocr',
+    name: 'OcrRecognition',
+    component: () => import('../views/OcrRecognition.vue'),
+  },
+  {
+    path: '/remove-bg',
+    name: 'RemoveBg',
+    component: () => import('../views/RemoveBg.vue'),
+  },
 ]
 
 export default createRouter({

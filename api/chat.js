@@ -45,10 +45,23 @@ export default async function handler(request) {
     }
 
     // 限制消息数量和长度，防止滥用
-    const safeMessages = messages.slice(-20).map(m => ({
-      role: ['user', 'assistant', 'system'].includes(m.role) ? m.role : 'user',
-      content: typeof m.content === 'string' ? m.content.slice(0, 10000) : '',
-    }))
+    const safeMessages = messages.slice(-20).map(m => {
+      const role = ['user', 'assistant', 'system'].includes(m.role) ? m.role : 'user'
+      // 支持多模态内容（数组格式，含 image_url 等）
+      let content
+      if (typeof m.content === 'string') {
+        content = m.content.slice(0, 10000)
+      } else if (Array.isArray(m.content)) {
+        content = m.content.map(item => {
+          if (item.type === 'text') return { type: 'text', text: (item.text || '').slice(0, 10000) }
+          if (item.type === 'image_url') return { type: 'image_url', image_url: { url: item.image_url?.url || '' } }
+          return item
+        })
+      } else {
+        content = ''
+      }
+      return { role, content }
+    })
 
     const safeTemp = Math.min(Math.max(Number(temperature) || 0.7, 0), 2)
     const safeMaxTokens = Math.min(Math.max(Number(max_tokens) || 4096, 1), 8192)

@@ -1,11 +1,72 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 // API Keys 只从环境变量读取，不要硬编码！
 // 本地开发时在项目根目录创建 .env.local 文件写入密钥
-const SILICONFLOW_API_KEY = process.env.SILICONFLOW_API_KEY || ''
-const ZHIPU_API_KEY = process.env.ZHIPU_API_KEY || ''
-const ZHIPU_API_BASE = 'https://open.bigmodel.cn/api/paas/v4'
+
+export default defineConfig(({ mode }) => {
+  // loadEnv 第三个参数 '' 表示加载所有变量（不限 VITE_ 前缀）
+  const env = loadEnv(mode, process.cwd(), '')
+  const SILICONFLOW_API_KEY = env.SILICONFLOW_API_KEY || ''
+  const ZHIPU_API_KEY = env.ZHIPU_API_KEY || ''
+  const ZHIPU_API_BASE = 'https://open.bigmodel.cn/api/paas/v4'
+
+// 智谱聊天API中间件（替代proxy，解决大body转发问题）
+function chatApiMiddleware() {
+  return {
+    name: 'chat-api-middleware',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url !== '/api/chat' || req.method !== 'POST') {
+          return next()
+        }
+
+        let body = ''
+        for await (const chunk of req) {
+          body += chunk
+        }
+
+        try {
+          const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${ZHIPU_API_KEY}`,
+            },
+            body,
+          })
+
+          const contentType = response.headers.get('content-type') || 'application/json'
+          res.statusCode = response.status
+          res.setHeader('Content-Type', contentType)
+          res.setHeader('Access-Control-Allow-Origin', '*')
+
+          if (contentType.includes('text/event-stream')) {
+            res.setHeader('Cache-Control', 'no-cache')
+            res.setHeader('Connection', 'keep-alive')
+            const reader = response.body.getReader()
+            const pump = async () => {
+              while (true) {
+                const { done, value } = await reader.read()
+                if (done) { res.end(); return }
+                res.write(value)
+              }
+            }
+            await pump()
+          } else {
+            const result = await response.text()
+            res.end(result)
+          }
+        } catch (error) {
+          console.error('[Chat API Error]', error)
+          res.statusCode = 500
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: error.message }))
+        }
+      })
+    }
+  }
+}
 
 // 图片去水印API中间件
 function watermarkRemovalMiddleware() {
@@ -181,33 +242,23 @@ function videoApiMiddleware() {
   }
 }
 
-export default defineConfig({
-  plugins: [vue(), watermarkRemovalMiddleware(), videoApiMiddleware()],
-  optimizeDeps: {
-    exclude: ['@imgly/background-removal'],
-  },
-  server: {
-    proxy: {
-      // 智谱聊天API代理
-      '/api/chat': {
-        target: 'https://open.bigmodel.cn/api/paas/v4',
-        changeOrigin: true,
-        rewrite: () => '/chat/completions',
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Authorization', `Bearer ${ZHIPU_API_KEY}`)
-          })
-        }
-      },
-      // 硅基流动图片生成API代理（Kolors模型）
-      '/api/image': {
-        target: 'https://api.siliconflow.cn/v1',
-        changeOrigin: true,
-        rewrite: () => '/images/generations',
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Authorization', `Bearer ${SILICONFLOW_API_KEY}`)
-          })
+  return {
+    plugins: [vue(), watermarkRemovalMiddleware(), videoApiMiddleware(), chatApiMiddleware()],
+    optimizeDeps: {
+      exclude: ['@imgly/background-removal'],
+    },
+    server: {
+      proxy: {
+        // 硅基流动图片生成API代理（Kolors模型）
+        '/api/image': {
+          target: 'https://api.siliconflow.cn/v1',
+          changeOrigin: true,
+          rewrite: () => '/images/generations',
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.setHeader('Authorization', `Bearer ${SILICONFLOW_API_KEY}`)
+            })
+          }
         }
       }
     }
