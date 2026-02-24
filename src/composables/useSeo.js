@@ -17,9 +17,9 @@ const SEO_CONFIG = {
     keywords: '证件照制作,在线证件照,一寸照片,二寸照片,证件照换底色,AI证件照,证件照背景色',
   },
   '/watermark-removal': {
-    title: '在线AI去水印工具 - 智能识别去除图片水印 | AI Box Pro',
-    description: '在线AI去水印工具，利用AI智能识别并去除图片中的水印、文字、Logo，保留原图画质，无需安装软件，上传图片即可处理。',
-    keywords: '去水印,图片去水印,在线去水印,AI去水印,去除水印',
+    title: '在线AI去水印/加水印工具 - 智能识别去除或添加图片水印 | AI Box Pro',
+    description: '在线AI水印工具，利用AI智能识别并去除图片中的水印、文字、Logo，也支持为图片添加文字、Emoji、图片水印，支持平铺和自定义样式，保留原图画质，无需安装软件。',
+    keywords: '去水印,图片去水印,在线去水印,AI去水印,去除水印,加水印,图片加水印,添加水印',
   },
   '/image-compress': {
     title: '在线图片压缩工具 - 高质量多模式压缩 | AI Box Pro',

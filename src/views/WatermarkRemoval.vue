@@ -1,11 +1,16 @@
 <script setup>
 import { ref, computed, nextTick, onBeforeUnmount } from 'vue'
 import { useWatermarkRemoval } from '../composables/useWatermarkRemoval'
+import WatermarkAdd from '../components/WatermarkAdd.vue'
 import {
   Eraser, Sparkles, Upload, Download, RefreshCw, Loader2,
   Image, AlertCircle, Clock, X, ZoomIn, ArrowLeftRight, Wand2,
-  Paintbrush, Trash2, Maximize, Zap, SlidersHorizontal, RotateCw
+  Paintbrush, Trash2, Maximize, Zap, SlidersHorizontal, RotateCw,
+  Droplets
 } from 'lucide-vue-next'
+
+// 顶部 Tab：去水印 / 加水印
+const activeMainTab = ref('remove')
 
 const {
   loading,
@@ -306,20 +311,43 @@ onBeforeUnmount(() => {
       <div class="header__content">
         <div class="header__badge">
           <Eraser :size="14" />
-          <span>AI 去水印</span>
+          <span>AI 水印工具</span>
         </div>
         <h1 class="header__title">
-          <span>智能去水印，</span>
-          <span class="gradient-text">一键还原</span>
+          <span>智能水印工具，</span>
+          <span class="gradient-text">一键搞定</span>
         </h1>
         <p class="header__desc">
-          基于 AI 图像编辑模型，智能识别并去除各类复杂水印
+          基于 AI 图像编辑模型，智能去除或添加各类水印
         </p>
       </div>
     </header>
 
-    <!-- 主内容区 -->
-    <div class="main">
+    <!-- 主 Tab 切换 -->
+    <div class="main-tabs">
+      <button
+        :class="['main-tab', { active: activeMainTab === 'remove' }]"
+        @click="activeMainTab = 'remove'"
+      >
+        <Eraser :size="18" />
+        <span>去水印</span>
+      </button>
+      <button
+        :class="['main-tab', { active: activeMainTab === 'add' }]"
+        @click="activeMainTab = 'add'"
+      >
+        <Droplets :size="18" />
+        <span>加水印</span>
+      </button>
+    </div>
+
+    <!-- 加水印内容 -->
+    <div v-if="activeMainTab === 'add'" class="main">
+      <WatermarkAdd />
+    </div>
+
+    <!-- 去水印内容 -->
+    <div v-else class="main">
       <div class="panel">
         <!-- 左侧：上传与设置 -->
         <div class="input-section">
@@ -679,6 +707,47 @@ onBeforeUnmount(() => {
 .header__desc {
   font-size: 1.125rem;
   color: var(--text-secondary);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   主 Tab 切换
+   ═══════════════════════════════════════════════════════════ */
+
+.main-tabs {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.main-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 36px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.main-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.main-tab.active {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+}
+
+.main-tab.active svg {
+  color: #34d399;
 }
 
 /* ═══════════════════════════════════════════════════════════

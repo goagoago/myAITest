@@ -18,7 +18,7 @@ const navGroups = [
     label: '图片工具',
     icon: Image,
     children: [
-      { path: '/watermark-removal', label: '去水印', icon: Eraser, desc: '智能去除水印' },
+      { path: '/watermark-removal', label: '水印工具', icon: Eraser, desc: '去水印/加水印' },
       { path: '/image-compress', label: '图片压缩', icon: ImageDown, desc: '多模式压缩' },
       { path: '/id-photo', label: '证件照', icon: Camera, desc: '证件照制作' },
       { path: '/remove-bg', label: 'AI抠图', icon: Scissors, desc: '智能去除背景' },

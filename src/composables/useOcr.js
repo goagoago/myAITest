@@ -69,7 +69,7 @@ export function useOcr() {
     let lastError = null
 
     for (const model of models) {
-      progressStage.value = `AI 识别中（${model}）...`
+      progressStage.value = 'AI 识别中...'
       progress.value = 30
 
       try {

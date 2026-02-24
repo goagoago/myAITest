@@ -24,7 +24,7 @@ const toolCategories = [
         desc: '智能识别并去除各类复杂水印，一键还原清晰图片',
         gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
         shadowColor: 'rgba(16, 185, 129, 0.35)',
-        features: ['复杂水印', 'Logo去除', '智能修复'],
+        features: ['去水印', '加水印', '智能修复'],
       },
       {
         id: 'image-compress',
@@ -167,7 +167,7 @@ const toolCategories = [
 ]
 
 const features = [
-  { icon: Zap, title: '极速响应', desc: '基于智谱 GLM-4 大模型，毫秒级生成' },
+  { icon: Zap, title: '极速响应', desc: 'AI 智能处理，毫秒级生成' },
   { icon: Shield, title: '安全可靠', desc: '数据加密传输，不存储隐私信息' },
   { icon: Sparkles, title: '智能精准', desc: '深度理解语境，输出超越预期' },
   { icon: Clock, title: '即开即用', desc: '所有功能开放使用，无需注册' },
