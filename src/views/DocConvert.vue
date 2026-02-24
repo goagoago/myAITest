@@ -394,8 +394,8 @@ const resetAll = () => {
       </div>
       <div class="feature-item">
         <div class="feature-icon">🆓</div>
-        <h3>完全免费</h3>
-        <p>无需注册、无次数限制、永久免费使用</p>
+        <h3>开放使用</h3>
+        <p>无需注册、无次数限制、随时随地使用</p>
       </div>
     </div>
   </div>

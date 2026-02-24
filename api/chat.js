@@ -74,19 +74,25 @@ export default async function handler(request) {
       })
     }
 
+    // 视觉模型不支持 temperature / max_tokens 参数
+    const isVisionModel = model.includes('4v') || model.includes('vision')
+    const apiBody = {
+      model,
+      messages: safeMessages,
+      stream,
+    }
+    if (!isVisionModel) {
+      apiBody.temperature = safeTemp
+      apiBody.max_tokens = safeMaxTokens
+    }
+
     const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model,
-        messages: safeMessages,
-        temperature: safeTemp,
-        max_tokens: safeMaxTokens,
-        stream,
-      }),
+      body: JSON.stringify(apiBody),
     })
 
     if (!response.ok) {

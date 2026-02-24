@@ -170,7 +170,7 @@ const features = [
   { icon: Zap, title: '极速响应', desc: '基于智谱 GLM-4 大模型，毫秒级生成' },
   { icon: Shield, title: '安全可靠', desc: '数据加密传输，不存储隐私信息' },
   { icon: Sparkles, title: '智能精准', desc: '深度理解语境，输出超越预期' },
-  { icon: Clock, title: '永久免费', desc: '所有功能完全免费，无需注册' },
+  { icon: Clock, title: '即开即用', desc: '所有功能开放使用，无需注册' },
 ]
 
 const stats = [
@@ -189,7 +189,7 @@ const stats = [
         <div class="hero__badge">
           <span class="badge__pulse"></span>
           <Sparkles :size="14" />
-          <span>全新升级 · 免费使用</span>
+          <span>全新升级 · 即刻体验</span>
         </div>
 
         <!-- 标题 -->
@@ -309,7 +309,7 @@ const stats = [
         <p class="cta__desc">立即体验AI的强大能力，让工作更高效</p>
         <button class="btn-primary btn-primary--large" @click="router.push('/travel')">
           <Sparkles :size="22" />
-          <span>免费开始使用</span>
+          <span>立即开始使用</span>
         </button>
       </div>
       <div class="cta__glow"></div>
