@@ -57,8 +57,8 @@ export function useWatermarkRemoval() {
     const origW = originalImg.naturalWidth
     const origH = originalImg.naturalHeight
 
-    // 用小图做检测（速度快，只需要位置信息）
-    const detectMaxEdge = 768
+    // 用较大的检测图提高精度（之前768太小，容易漏检）
+    const detectMaxEdge = 1024
     let dw = origW, dh = origH
     if (Math.max(dw, dh) > detectMaxEdge) {
       const ratio = detectMaxEdge / Math.max(dw, dh)
@@ -70,13 +70,13 @@ export function useWatermarkRemoval() {
     detectCanvas.width = dw
     detectCanvas.height = dh
     detectCanvas.getContext('2d').drawImage(originalImg, 0, 0, dw, dh)
-    const detectBase64 = detectCanvas.toDataURL('image/png', 0.9)
+    const detectBase64 = detectCanvas.toDataURL('image/png', 0.92)
 
-    // 让 AI 处理小图
-    const processedUrl = await callApi(detectBase64, prompt, Math.min(steps, 40), guidance)
+    // 让 AI 处理检测图（用更高的steps提高检测精度）
+    const processedUrl = await callApi(detectBase64, prompt, Math.min(steps, 50), guidance)
     const processedImg = await loadImage(processedUrl)
 
-    // 将 AI 输出绘制到与小图同样大小的 canvas
+    // 将 AI 输出绘制到与检测图同样大小的 canvas
     const procCanvas = document.createElement('canvas')
     procCanvas.width = dw
     procCanvas.height = dh
@@ -87,7 +87,7 @@ export function useWatermarkRemoval() {
     const procData = procCanvas.getContext('2d').getImageData(0, 0, dw, dh).data
 
     // 将图片分成小格子，计算每个格子的平均差异
-    const gridSize = 16
+    const gridSize = 12  // 更小的格子 = 更精确的定位
     const gridCols = Math.ceil(dw / gridSize)
     const gridRows = Math.ceil(dh / gridSize)
     const gridDiff = new Float32Array(gridCols * gridRows)
@@ -106,7 +106,8 @@ export function useWatermarkRemoval() {
             const dr = Math.abs(origData[idx] - procData[idx])
             const dg = Math.abs(origData[idx + 1] - procData[idx + 1])
             const db = Math.abs(origData[idx + 2] - procData[idx + 2])
-            totalDiff += Math.max(dr, dg, db)
+            // 综合 RGB 差异（加权感知亮度）
+            totalDiff += dr * 0.3 + dg * 0.59 + db * 0.11
             count++
           }
         }
@@ -114,11 +115,10 @@ export function useWatermarkRemoval() {
       }
     }
 
-    // 找出差异最大的格子 = 水印区域
-    // 用自适应阈值：取所有格子差异的中位数 + 偏移
+    // 用自适应阈值：取 P75 分位 + 偏移，更容易检出轻微水印
     const sorted = [...gridDiff].sort((a, b) => a - b)
-    const median = sorted[Math.floor(sorted.length * 0.5)]
-    const threshold = Math.max(25, median + 15)
+    const p75 = sorted[Math.floor(sorted.length * 0.75)]
+    const threshold = Math.max(18, p75 + 10)
 
     // 标记水印格子
     const watermarkGrid = new Uint8Array(gridCols * gridRows)
@@ -126,9 +126,9 @@ export function useWatermarkRemoval() {
       if (gridDiff[i] > threshold) watermarkGrid[i] = 1
     }
 
-    // 膨胀水印格子（向外扩展 2 格，确保覆盖完整）
+    // 膨胀水印格子（向外扩展 3 格，确保完整覆盖水印边缘）
     const dilated = new Uint8Array(watermarkGrid.length)
-    const dilateR = 2
+    const dilateR = 3
     for (let gy = 0; gy < gridRows; gy++) {
       for (let gx = 0; gx < gridCols; gx++) {
         for (let dy = -dilateR; dy <= dilateR; dy++) {
@@ -179,8 +179,8 @@ export function useWatermarkRemoval() {
           }
         }
 
-        // 映射回原图坐标 + padding
-        const pad = Math.max(40, Math.round(Math.max(origW, origH) * 0.05))
+        // 映射回原图坐标 + 更大的 padding 确保上下文足够
+        const pad = Math.max(60, Math.round(Math.max(origW, origH) * 0.08))
         const rx = Math.max(0, Math.round(minGx * gridSize * scaleX) - pad)
         const ry = Math.max(0, Math.round(minGy * gridSize * scaleY) - pad)
         const rw = Math.min(origW - rx, Math.round((maxGx + 1) * gridSize * scaleX) - rx + pad * 2)
@@ -298,13 +298,58 @@ export function useWatermarkRemoval() {
     }
   }
 
+  /**
+   * 将处理后的区域用羽化边缘混合贴回原图，避免硬边界
+   */
+  const blendRegion = (compCtx, originalImg, processedImg, region, feather = 20) => {
+    const { x, y, w, h } = region
+
+    // 先创建一个临时 canvas 绘制处理结果
+    const tmpCanvas = document.createElement('canvas')
+    tmpCanvas.width = w
+    tmpCanvas.height = h
+    const tmpCtx = tmpCanvas.getContext('2d')
+    tmpCtx.drawImage(processedImg, 0, 0, processedImg.naturalWidth, processedImg.naturalHeight, 0, 0, w, h)
+
+    // 获取处理后的像素和原图对应区域的像素
+    const procData = tmpCtx.getImageData(0, 0, w, h)
+    const procPixels = procData.data
+
+    const origCanvas = document.createElement('canvas')
+    origCanvas.width = w
+    origCanvas.height = h
+    origCanvas.getContext('2d').drawImage(originalImg, x, y, w, h, 0, 0, w, h)
+    const origPixels = origCanvas.getContext('2d').getImageData(0, 0, w, h).data
+
+    // 在边缘做羽化混合：边缘部分保留更多原图，中心部分用处理结果
+    const f = Math.min(feather, Math.floor(Math.min(w, h) / 4))
+    for (let py = 0; py < h; py++) {
+      for (let px = 0; px < w; px++) {
+        // 计算到边缘的最小距离
+        const distToEdge = Math.min(px, py, w - 1 - px, h - 1 - py)
+        if (distToEdge < f) {
+          // 边缘区域做渐变混合
+          const alpha = distToEdge / f  // 0(边缘)→1(内部)
+          const idx = (py * w + px) * 4
+          procPixels[idx]     = Math.round(origPixels[idx]     * (1 - alpha) + procPixels[idx]     * alpha)
+          procPixels[idx + 1] = Math.round(origPixels[idx + 1] * (1 - alpha) + procPixels[idx + 1] * alpha)
+          procPixels[idx + 2] = Math.round(origPixels[idx + 2] * (1 - alpha) + procPixels[idx + 2] * alpha)
+        }
+      }
+    }
+
+    tmpCtx.putImageData(procData, 0, 0)
+    compCtx.drawImage(tmpCanvas, 0, 0, w, h, x, y, w, h)
+  }
+
   // ══════════════════════════════════════════════════════════
-  // 全图去水印（自动检测 + 局部处理）
+  // 全图去水印（自动检测 + 局部处理 + 羽化混合）
   //
   // 思路：
-  // 第一步：用缩小图快速让 AI 处理一遍，对比原图找出"哪些区域有水印"
+  // 第一步：用检测图让 AI 处理一遍，对比原图找出"哪些区域有水印"
   // 第二步：只对检测到的水印区域，从原图裁剪出来单独处理
-  // 第三步：把处理好的区域贴回原图，非水印区域完全不动
+  // 第三步：用羽化混合把处理好的区域贴回原图，消除拼接痕迹
+  // 第四步（可选）：二次精修，清除残留
   // ══════════════════════════════════════════════════════════
 
   const removeWatermark = async (file, customPrompt = '', options = {}) => {
@@ -314,16 +359,16 @@ export function useWatermarkRemoval() {
     progress.value = 5
 
     const quality = options.quality || 'standard'
-    const twoPass = options.twoPass || false
+    const twoPass = quality === 'high' ? true : (options.twoPass || false)
 
     const qualityConfig = {
-      fast:     { steps: 40, guidance: 7 },
-      standard: { steps: 65, guidance: 9 },
-      high:     { steps: 80, guidance: 10 },
+      fast:     { steps: 40, guidance: 7.5 },
+      standard: { steps: 50, guidance: 9 },
+      high:     { steps: 50, guidance: 10 },
     }
     const cfg = qualityConfig[quality] || qualityConfig.standard
 
-    const prompt = customPrompt || 'Remove the watermark from this image. Keep everything else exactly the same — same colors, lighting, textures, and details. Only remove the watermark.'
+    const prompt = customPrompt || 'Remove the watermark from this image completely. Keep everything else exactly the same — same colors, lighting, textures, and details. Only remove the watermark, do not change the background.'
 
     try {
       const originalBase64 = await fileToBase64(file)
@@ -339,8 +384,7 @@ export function useWatermarkRemoval() {
       progress.value = 35
 
       if (regions.length === 0) {
-        // 没检测到明显水印，退回到直接处理整图
-        // 但用最保守的方式：直接返回 API 结果
+        // 没检测到明显水印，直接处理整图
         const canvas = document.createElement('canvas')
         canvas.width = origW
         canvas.height = origH
@@ -352,34 +396,31 @@ export function useWatermarkRemoval() {
         return url
       }
 
-      // ── 第二步：逐区域裁剪 + 处理 ──
+      // ── 第二步：逐区域裁剪 + 处理 + 羽化混合 ──
       const compositeCanvas = document.createElement('canvas')
       compositeCanvas.width = origW
       compositeCanvas.height = origH
       const compCtx = compositeCanvas.getContext('2d')
-      // 先画完整原图
       compCtx.drawImage(originalImg, 0, 0)
+
+      // 羽化边缘宽度：根据图片大小自适应
+      const feather = Math.max(15, Math.round(Math.min(origW, origH) * 0.03))
 
       const totalRegions = regions.length
       for (let i = 0; i < totalRegions; i++) {
         const region = regions[i]
         const processed = await processRegion(originalImg, region, prompt, cfg.steps, cfg.guidance)
 
-        // 贴回去
-        compCtx.drawImage(
-          processed,
-          0, 0, processed.naturalWidth, processed.naturalHeight,
-          region.x, region.y, region.w, region.h
-        )
+        // 用羽化混合贴回去（消除硬边界）
+        blendRegion(compCtx, originalImg, processed, region, feather)
 
         progress.value = 35 + Math.floor(((i + 1) / totalRegions) * (twoPass ? 30 : 55))
       }
 
-      // ── 第三步（可选）：二次精修 ──
+      // ── 第三步（可选/high默认开启）：二次精修 ──
       if (twoPass) {
         const secondPrompt = 'Carefully check this image and remove any remaining watermark traces, faint text shadows, or artifacts. Keep everything else exactly the same.'
 
-        // 对同样的区域再处理一次
         for (let i = 0; i < totalRegions; i++) {
           const region = regions[i]
           // 从当前合成结果裁剪
@@ -393,11 +434,7 @@ export function useWatermarkRemoval() {
           const resultUrl = await callApi(cropBase64, secondPrompt, cfg.steps, cfg.guidance)
           const processed = await loadImage(resultUrl)
 
-          compCtx.drawImage(
-            processed,
-            0, 0, processed.naturalWidth, processed.naturalHeight,
-            region.x, region.y, region.w, region.h
-          )
+          blendRegion(compCtx, originalImg, processed, region, feather)
 
           progress.value = 65 + Math.floor(((i + 1) / totalRegions) * 25)
         }

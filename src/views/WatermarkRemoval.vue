@@ -102,12 +102,12 @@ const handlePaste = (e) => {
 const processFile = (file) => {
   if (!file.type.startsWith('image/')) return
   if (file.size > 10 * 1024 * 1024) return
+
   originalFile.value = file
   originalImageUrl.value = URL.createObjectURL(file)
   resultImageUrl.value = ''
   compareMode.value = false
   hasMask.value = false
-  // 等图片渲染后初始化 canvas
   nextTick(() => {
     initMaskCanvas()
   })
@@ -212,7 +212,6 @@ const handleRemoveWatermark = async () => {
     let url
 
     if (maskMode.value && hasMask.value) {
-      // 局部模式
       const canvas = maskCanvasRef.value
       url = await removeWatermarkByMask(
         originalFile.value,
@@ -222,7 +221,6 @@ const handleRemoveWatermark = async () => {
         prompt
       )
     } else {
-      // 全图模式（带高级选项）
       url = await removeWatermark(originalFile.value, prompt, {
         quality: processQuality.value,
         twoPass: twoPass.value,
@@ -377,7 +375,7 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- 已上传图片预览 + 涂抹画布 -->
-          <div v-else class="preview-section">
+          <div v-if="originalImageUrl" class="preview-section">
             <div class="preview-header">
               <div class="preview-label">
                 <Image :size="16" />
@@ -624,7 +622,7 @@ onBeforeUnmount(() => {
               <Eraser :size="48" />
             </div>
             <p>去水印结果将在这里显示</p>
-            <span class="placeholder-tip">上传图片后点击"开始去水印"</span>
+            <span class="placeholder-tip">上传图片后点击开始去水印</span>
           </div>
         </div>
       </div>
@@ -822,6 +820,10 @@ onBeforeUnmount(() => {
   color: var(--text-muted);
   margin-top: 4px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   视频预览 & 设置
+   ═══════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════
    预览区域 + 涂抹画布

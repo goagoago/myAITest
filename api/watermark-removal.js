@@ -18,6 +18,159 @@ function setCorsHeaders(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 }
 
+const IMAGE_EXTENSIONS = /\.(jpe?g|png|gif|webp|bmp|tiff?|svg)(\?|$)/i
+const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v)(\?|$)/i
+const IMAGE_MIME = /^image\//
+const VIDEO_MIME = /^video\//
+const HTML_MIME = /^text\/html/
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024  // 10MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024  // 50MB
+
+const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+
+/**
+ * 从 HTML 页面中提取媒体 URL（支持小红书、微博等社交平台分享链接）
+ * 优先提取 og:video，其次 og:image
+ */
+function extractMediaFromHtml(html) {
+  // 提取所有 og:video 和 og:video:url
+  const videoMatches = []
+  const videoRe = /property=["']og:video(?::url)?["'][^>]*content=["']([^"']+)["']/gi
+  const videoRe2 = /content=["']([^"']+)["'][^>]*property=["']og:video(?::url)?["']/gi
+  let m
+  while ((m = videoRe.exec(html)) !== null) videoMatches.push(m[1])
+  while ((m = videoRe2.exec(html)) !== null) videoMatches.push(m[1])
+
+  // 提取所有 og:image
+  const imageMatches = []
+  const imageRe = /property=["']og:image["'][^>]*content=["']([^"']+)["']/gi
+  const imageRe2 = /content=["']([^"']+)["'][^>]*property=["']og:image["']/gi
+  while ((m = imageRe.exec(html)) !== null) imageMatches.push(m[1])
+  while ((m = imageRe2.exec(html)) !== null) imageMatches.push(m[1])
+
+  // 去重
+  const videos = [...new Set(videoMatches)].filter(u => u.startsWith('http'))
+  const images = [...new Set(imageMatches)].filter(u => u.startsWith('http'))
+
+  // 优先返回视频，其次返回第一张图片
+  if (videos.length > 0) {
+    return { type: 'video', url: videos[0], allImages: images }
+  }
+  if (images.length > 0) {
+    return { type: 'image', url: images[0], allImages: images }
+  }
+  return null
+}
+
+/**
+ * 下载指定媒体URL，返回 { type, data(base64), contentType }
+ */
+async function downloadMedia(mediaUrl, expectedType) {
+  const resp = await fetch(mediaUrl, {
+    headers: { 'User-Agent': BROWSER_UA, 'Referer': mediaUrl },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(30000),
+  })
+  if (!resp.ok) {
+    throw new Error(`下载媒体失败: HTTP ${resp.status}`)
+  }
+
+  const contentType = (resp.headers.get('content-type') || '').split(';')[0].trim()
+  let mediaType = expectedType
+  if (IMAGE_MIME.test(contentType)) mediaType = 'image'
+  else if (VIDEO_MIME.test(contentType)) mediaType = 'video'
+
+  const maxSize = mediaType === 'image' ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE
+  const arrayBuffer = await resp.arrayBuffer()
+  if (arrayBuffer.byteLength > maxSize) {
+    throw new Error(`文件过大（${(arrayBuffer.byteLength / 1024 / 1024).toFixed(1)}MB），${mediaType === 'image' ? '图片' : '视频'}最大支持 ${maxSize / 1024 / 1024}MB`)
+  }
+
+  const base64 = Buffer.from(arrayBuffer).toString('base64')
+  const finalContentType = contentType || (mediaType === 'image' ? 'image/png' : 'video/mp4')
+  return { type: mediaType, data: base64, contentType: finalContentType }
+}
+
+async function handleFetchUrl(req, res) {
+  const { url } = req.body
+  if (!url || typeof url !== 'string') {
+    return res.status(400).json({ error: '请提供有效的URL' })
+  }
+
+  let parsedUrl
+  try {
+    parsedUrl = new URL(url)
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw new Error('invalid protocol')
+    }
+  } catch {
+    return res.status(400).json({ error: 'URL格式不正确' })
+  }
+
+  try {
+    const resp = await fetch(url, {
+      headers: { 'User-Agent': BROWSER_UA },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(30000),
+    })
+
+    if (!resp.ok) {
+      return res.status(400).json({ error: `无法下载资源: HTTP ${resp.status}` })
+    }
+
+    const contentType = (resp.headers.get('content-type') || '').split(';')[0].trim()
+
+    // ── 直接是图片/视频 ──
+    let mediaType = null
+    if (IMAGE_MIME.test(contentType)) mediaType = 'image'
+    else if (VIDEO_MIME.test(contentType)) mediaType = 'video'
+    else if (IMAGE_EXTENSIONS.test(parsedUrl.pathname)) mediaType = 'image'
+    else if (VIDEO_EXTENSIONS.test(parsedUrl.pathname)) mediaType = 'video'
+
+    if (mediaType) {
+      const maxSize = mediaType === 'image' ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE
+      const arrayBuffer = await resp.arrayBuffer()
+      if (arrayBuffer.byteLength > maxSize) {
+        return res.status(400).json({
+          error: `文件过大（${(arrayBuffer.byteLength / 1024 / 1024).toFixed(1)}MB），${mediaType === 'image' ? '图片' : '视频'}最大支持 ${maxSize / 1024 / 1024}MB`
+        })
+      }
+      const base64 = Buffer.from(arrayBuffer).toString('base64')
+      const finalContentType = contentType || (mediaType === 'image' ? 'image/png' : 'video/mp4')
+      return res.status(200).json({ type: mediaType, data: base64, contentType: finalContentType })
+    }
+
+    // ── HTML 页面：解析 og 标签提取媒体 ──
+    if (HTML_MIME.test(contentType)) {
+      const html = await resp.text()
+      const extracted = extractMediaFromHtml(html)
+
+      if (!extracted) {
+        return res.status(400).json({ error: '页面中未找到图片或视频，请直接粘贴图片/视频的链接' })
+      }
+
+      console.log(`[Fetch URL] 从HTML提取到 ${extracted.type}: ${extracted.url.slice(0, 100)}...`)
+
+      const result = await downloadMedia(extracted.url, extracted.type)
+
+      // 如果是图片类型且有多张图片，附带全部图片URL供前端展示
+      if (extracted.allImages && extracted.allImages.length > 1) {
+        result.allImages = extracted.allImages
+      }
+
+      return res.status(200).json(result)
+    }
+
+    return res.status(400).json({ error: '无法识别资源类型，请确认链接为图片或视频' })
+  } catch (err) {
+    console.error('[Fetch URL Error]', err)
+    if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+      return res.status(400).json({ error: '下载超时，请检查链接是否可访问' })
+    }
+    return res.status(500).json({ error: '下载资源失败: ' + (err.message || '未知错误') })
+  }
+}
+
 export default async function handler(req, res) {
   setCorsHeaders(req, res)
 
@@ -35,6 +188,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    const { action } = req.body
+
+    // ── URL代理下载 ──
+    if (action === 'fetch-url') {
+      return await handleFetchUrl(req, res)
+    }
+
     const { prompt, image, num_inference_steps, guidance_scale } = req.body
 
     if (!image || typeof image !== 'string') {

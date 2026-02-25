@@ -87,6 +87,151 @@ function watermarkRemovalMiddleware() {
         try {
           const data = JSON.parse(body)
 
+          // URL代理下载
+          if (data.action === 'fetch-url') {
+            const targetUrl = data.url
+            if (!targetUrl || typeof targetUrl !== 'string') {
+              res.statusCode = 400
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: '请提供有效的URL' }))
+              return
+            }
+
+            let parsedUrl
+            try {
+              parsedUrl = new URL(targetUrl)
+              if (!['http:', 'https:'].includes(parsedUrl.protocol)) throw new Error()
+            } catch {
+              res.statusCode = 400
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: 'URL格式不正确' }))
+              return
+            }
+
+            const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+
+            const fetchResp = await fetch(targetUrl, {
+              headers: { 'User-Agent': BROWSER_UA },
+              redirect: 'follow',
+            })
+
+            if (!fetchResp.ok) {
+              res.statusCode = 400
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: `无法下载资源: HTTP ${fetchResp.status}` }))
+              return
+            }
+
+            const contentType = (fetchResp.headers.get('content-type') || '').split(';')[0].trim()
+            let mediaType = null
+            if (/^image\//.test(contentType)) mediaType = 'image'
+            else if (/^video\//.test(contentType)) mediaType = 'video'
+            else if (/\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(parsedUrl.pathname)) mediaType = 'image'
+            else if (/\.(mp4|webm|mov|avi|mkv|flv|m4v)(\?|$)/i.test(parsedUrl.pathname)) mediaType = 'video'
+
+            // 直接是媒体文件
+            if (mediaType) {
+              const maxSize = mediaType === 'image' ? 10 * 1024 * 1024 : 50 * 1024 * 1024
+              const arrayBuffer = await fetchResp.arrayBuffer()
+              if (arrayBuffer.byteLength > maxSize) {
+                res.statusCode = 400
+                res.setHeader('Content-Type', 'application/json')
+                res.end(JSON.stringify({ error: `文件过大，${mediaType === 'image' ? '图片' : '视频'}最大支持 ${maxSize / 1024 / 1024}MB` }))
+                return
+              }
+
+              const base64 = Buffer.from(arrayBuffer).toString('base64')
+              const finalContentType = contentType || (mediaType === 'image' ? 'image/png' : 'video/mp4')
+
+              res.setHeader('Content-Type', 'application/json')
+              res.setHeader('Access-Control-Allow-Origin', '*')
+              res.end(JSON.stringify({ type: mediaType, data: base64, contentType: finalContentType }))
+              return
+            }
+
+            // HTML 页面：解析 og 标签提取媒体
+            if (/^text\/html/.test(contentType)) {
+              const html = await fetchResp.text()
+
+              // 提取 og:video
+              const videoMatches = []
+              const videoRe = /property=["']og:video(?::url)?["'][^>]*content=["']([^"']+)["']/gi
+              const videoRe2 = /content=["']([^"']+)["'][^>]*property=["']og:video(?::url)?["']/gi
+              let m
+              while ((m = videoRe.exec(html)) !== null) videoMatches.push(m[1])
+              while ((m = videoRe2.exec(html)) !== null) videoMatches.push(m[1])
+
+              // 提取 og:image
+              const imageMatches = []
+              const imageRe = /property=["']og:image["'][^>]*content=["']([^"']+)["']/gi
+              const imageRe2 = /content=["']([^"']+)["'][^>]*property=["']og:image["']/gi
+              while ((m = imageRe.exec(html)) !== null) imageMatches.push(m[1])
+              while ((m = imageRe2.exec(html)) !== null) imageMatches.push(m[1])
+
+              const videos = [...new Set(videoMatches)].filter(u => u.startsWith('http'))
+              const images = [...new Set(imageMatches)].filter(u => u.startsWith('http'))
+
+              const extracted = videos.length > 0
+                ? { type: 'video', url: videos[0], allImages: images }
+                : images.length > 0
+                  ? { type: 'image', url: images[0], allImages: images }
+                  : null
+
+              if (!extracted) {
+                res.statusCode = 400
+                res.setHeader('Content-Type', 'application/json')
+                res.end(JSON.stringify({ error: '页面中未找到图片或视频，请直接粘贴图片/视频的链接' }))
+                return
+              }
+
+              console.log(`[Fetch URL] 从HTML提取到 ${extracted.type}: ${extracted.url.slice(0, 100)}...`)
+
+              // 下载提取到的媒体
+              const mediaResp = await fetch(extracted.url, {
+                headers: { 'User-Agent': BROWSER_UA, 'Referer': extracted.url },
+                redirect: 'follow',
+              })
+              if (!mediaResp.ok) {
+                res.statusCode = 400
+                res.setHeader('Content-Type', 'application/json')
+                res.end(JSON.stringify({ error: `下载媒体失败: HTTP ${mediaResp.status}` }))
+                return
+              }
+
+              const mediaCt = (mediaResp.headers.get('content-type') || '').split(';')[0].trim()
+              let detectedType = extracted.type
+              if (/^image\//.test(mediaCt)) detectedType = 'image'
+              else if (/^video\//.test(mediaCt)) detectedType = 'video'
+
+              const maxSize = detectedType === 'image' ? 10 * 1024 * 1024 : 50 * 1024 * 1024
+              const arrayBuffer = await mediaResp.arrayBuffer()
+              if (arrayBuffer.byteLength > maxSize) {
+                res.statusCode = 400
+                res.setHeader('Content-Type', 'application/json')
+                res.end(JSON.stringify({ error: `文件过大，最大支持 ${maxSize / 1024 / 1024}MB` }))
+                return
+              }
+
+              const base64 = Buffer.from(arrayBuffer).toString('base64')
+              const finalContentType = mediaCt || (detectedType === 'image' ? 'image/png' : 'video/mp4')
+              const result = { type: detectedType, data: base64, contentType: finalContentType }
+              if (extracted.allImages && extracted.allImages.length > 1) {
+                result.allImages = extracted.allImages
+              }
+
+              res.setHeader('Content-Type', 'application/json')
+              res.setHeader('Access-Control-Allow-Origin', '*')
+              res.end(JSON.stringify(result))
+              return
+            }
+
+            res.statusCode = 400
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: '无法识别资源类型，请确认链接为图片或视频' }))
+            return
+          }
+
+          // 原有去水印逻辑
           const response = await fetch('https://api.siliconflow.cn/v1/images/generations', {
             method: 'POST',
             headers: {
