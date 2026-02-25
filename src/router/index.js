@@ -71,6 +71,21 @@ const routes = [
     name: 'RemoveBg',
     component: () => import('../views/RemoveBg.vue'),
   },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/Login.vue'),
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('../views/Register.vue'),
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('../views/ForgotPassword.vue'),
+  },
 ]
 
 export default createRouter({

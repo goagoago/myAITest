@@ -3,8 +3,18 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Home, Plane, PenTool, Globe, Lightbulb, Sparkles, Zap, Eraser, FileText,
-  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera, QrCode, ScanLine, Scissors
+  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera, QrCode, ScanLine, Scissors,
+  LogIn, User, LogOut
 } from 'lucide-vue-next'
+import { useAuth } from '../composables/useAuth.js'
+
+const { isLoggedIn, username, logout } = useAuth()
+const showUserMenu = ref(false)
+
+const handleLogout = () => {
+  logout()
+  showUserMenu.value = false
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -155,6 +165,37 @@ onUnmounted(() => {
           </div>
         </nav>
 
+        <!-- 用户按钮 -->
+        <div class="user-area">
+          <template v-if="isLoggedIn">
+            <div class="user-menu-wrap" @mouseenter="showUserMenu = true" @mouseleave="showUserMenu = false">
+              <button class="user-btn">
+                <div class="user-avatar">{{ username.charAt(0).toUpperCase() }}</div>
+                <span class="user-name">{{ username }}</span>
+                <ChevronDown :size="14" class="nav__chevron" :class="{ 'nav__chevron--open': showUserMenu }" />
+              </button>
+              <Transition name="dropdown">
+                <div v-if="showUserMenu" class="user-dropdown">
+                  <button class="dropdown__item" @click="handleLogout">
+                    <div class="dropdown__icon">
+                      <LogOut :size="18" />
+                    </div>
+                    <div class="dropdown__text">
+                      <span class="dropdown__name">退出登录</span>
+                    </div>
+                  </button>
+                </div>
+              </Transition>
+            </div>
+          </template>
+          <template v-else>
+            <router-link to="/login" class="login-btn">
+              <LogIn :size="18" />
+              <span>登录</span>
+            </router-link>
+          </template>
+        </div>
+
         <!-- 移动端菜单按钮 -->
         <button class="mobile-toggle" @click="mobileMenuOpen = !mobileMenuOpen">
           <component :is="mobileMenuOpen ? X : Menu" :size="22" />
@@ -192,6 +233,34 @@ onUnmounted(() => {
             <component :is="item.icon" :size="20" />
             <span>{{ item.label }}</span>
           </button>
+        </div>
+
+        <!-- 移动端登录/用户 -->
+        <div class="mobile-menu__group">
+          <div class="mobile-menu__group-label">
+            <User :size="16" />
+            <span>账号</span>
+          </div>
+          <template v-if="isLoggedIn">
+            <div class="mobile-menu__user">
+              <div class="user-avatar user-avatar--sm">{{ username.charAt(0).toUpperCase() }}</div>
+              <span>{{ username }}</span>
+            </div>
+            <button class="mobile-menu__link" @click="handleLogout(); mobileMenuOpen = false">
+              <LogOut :size="20" />
+              <span>退出登录</span>
+            </button>
+          </template>
+          <template v-else>
+            <button class="mobile-menu__link" @click="navigateTo('/login')">
+              <LogIn :size="20" />
+              <span>登录</span>
+            </button>
+            <button class="mobile-menu__link" @click="navigateTo('/register')">
+              <User :size="20" />
+              <span>注册</span>
+            </button>
+          </template>
         </div>
       </div>
     </Transition>
@@ -593,6 +662,111 @@ onUnmounted(() => {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   用户区域
+   ═══════════════════════════════════════════════════════════ */
+
+.user-area {
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.user-menu-wrap {
+  position: relative;
+}
+
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-1);
+  border-radius: 9px;
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.user-avatar--sm {
+  width: 28px;
+  height: 28px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+}
+
+.user-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  padding: 6px;
+  background: rgba(20, 20, 24, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.6);
+  z-index: 200;
+}
+
+.login-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  background: var(--gradient-1);
+  border-radius: 10px;
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.2s;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.25);
+}
+
+.login-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.mobile-menu__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════
    主内容 & 页脚
    ═══════════════════════════════════════════════════════════ */
 
@@ -647,6 +821,10 @@ onUnmounted(() => {
 
 @media (max-width: 900px) {
   .nav {
+    display: none;
+  }
+
+  .user-area {
     display: none;
   }
 
