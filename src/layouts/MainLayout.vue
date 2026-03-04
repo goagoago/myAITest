@@ -102,8 +102,7 @@ onUnmounted(() => {
           <div class="logo__icon-wrap">
             <Zap class="logo__icon" :size="22" />
           </div>
-          <span class="logo__text">AI Box</span>
-          <span class="logo__badge">Pro</span>
+          <span class="logo__text">Tools Box</span>
         </router-link>
 
         <!-- 桌面端导航 -->
@@ -210,7 +209,7 @@ onUnmounted(() => {
       <div class="footer__content">
         <div class="footer__brand">
           <Zap :size="20" class="footer__icon" />
-          <span>AI Box</span>
+          <span>Tools Box</span>
         </div>
       </div>
     </footer>
