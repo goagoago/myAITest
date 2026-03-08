@@ -35,7 +35,12 @@
       "mcp__plugin_context7_context7__query-docs",
       "Bash(cd \"/Users/simonyu/Desktop/我的项目/myAITest\" && curl -s -X POST 'https://open.bigmodel.cn/api/paas/v4/chat/completions' \\\\\n  -H 'Content-Type: application/json' \\\\\n  -H 'Authorization: Bearer 94c09f3d19b582cafaa8700d63524cbc.4vAoySH9Q0l7xCQW' \\\\\n  -d '{\n    \"model\": \"glm-4v-flash\",\n    \"messages\": [{\"role\":\"user\",\"content\":[{\"type\":\"image_url\",\"image_url\":{\"url\":\"https://img1.baidu.com/it/u=1369931113,3388870659&fm=253\"}},{\"type\":\"text\",\"text\":\"这张图片里有什么文字？\"}]}],\n    \"max_tokens\": 1024\n  }' 2>&1 | head -20)",
       "Bash(curl -s -X POST 'https://open.bigmodel.cn/api/paas/v4/chat/completions' \\\\\n  -H 'Content-Type: application/json' \\\\\n  -H 'Authorization: Bearer 94c09f3d19b582cafaa8700d63524cbc.4vAoySH9Q0l7xCQW' \\\\\n  -d '{\n    \"model\": \"glm-4v-flash\",\n    \"messages\": [{\"role\":\"user\",\"content\":[{\"type\":\"image_url\",\"image_url\":{\"url\":\"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/320px-Camponotus_flavomarginatus_ant.jpg\"}},{\"type\":\"text\",\"text\":\"描述这张图片\"}]}],\n    \"max_tokens\": 256\n  }' 2>&1)",
-      "Bash(curl -s -X POST 'https://open.bigmodel.cn/api/paas/v4/chat/completions' \\\\\n  -H 'Content-Type: application/json' \\\\\n  -H 'Authorization: Bearer 94c09f3d19b582cafaa8700d63524cbc.4vAoySH9Q0l7xCQW' \\\\\n  -d '{\n    \"model\": \"glm-4.6v-flash\",\n    \"messages\": [{\"role\":\"user\",\"content\":[{\"type\":\"image_url\",\"image_url\":{\"url\":\"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/320px-Camponotus_flavomarginatus_ant.jpg\"}},{\"type\":\"text\",\"text\":\"描述这张图片\"}]}],\n    \"max_tokens\": 256\n  }' 2>&1)"
+      "Bash(curl -s -X POST 'https://open.bigmodel.cn/api/paas/v4/chat/completions' \\\\\n  -H 'Content-Type: application/json' \\\\\n  -H 'Authorization: Bearer 94c09f3d19b582cafaa8700d63524cbc.4vAoySH9Q0l7xCQW' \\\\\n  -d '{\n    \"model\": \"glm-4.6v-flash\",\n    \"messages\": [{\"role\":\"user\",\"content\":[{\"type\":\"image_url\",\"image_url\":{\"url\":\"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/320px-Camponotus_flavomarginatus_ant.jpg\"}},{\"type\":\"text\",\"text\":\"描述这张图片\"}]}],\n    \"max_tokens\": 256\n  }' 2>&1)",
+      "WebFetch(domain:uiverse.io)",
+      "WebFetch(domain:app.lottiefiles.com)",
+      "Bash(findstr /c:\"Error\" /c:\"error\" /c:\"created\" /c:\"写入\" /c:\"Created\" /c:\"Written\")",
+      "Bash(del \"D:\\\\我的项目\\\\myAITest\\\\src\\\\assets\\\\lottie\\\\char-factory.js\")",
+      "Bash(node generate-lottie.js)"
     ]
   }
 }

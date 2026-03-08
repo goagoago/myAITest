@@ -5,12 +5,41 @@ import {
   Home, Plane, PenTool, Globe, Lightbulb, Sparkles, Zap, Eraser, FileText,
   ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera, QrCode, ScanLine, Scissors
 } from 'lucide-vue-next'
+import CursorEffect from '../components/CursorEffect.vue'
+import LottieInteractive from '../components/LottieInteractive.vue'
+import toolboxAnim from '../assets/lottie/toolbox.js'
+import PageLoader from '../components/PageLoader.vue'
+
+import bgVideo from '../assets/BG.mp4'
 
 const route = useRoute()
 const router = useRouter()
 const scrolled = ref(false)
 const mobileMenuOpen = ref(false)
 const openDropdown = ref(null)
+const isLoading = ref(false)
+
+// 全局加载逻辑
+let loadingTimer = null
+router.beforeEach(() => {
+  console.log('Router: beforeEach triggered')
+  clearTimeout(loadingTimer)
+  // 200ms 后再显示 loading，防止快速切换时闪烁
+  loadingTimer = setTimeout(() => {
+    console.log('Router: Setting isLoading to true')
+    isLoading.value = true
+  }, 200)
+})
+router.afterEach(() => {
+  console.log('Router: afterEach triggered')
+  clearTimeout(loadingTimer)
+  // 保证 loading 至少可见 300ms，防止体验突兀
+  setTimeout(() => {
+    console.log('Router: Setting isLoading to false')
+    isLoading.value = false
+  }, 300)
+})
+
 
 const navGroups = [
   {
@@ -95,24 +124,39 @@ onUnmounted(() => {
 
 <template>
   <div class="layout">
-    <!-- 顶部导航 -->
+    <video class="global-bg" autoplay loop muted playsinline :src="bgVideo"></video>
+
+    <!-- 全局加载动画 -->
+    <PageLoader v-if="isLoading" />
+
+    <!-- 自定义光标 -->
+    <CursorEffect />
+
+    <!-- 顶部导航 — 新拟物凸起 -->
     <header class="navbar" :class="{ 'navbar--scrolled': scrolled }">
       <div class="navbar__inner">
+        <!-- Logo — Lottie动画 -->
         <router-link to="/" class="logo">
           <div class="logo__icon-wrap">
-            <Zap class="logo__icon" :size="22" />
+            <LottieInteractive
+              :animation-data="toolboxAnim"
+              trigger="hover"
+              :loop="false"
+              width="26px"
+              height="26px"
+            />
           </div>
           <span class="logo__text">Tools Box</span>
         </router-link>
 
-        <!-- 桌面端导航 -->
+        <!-- 桌面端导航 — 新拟物分段器 -->
         <nav class="nav">
           <router-link
             to="/"
             class="nav__link"
             :class="{ 'nav__link--active': isActive('/') }"
           >
-            <Home :size="18" class="nav__icon" />
+            <Home :size="17" class="nav__icon" />
             <span class="nav__label">首页</span>
           </router-link>
 
@@ -127,9 +171,9 @@ onUnmounted(() => {
               class="nav__link nav__link--trigger"
               :class="{ 'nav__link--active': isGroupActive(group) }"
             >
-              <component :is="group.icon" :size="18" class="nav__icon" />
+              <component :is="group.icon" :size="17" class="nav__icon" />
               <span class="nav__label">{{ group.label }}</span>
-              <ChevronDown :size="14" class="nav__chevron" :class="{ 'nav__chevron--open': openDropdown === group.id }" />
+              <ChevronDown :size="13" class="nav__chevron" :class="{ 'nav__chevron--open': openDropdown === group.id }" />
             </button>
 
             <Transition name="dropdown">
@@ -142,7 +186,7 @@ onUnmounted(() => {
                   @click="navigateTo(item.path)"
                 >
                   <div class="dropdown__icon">
-                    <component :is="item.icon" :size="18" />
+                    <component :is="item.icon" :size="17" />
                   </div>
                   <div class="dropdown__text">
                     <span class="dropdown__name">{{ item.label }}</span>
@@ -195,20 +239,20 @@ onUnmounted(() => {
       </div>
     </Transition>
 
-    <!-- 主内容 -->
+    <!-- 主内容 — 3D页面转场 -->
     <main class="main">
       <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
+        <transition name="page3d" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
     </main>
 
-    <!-- 页脚 -->
+    <!-- 页脚 — 新拟物 -->
     <footer class="footer">
       <div class="footer__content">
         <div class="footer__brand">
-          <Zap :size="20" class="footer__icon" />
+          <div class="footer__logo-dot"></div>
           <span>Tools Box</span>
         </div>
       </div>
@@ -220,10 +264,22 @@ onUnmounted(() => {
 .layout {
   min-height: 100vh;
   position: relative;
+  background-color: transparent; /* Ensure layout background is transparent */
+}
+
+.global-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  filter: brightness(0.7);
 }
 
 /* ═══════════════════════════════════════════════════════════
-   导航栏
+   导航栏 — 新拟物凸起
    ═══════════════════════════════════════════════════════════ */
 
 .navbar {
@@ -233,16 +289,17 @@ onUnmounted(() => {
   right: 0;
   z-index: 100;
   padding: 16px 0;
-  transition: padding 0.3s, background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  transition: all 0.4s var(--transition-smooth);
 }
 
 .navbar--scrolled {
-  padding: 10px 0;
-  background: rgba(9, 9, 11, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  padding: 8px 0;
+  background: rgba(26, 26, 46, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .navbar__inner {
@@ -254,7 +311,7 @@ onUnmounted(() => {
   justify-content: space-between;
 }
 
-/* Logo */
+/* Logo — 新拟物凸起 */
 .logo {
   display: flex;
   align-items: center;
@@ -264,21 +321,29 @@ onUnmounted(() => {
 }
 
 .logo__icon-wrap {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-  border-radius: 12px;
-  color: white;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
-  transition: transform 0.3s, box-shadow 0.3s;
+  background: var(--neo-surface-raised);
+  border-radius: 14px;
+  box-shadow:
+    4px 4px 12px rgba(0, 0, 0, 0.5),
+    -3px -3px 10px rgba(255, 255, 255, 0.03),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  transition: all 0.35s var(--transition-bounce);
+  overflow: hidden;
 }
 
 .logo:hover .logo__icon-wrap {
-  transform: scale(1.05) rotate(-5deg);
-  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.45);
+  transform: scale(1.08) rotate(-5deg);
+  box-shadow:
+    6px 6px 18px rgba(0, 0, 0, 0.5),
+    -4px -4px 12px rgba(255, 255, 255, 0.04),
+    0 0 20px rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
 .logo__text {
@@ -286,31 +351,23 @@ onUnmounted(() => {
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.03em;
-}
-
-.logo__badge {
-  padding: 4px 10px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(245, 158, 11, 0.15));
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  border-radius: 20px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--primary);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* ═══════════════════════════════════════════════════════════
-   桌面端导航
+   桌面端导航 — 新拟物分段器
    ═══════════════════════════════════════════════════════════ */
 
 .nav {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   padding: 5px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
+  background: var(--neo-surface);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  box-shadow:
+    var(--neo-shadow-up-sm),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .nav__link {
@@ -318,36 +375,39 @@ onUnmounted(() => {
   align-items: center;
   gap: 7px;
   padding: 9px 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary);
-  transition: color 0.2s, background 0.2s;
+  transition: all 0.25s var(--transition-smooth);
   text-decoration: none;
   position: relative;
   background: none;
   border: none;
-  cursor: pointer;
+  cursor: none;
   white-space: nowrap;
 }
 
 .nav__link:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: var(--neo-shadow-up-sm);
 }
 
 .nav__link--active {
   color: var(--primary);
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--neo-bg-dark);
+  box-shadow: var(--neo-shadow-down-sm);
 }
 
 .nav__link--active .nav__icon {
   color: var(--primary);
+  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4));
 }
 
 .nav__icon {
   flex-shrink: 0;
-  transition: color 0.2s;
+  transition: all 0.25s;
 }
 
 .nav__label {
@@ -356,7 +416,7 @@ onUnmounted(() => {
 }
 
 .nav__chevron {
-  transition: transform 0.2s;
+  transition: transform 0.25s;
   opacity: 0.5;
   flex-shrink: 0;
 }
@@ -365,43 +425,39 @@ onUnmounted(() => {
   transform: rotate(180deg);
 }
 
-/* 下拉菜单容器 */
 .nav__dropdown {
   position: relative;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   下拉菜单
+   下拉菜单 — 新拟物3D浮起
    ═══════════════════════════════════════════════════════════ */
 
 .dropdown {
   position: absolute;
-  top: calc(100% + 12px);
+  top: calc(100% + 14px);
   left: 50%;
   transform: translateX(-50%);
-  min-width: 220px;
+  min-width: 230px;
   padding: 8px;
-  background: rgba(20, 20, 24, 0.98);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background: var(--neo-surface);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  box-shadow:
+    var(--neo-shadow-up-lg),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
   z-index: 200;
 }
 
-/* 下拉菜单小箭头 */
+/* 下拉菜单装饰线 */
 .dropdown::before {
   content: '';
   position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 12px;
-  height: 12px;
-  background: rgba(20, 20, 24, 0.98);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
 }
 
 .dropdown__item {
@@ -410,43 +466,49 @@ onUnmounted(() => {
   gap: 12px;
   width: 100%;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   background: none;
   border: none;
-  cursor: pointer;
-  transition: background 0.2s;
+  cursor: none;
+  transition: all 0.25s;
   text-align: left;
 }
 
 .dropdown__item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--neo-bg-dark);
+  box-shadow: var(--neo-shadow-down-sm);
 }
 
 .dropdown__item--active {
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--neo-bg-dark);
+  box-shadow: var(--neo-shadow-down-sm);
 }
 
 .dropdown__icon {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+  background: var(--neo-surface-raised);
+  border-radius: 11px;
   color: var(--text-secondary);
   flex-shrink: 0;
-  transition: all 0.2s;
+  transition: all 0.25s;
+  box-shadow: var(--neo-shadow-up-sm);
 }
 
 .dropdown__item:hover .dropdown__icon {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--primary);
+  background: linear-gradient(145deg, #12c98e, #0ea572);
+  color: white;
+  box-shadow:
+    var(--neo-shadow-up-sm),
+    0 0 12px rgba(16, 185, 129, 0.3);
 }
 
 .dropdown__item--active .dropdown__icon {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--primary);
+  background: linear-gradient(145deg, #12c98e, #0ea572);
+  color: white;
 }
 
 .dropdown__text {
@@ -468,47 +530,54 @@ onUnmounted(() => {
 
 /* 下拉菜单动画 */
 .dropdown-enter-active {
-  transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.25s, transform 0.3s var(--transition-bounce);
 }
 .dropdown-leave-active {
   transition: opacity 0.15s, transform 0.15s;
 }
 .dropdown-enter-from {
   opacity: 0;
-  transform: translateX(-50%) translateY(-8px);
+  transform: translateX(-50%) translateY(-10px) scale(0.95);
 }
 .dropdown-leave-to {
   opacity: 0;
-  transform: translateX(-50%) translateY(-4px);
+  transform: translateX(-50%) translateY(-5px) scale(0.98);
 }
 
 /* ═══════════════════════════════════════════════════════════
-   移动端菜单
+   移动端菜单 — 新拟物
    ═══════════════════════════════════════════════════════════ */
 
 .mobile-toggle {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  background: var(--neo-surface);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  box-shadow: var(--neo-shadow-up-sm);
   color: var(--text-secondary);
-  cursor: pointer;
+  cursor: none;
   transition: all 0.3s;
 }
 
 .mobile-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
+  box-shadow: var(--neo-shadow-up);
   color: var(--text-primary);
+}
+
+.mobile-toggle:active {
+  box-shadow: var(--neo-shadow-pressed);
+  transform: scale(0.95);
 }
 
 .mobile-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   z-index: 150;
 }
 
@@ -516,26 +585,25 @@ onUnmounted(() => {
   position: fixed;
   top: 0;
   right: 0;
-  width: 280px;
+  width: 300px;
   height: 100vh;
-  background: rgba(15, 15, 18, 0.98);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--neo-bg);
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.5);
   z-index: 200;
   padding: 80px 20px 20px;
   overflow-y: auto;
 }
 
 .mobile-menu__group {
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .mobile-menu__group-label {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 12px 6px;
+  padding: 12px 14px 8px;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
@@ -548,25 +616,28 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 12px;
-  border-radius: 12px;
+  padding: 13px 14px;
+  border-radius: 14px;
   background: none;
   border: none;
-  cursor: pointer;
+  cursor: none;
   font-size: 0.9375rem;
   font-weight: 500;
   color: var(--text-secondary);
-  transition: all 0.2s;
+  transition: all 0.25s;
   text-align: left;
+  margin-bottom: 4px;
 }
 
 .mobile-menu__link:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--neo-surface);
+  box-shadow: var(--neo-shadow-up-sm);
   color: var(--text-primary);
 }
 
 .mobile-menu__link--active {
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--neo-bg-dark);
+  box-shadow: var(--neo-shadow-down-sm);
   color: var(--primary);
 }
 
@@ -581,7 +652,7 @@ onUnmounted(() => {
 }
 
 .slide-enter-active {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.35s var(--transition-bounce);
 }
 .slide-leave-active {
   transition: transform 0.25s;
@@ -592,7 +663,7 @@ onUnmounted(() => {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   主内容 & 页脚
+   主内容 & 页脚 — 新拟物
    ═══════════════════════════════════════════════════════════ */
 
 .main {
@@ -605,8 +676,7 @@ onUnmounted(() => {
 .footer {
   position: relative;
   z-index: 1;
-  padding: 60px 20px 40px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 40px 20px 32px;
 }
 
 .footer__content {
@@ -616,6 +686,8 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  padding: 28px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .footer__brand {
@@ -625,19 +697,27 @@ onUnmounted(() => {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--text-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.footer__icon {
-  color: var(--primary);
+.footer__logo-dot {
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(145deg, #12c98e, #0ea572);
+  border-radius: 50%;
+  box-shadow:
+    2px 2px 5px rgba(0, 0, 0, 0.3),
+    -1px -1px 3px rgba(16, 185, 129, 0.15),
+    0 0 10px rgba(16, 185, 129, 0.3);
 }
 
-/* 页面切换动画 */
-.page-enter-active {
-  animation: fadeInUp 0.4s ease;
+/* 页面切换 3D 动画 */
+.page3d-enter-active {
+  animation: page3DIn 0.45s var(--transition-smooth);
 }
 
-.page-leave-active {
-  animation: fadeInUp 0.25s ease reverse;
+.page3d-leave-active {
+  animation: page3DOut 0.25s ease;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -660,10 +740,6 @@ onUnmounted(() => {
   }
 
   .logo__text {
-    display: none;
-  }
-
-  .logo__badge {
     display: none;
   }
 }

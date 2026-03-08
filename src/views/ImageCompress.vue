@@ -7,6 +7,7 @@ import {
   Maximize, Target, FileType, ArrowLeftRight, Info
 } from 'lucide-vue-next'
 
+
 const {
   loading,
   error,
@@ -224,6 +225,8 @@ const handleCompareMove = (e) => {
   <div class="image-compress" @paste="handlePaste">
     <!-- 头部 -->
     <header class="header">
+      <div class="header__character">
+      </div>
       <div class="header__content">
         <div class="header__badge">
           <ImageDown :size="14" />
@@ -621,7 +624,19 @@ const handleCompareMove = (e) => {
 /* 头部 */
 .header {
   padding: 60px 0 40px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  justify-content: center;
+}
+
+.header__character {
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.15));
+}
+
+.header__content {
+  text-align: left;
 }
 
 .header__badge {
