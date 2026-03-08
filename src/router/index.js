@@ -71,6 +71,16 @@ const routes = [
     name: 'RemoveBg',
     component: () => import('../views/RemoveBg.vue'),
   },
+  {
+    path: '/id-generator',
+    name: 'IdGenerator',
+    component: () => import('../views/IdGenerator.vue'),
+  },
+  {
+    path: '/video-compress',
+    name: 'VideoCompress',
+    component: () => import('../views/VideoCompress.vue'),
+  },
 ]
 
 export default createRouter({

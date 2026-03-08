@@ -390,7 +390,10 @@ function videoApiMiddleware() {
   return {
     plugins: [vue(), watermarkRemovalMiddleware(), videoApiMiddleware(), chatApiMiddleware()],
     optimizeDeps: {
-      exclude: ['@imgly/background-removal'],
+      exclude: ['@imgly/background-removal', '@ffmpeg/ffmpeg', '@ffmpeg/util'],
+    },
+    worker: {
+      format: 'es',
     },
     server: {
       proxy: {

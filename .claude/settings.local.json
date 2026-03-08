@@ -40,7 +40,13 @@
       "WebFetch(domain:app.lottiefiles.com)",
       "Bash(findstr /c:\"Error\" /c:\"error\" /c:\"created\" /c:\"写入\" /c:\"Created\" /c:\"Written\")",
       "Bash(del \"D:\\\\我的项目\\\\myAITest\\\\src\\\\assets\\\\lottie\\\\char-factory.js\")",
-      "Bash(node generate-lottie.js)"
+      "Bash(node generate-lottie.js)",
+      "Bash(pnpm add xlsx)",
+      "Bash(pnpm add @ffmpeg/ffmpeg @ffmpeg/util)",
+      "Bash(pnpm add @ffmpeg/core@0.12.6)",
+      "Bash(copy /Y \"D:\\\\我的项目\\\\myAITest\\\\node_modules\\\\@ffmpeg\\\\core\\\\dist\\\\esm\\\\ffmpeg-core.js\" \"D:\\\\我的项目\\\\myAITest\\\\public\\\\ffmpeg\\\\ffmpeg-core.js\")",
+      "Bash(copy /Y \"D:\\\\我的项目\\\\myAITest\\\\node_modules\\\\@ffmpeg\\\\core\\\\dist\\\\esm\\\\ffmpeg-core.wasm\" \"D:\\\\我的项目\\\\myAITest\\\\public\\\\ffmpeg\\\\ffmpeg-core.wasm\")",
+      "Bash(ls \"D:/我的项目/myAITest/dist/assets/worker\"*)"
     ]
   }
 }

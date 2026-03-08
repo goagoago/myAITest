@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import {
   Plane, PenTool, Globe, Lightbulb, Zap, Shield, Sparkles, Clock,
   Star, Users, TrendingUp, Wand2, Eraser, FileText, ImageDown, MonitorPlay,
-  Image, Wrench, Bot, Camera, QrCode, ScanLine, Scissors
+  Image, Wrench, Bot, Camera, QrCode, ScanLine, Scissors, CreditCard, Video
 } from 'lucide-vue-next'
 import UiverseCard from '../components/UiverseCard.vue'
 
@@ -96,6 +96,24 @@ const toolCategories = [
         desc: '上传图片提取文字，支持中英文多语言，纯浏览器端处理',
         gradient: 'linear-gradient(145deg, #06b6d4, #8b5cf6)',
         shadowColor: 'rgba(6, 182, 212, 0.3)',
+      },
+      {
+        id: 'id-generator',
+        path: '/id-generator',
+        icon: CreditCard,
+        name: '身份证号生成',
+        desc: '随机生成符合规则的身份证号，支持指定省市区、性别、出生日期',
+        gradient: 'linear-gradient(145deg, #3b82f6, #10b981)',
+        shadowColor: 'rgba(59, 130, 246, 0.3)',
+      },
+      {
+        id: 'video-compress',
+        path: '/video-compress',
+        icon: Video,
+        name: '视频压缩',
+        desc: '浏览器端 FFmpeg 压缩视频，多种预设与分辨率可选，安全无上传',
+        gradient: 'linear-gradient(145deg, #f97316, #ef4444)',
+        shadowColor: 'rgba(249, 115, 22, 0.3)',
       },
     ],
   },
