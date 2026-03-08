@@ -375,29 +375,6 @@ const resetAll = () => {
       </div>
     </div>
 
-    <!-- 功能说明 -->
-    <!-- <div class="features-section">
-      <div class="feature-item">
-        <div class="feature-icon">🔒</div>
-        <h3>安全私密</h3>
-        <p>文件仅在浏览器本地处理，不会上传到任何服务器</p>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon">⚡</div>
-        <h3>快速转换</h3>
-        <p>基于浏览器端技术，秒级完成文档格式转换</p>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon">📄</div>
-        <h3>7 种模式</h3>
-        <p>PDF、Word、Markdown、HTML、图片多种格式互转</p>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon">🆓</div>
-        <h3>开放使用</h3>
-        <p>无需注册、无次数限制、随时随地使用</p>
-      </div>
-    </div> -->
   </div>
 </template>
 
