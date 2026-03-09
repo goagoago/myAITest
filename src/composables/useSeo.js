@@ -27,11 +27,11 @@ const SEO_CONFIG = {
     keywords: '图片压缩,在线压缩,图片缩小,压缩图片,图片优化,批量压缩',
   },
   '/doc-convert': {
-    title: '在线文档转换工具 - PDF/Word/Markdown等格式互转 | Tools Box',
-    description: '在线文档格式转换工具，支持PDF转Word、Word转PDF、Markdown转PDF、HTML转PDF、图片转PDF、PDF转图片等7种转换模式，浏览器端处理，安全隐私。',
-    keywords: '文档转换,PDF转Word,Word转PDF,Markdown转PDF,格式转换,在线转换',
+    title: '在线文档格式互转 - PDF/Word/Excel/Markdown/HTML/TXT | Tools Box',
+    description: '在线文档格式互转工具，支持PDF、Word、Excel、Markdown、HTML、TXT、图片等7种格式21种转换路径，浏览器端处理，安全隐私无需上传。',
+    keywords: '文档转换,PDF转Word,PDF转Excel,Word转PDF,格式互转,在线转换,Markdown转PDF,HTML转Word',
   },
-  '/screen-record': {
+  '/video/record': {
     title: '在线屏幕录制工具 - 浏览器端录屏 | Tools Box',
     description: '在线屏幕录制工具，无需安装软件，浏览器直接录屏，支持全屏、窗口、标签页录制，可录制系统声音和麦克风，录制文件本地保存。',
     keywords: '屏幕录制,在线录屏,浏览器录屏,录屏工具',
@@ -81,7 +81,7 @@ const SEO_CONFIG = {
     description: '在线随机身份证号码生成器，支持指定省市区、性别、出生日期范围，批量生成符合校验规则的18位身份证号码，仅供开发测试使用。',
     keywords: '身份证号生成器,随机身份证号,身份证号码,测试数据生成,开发测试工具',
   },
-  '/video-compress': {
+  '/video/compress': {
     title: '在线视频压缩工具 - 浏览器端FFmpeg压缩·多种预设 | Tools Box',
     description: '在线视频压缩工具，使用FFmpeg.wasm在浏览器端处理，支持MP4、WebM等格式，提供高质量、均衡、极致压缩三种预设，可选分辨率缩放，安全无上传。',
     keywords: '视频压缩,在线视频压缩,视频缩小,压缩视频,视频瘦身,FFmpeg,浏览器压缩',

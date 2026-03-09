@@ -54,16 +54,23 @@ const navGroups = [
     ],
   },
   {
+    id: 'video',
+    label: '视频工具',
+    icon: Video,
+    children: [
+      { path: '/video/compress', label: '视频压缩', icon: Video, desc: '浏览器端压缩' },
+      { path: '/video/record', label: '屏幕录制', icon: MonitorPlay, desc: '浏览器端录屏' },
+    ],
+  },
+  {
     id: 'utility',
     label: '实用工具',
     icon: Wrench,
     children: [
       { path: '/doc-convert', label: '文档转换', icon: FileText, desc: '7种格式互转' },
-      { path: '/screen-record', label: '屏幕录制', icon: MonitorPlay, desc: '浏览器端录屏' },
       { path: '/qr-code', label: 'QR码生成', icon: QrCode, desc: '二维码生成美化' },
       { path: '/ocr', label: 'OCR识别', icon: ScanLine, desc: '图片文字识别' },
       { path: '/id-generator', label: '身份证号', icon: CreditCard, desc: '随机号码生成' },
-      { path: '/video-compress', label: '视频压缩', icon: Video, desc: '浏览器端压缩' },
     ],
   },
   {

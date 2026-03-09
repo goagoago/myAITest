@@ -56,6 +56,32 @@ const toolCategories = [
     ],
   },
   {
+    id: 'video',
+    label: '视频工具',
+    icon: Video,
+    desc: '视频处理与录制',
+    tools: [
+      {
+        id: 'video-compress',
+        path: '/video/compress',
+        icon: Video,
+        name: '视频压缩',
+        desc: '浏览器端 FFmpeg 压缩视频，多种预设与分辨率可选，安全无上传',
+        gradient: 'linear-gradient(145deg, #f97316, #ef4444)',
+        shadowColor: 'rgba(249, 115, 22, 0.3)',
+      },
+      {
+        id: 'screen-record',
+        path: '/video/record',
+        icon: MonitorPlay,
+        name: '屏幕录制',
+        desc: '浏览器端录屏，支持系统声音和麦克风，无需安装插件',
+        gradient: 'linear-gradient(145deg, #ef4444, #f97316)',
+        shadowColor: 'rgba(239, 68, 68, 0.3)',
+      },
+    ],
+  },
+  {
     id: 'utility',
     label: '实用工具',
     icon: Wrench,
@@ -69,15 +95,6 @@ const toolCategories = [
         desc: '支持 PDF、Word、Markdown、HTML、图片等 7 种格式互转',
         gradient: 'linear-gradient(145deg, #3b82f6, #8b5cf6)',
         shadowColor: 'rgba(59, 130, 246, 0.3)',
-      },
-      {
-        id: 'screen-record',
-        path: '/screen-record',
-        icon: MonitorPlay,
-        name: '屏幕录制',
-        desc: '浏览器端录屏，支持系统声音和麦克风，无需安装插件',
-        gradient: 'linear-gradient(145deg, #ef4444, #f97316)',
-        shadowColor: 'rgba(239, 68, 68, 0.3)',
       },
       {
         id: 'qr-code',
@@ -105,15 +122,6 @@ const toolCategories = [
         desc: '随机生成符合规则的身份证号，支持指定省市区、性别、出生日期',
         gradient: 'linear-gradient(145deg, #3b82f6, #10b981)',
         shadowColor: 'rgba(59, 130, 246, 0.3)',
-      },
-      {
-        id: 'video-compress',
-        path: '/video-compress',
-        icon: Video,
-        name: '视频压缩',
-        desc: '浏览器端 FFmpeg 压缩视频，多种预设与分辨率可选，安全无上传',
-        gradient: 'linear-gradient(145deg, #f97316, #ef4444)',
-        shadowColor: 'rgba(249, 115, 22, 0.3)',
       },
     ],
   },
@@ -180,7 +188,7 @@ const toolCategories = [
       <div class="hero__content">
         <!-- 3D凸起标题 -->
         <h1 class="hero__title text-3d">
-          <span class="hero__title-line">让 AI 成为你的</span>
+          <span class="hero__title-line">让 TB 成为你的</span>
           <span class="hero__title-highlight gradient-text">超级助手</span>
         </h1>
       </div>

@@ -47,9 +47,22 @@ const routes = [
     component: () => import('../views/ImageCompress.vue'),
   },
   {
-    path: '/screen-record',
-    name: 'ScreenRecord',
-    component: () => import('../views/ScreenRecord.vue'),
+    path: '/video',
+    name: 'VideoTools',
+    redirect: '/video/compress',
+    component: () => import('../views/VideoTools.vue'),
+    children: [
+      {
+        path: 'compress',
+        name: 'VideoCompress',
+        component: () => import('../views/VideoCompress.vue'),
+      },
+      {
+        path: 'record',
+        name: 'ScreenRecord',
+        component: () => import('../views/ScreenRecord.vue'),
+      },
+    ]
   },
   {
     path: '/id-photo',
@@ -76,14 +89,16 @@ const routes = [
     name: 'IdGenerator',
     component: () => import('../views/IdGenerator.vue'),
   },
-  {
-    path: '/video-compress',
-    name: 'VideoCompress',
-    component: () => import('../views/VideoCompress.vue'),
-  },
 ]
 
 export default createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
+    }
+  },
 })

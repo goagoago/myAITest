@@ -571,6 +571,849 @@ export function useDocConvert() {
     }
   }
 
+  /**
+   * PDF → Excel（提取表格数据）
+   */
+  const convertPdfToExcel = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 5
+
+    try {
+      const pdfjsLib = await import('pdfjs-dist')
+      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
+      pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default
+
+      progress.value = 10
+
+      const arrayBuffer = await file.arrayBuffer()
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      const totalPages = pdf.numPages
+
+      progress.value = 20
+
+      const XLSX = await import('xlsx')
+      const wb = XLSX.utils.book_new()
+
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdf.getPage(i)
+        const textContent = await page.getTextContent()
+
+        // 按 Y 坐标分行，每行内按 X 排序分列
+        const rows = []
+        let currentRow = []
+        let lastY = null
+
+        // 按 Y 降序排列（PDF 坐标 Y 从下往上）
+        const sorted = [...textContent.items]
+          .filter(it => it.str.trim())
+          .sort((a, b) => b.transform[5] - a.transform[5] || a.transform[4] - b.transform[4])
+
+        for (const item of sorted) {
+          const y = Math.round(item.transform[5])
+          if (lastY !== null && Math.abs(y - lastY) > 5) {
+            if (currentRow.length) rows.push(currentRow.map(c => c.str))
+            currentRow = []
+          }
+          currentRow.push(item)
+          lastY = y
+        }
+        if (currentRow.length) rows.push(currentRow.map(c => c.str))
+
+        const ws = XLSX.utils.aoa_to_sheet(rows.length ? rows : [['']])
+        XLSX.utils.book_append_sheet(wb, ws, `第${i}页`)
+
+        progress.value = 20 + Math.floor((i / totalPages) * 60)
+      }
+
+      progress.value = 85
+
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const baseName = file.name.replace(/\.pdf$/i, '')
+      convertedFileName.value = `${baseName}.xlsx`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'PDF 转 Excel 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Excel → PDF
+   */
+  const convertExcelToPdf = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 5
+
+    try {
+      const XLSX = await import('xlsx')
+      progress.value = 15
+
+      const arrayBuffer = await file.arrayBuffer()
+      const wb = XLSX.read(arrayBuffer, { type: 'array' })
+
+      progress.value = 30
+
+      // 将所有 sheet 渲染为 HTML 表格
+      let htmlParts = []
+      for (const name of wb.SheetNames) {
+        const ws = wb.Sheets[name]
+        const html = XLSX.utils.sheet_to_html(ws, { editable: false })
+        htmlParts.push(`<h2 style="font-size:16px;font-weight:700;margin:24px 0 12px;color:#333;">${name}</h2>${html}`)
+      }
+
+      progress.value = 50
+
+      const html2pdf = (await import('html2pdf.js')).default
+
+      const container = document.createElement('div')
+      container.innerHTML = htmlParts.join('')
+      container.style.cssText = `
+        font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #333;
+        padding: 16px;
+      `
+      container.querySelectorAll('table').forEach(table => {
+        table.style.cssText = 'border-collapse:collapse;width:100%;margin-bottom:16px;'
+        table.querySelectorAll('td, th').forEach(cell => {
+          cell.style.cssText = 'border:1px solid #d1d5db;padding:6px 10px;text-align:left;font-size:12px;'
+        })
+      })
+
+      document.body.appendChild(container)
+      progress.value = 65
+
+      const baseName = file.name.replace(/\.(xlsx?|csv)$/i, '')
+      convertedFileName.value = `${baseName}.pdf`
+
+      await html2pdf()
+        .set({
+          margin: [10, 10, 10, 10],
+          filename: convertedFileName.value,
+          image: { type: 'jpeg', quality: 0.95 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+        })
+        .from(container)
+        .save()
+
+      document.body.removeChild(container)
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'Excel 转 PDF 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Word → Markdown
+   */
+  const convertWordToMarkdown = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 5
+
+    try {
+      const mammoth = await import('mammoth')
+      progress.value = 15
+
+      const arrayBuffer = await file.arrayBuffer()
+      const result = await mammoth.convertToHtml({ arrayBuffer })
+      const html = result.value
+
+      progress.value = 40
+
+      // HTML → Markdown 简易转换
+      let md = html
+        // 标题
+        .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
+        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
+        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
+        .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n')
+        .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n')
+        .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n')
+        // 粗体、斜体
+        .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
+        .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
+        .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
+        .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+        // 链接
+        .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
+        // 图片
+        .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![[$2]]($1)')
+        .replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '![]($1)')
+        // 列表
+        .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
+        .replace(/<\/?[ou]l[^>]*>/gi, '\n')
+        // 段落
+        .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+        // 换行
+        .replace(/<br\s*\/?>/gi, '\n')
+        // 水平线
+        .replace(/<hr[^>]*\/?>/gi, '\n---\n\n')
+        // 代码
+        .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
+        .replace(/<pre[^>]*>(.*?)<\/pre>/gis, '```\n$1\n```\n\n')
+        // 删除剩余标签
+        .replace(/<[^>]+>/g, '')
+        // HTML 实体
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        // 清理多余空行
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+
+      progress.value = 70
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
+      const baseName = file.name.replace(/\.docx?$/i, '')
+      convertedFileName.value = `${baseName}.md`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'Word 转 Markdown 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * HTML → Word
+   */
+  const convertHtmlToWord = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 10
+
+    try {
+      const text = await file.text()
+      progress.value = 25
+
+      // 提取 body 内容
+      const bodyMatch = text.match(/<body[^>]*>([\s\S]*)<\/body>/i)
+      const htmlContent = bodyMatch ? bodyMatch[1] : text
+
+      // 简易 HTML → 纯文本分段
+      let content = htmlContent
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<\/h[1-6]>/gi, '\n\n')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+
+      progress.value = 50
+
+      const { Document, Packer, Paragraph, TextRun } = await import('docx')
+
+      const lines = content.split('\n')
+      const children = lines.map(line =>
+        new Paragraph({
+          children: [new TextRun({ text: line || ' ', size: 24 })],
+          spacing: { after: line === '' ? 200 : 80 },
+        })
+      )
+
+      const doc = new Document({
+        sections: [{
+          properties: { page: { margin: { top: 1440, right: 1080, bottom: 1440, left: 1080 } } },
+          children,
+        }],
+      })
+
+      progress.value = 80
+
+      const blob = await Packer.toBlob(doc)
+      const baseName = file.name.replace(/\.(html?|htm)$/i, '')
+      convertedFileName.value = `${baseName}.docx`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'HTML 转 Word 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * TXT → PDF
+   */
+  const convertTxtToPdf = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 10
+
+    try {
+      const text = await file.text()
+      progress.value = 30
+
+      const html2pdf = (await import('html2pdf.js')).default
+
+      const container = document.createElement('div')
+      // 保留原始换行和空格
+      container.style.cssText = `
+        font-family: "Microsoft YaHei", "PingFang SC", "Courier New", monospace;
+        font-size: 13px;
+        line-height: 1.8;
+        color: #333;
+        padding: 24px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-width: 700px;
+      `
+      container.textContent = text
+
+      document.body.appendChild(container)
+      progress.value = 55
+
+      const baseName = file.name.replace(/\.(txt|text|log)$/i, '')
+      convertedFileName.value = `${baseName}.pdf`
+
+      await html2pdf()
+        .set({
+          margin: [15, 12, 15, 12],
+          filename: convertedFileName.value,
+          image: { type: 'jpeg', quality: 0.95 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+        })
+        .from(container)
+        .save()
+
+      document.body.removeChild(container)
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'TXT 转 PDF 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Excel → HTML（导出可视化 HTML 表格）
+   */
+  const convertExcelToHtml = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 5
+
+    try {
+      const XLSX = await import('xlsx')
+      progress.value = 15
+
+      const arrayBuffer = await file.arrayBuffer()
+      const wb = XLSX.read(arrayBuffer, { type: 'array' })
+
+      progress.value = 40
+
+      let htmlParts = [
+        '<!DOCTYPE html>',
+        '<html lang="zh-CN"><head><meta charset="UTF-8">',
+        `<title>${file.name}</title>`,
+        '<style>',
+        'body{font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;padding:32px;background:#f9fafb;color:#333;}',
+        'h2{font-size:18px;margin:28px 0 12px;color:#1f2937;}',
+        'table{border-collapse:collapse;width:100%;margin-bottom:24px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.1);border-radius:8px;overflow:hidden;}',
+        'th{background:#f3f4f6;font-weight:600;text-align:left;}',
+        'td,th{border:1px solid #e5e7eb;padding:8px 12px;font-size:13px;}',
+        'tr:hover{background:#f9fafb;}',
+        '</style></head><body>',
+      ]
+
+      for (const name of wb.SheetNames) {
+        const ws = wb.Sheets[name]
+        const html = XLSX.utils.sheet_to_html(ws, { editable: false })
+        htmlParts.push(`<h2>${name}</h2>`)
+        htmlParts.push(html)
+      }
+
+      htmlParts.push('</body></html>')
+      progress.value = 75
+
+      const blob = new Blob([htmlParts.join('\n')], { type: 'text/html;charset=utf-8' })
+      const baseName = file.name.replace(/\.(xlsx?|csv)$/i, '')
+      convertedFileName.value = `${baseName}.html`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'Excel 转 HTML 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * PDF → Markdown
+   */
+  const convertPdfToMarkdown = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 5
+
+    try {
+      const pdfjsLib = await import('pdfjs-dist')
+      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
+      pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default
+
+      progress.value = 10
+
+      const arrayBuffer = await file.arrayBuffer()
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      const totalPages = pdf.numPages
+
+      progress.value = 20
+
+      const mdParts = []
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdf.getPage(i)
+        const textContent = await page.getTextContent()
+
+        const lines = []
+        let currentLine = []
+        let lastY = null
+
+        for (const item of textContent.items) {
+          if (item.str.trim() === '') continue
+          const y = Math.round(item.transform[5])
+          if (lastY !== null && Math.abs(y - lastY) > 5) {
+            if (currentLine.length) lines.push(currentLine.map(c => c.str).join(' '))
+            currentLine = []
+          }
+          currentLine.push(item)
+          lastY = y
+        }
+        if (currentLine.length) lines.push(currentLine.map(c => c.str).join(' '))
+
+        if (i > 1) mdParts.push('\n---\n')
+        mdParts.push(lines.join('\n\n'))
+        progress.value = 20 + Math.floor((i / totalPages) * 65)
+      }
+
+      progress.value = 90
+
+      const blob = new Blob([mdParts.join('\n')], { type: 'text/markdown;charset=utf-8' })
+      const baseName = file.name.replace(/\.pdf$/i, '')
+      convertedFileName.value = `${baseName}.md`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'PDF 转 Markdown 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * PDF → HTML
+   */
+  const convertPdfToHtml = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 5
+
+    try {
+      const pdfjsLib = await import('pdfjs-dist')
+      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
+      pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default
+
+      progress.value = 10
+
+      const arrayBuffer = await file.arrayBuffer()
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      const totalPages = pdf.numPages
+
+      progress.value = 20
+
+      const htmlPages = []
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdf.getPage(i)
+        const textContent = await page.getTextContent()
+
+        const lines = []
+        let currentLine = []
+        let lastY = null
+
+        for (const item of textContent.items) {
+          if (item.str.trim() === '') continue
+          const y = Math.round(item.transform[5])
+          if (lastY !== null && Math.abs(y - lastY) > 5) {
+            if (currentLine.length) lines.push(currentLine.map(c => c.str).join(' '))
+            currentLine = []
+          }
+          currentLine.push(item)
+          lastY = y
+        }
+        if (currentLine.length) lines.push(currentLine.map(c => c.str).join(' '))
+
+        htmlPages.push(`<div class="page"><h3>第 ${i} 页</h3>${lines.map(l => `<p>${l}</p>`).join('\n')}</div>`)
+        progress.value = 20 + Math.floor((i / totalPages) * 60)
+      }
+
+      progress.value = 85
+
+      const fullHtml = [
+        '<!DOCTYPE html>',
+        '<html lang="zh-CN"><head><meta charset="UTF-8">',
+        `<title>${file.name}</title>`,
+        '<style>',
+        'body{font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;max-width:800px;margin:0 auto;padding:32px;background:#fff;color:#333;line-height:1.8;}',
+        '.page{margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #e5e7eb;}',
+        'h3{color:#1f2937;font-size:16px;margin-bottom:12px;}',
+        'p{margin:8px 0;font-size:14px;}',
+        '</style></head><body>',
+        htmlPages.join('\n'),
+        '</body></html>',
+      ].join('\n')
+
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' })
+      const baseName = file.name.replace(/\.pdf$/i, '')
+      convertedFileName.value = `${baseName}.html`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'PDF 转 HTML 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * PDF → TXT
+   */
+  const convertPdfToTxt = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 5
+
+    try {
+      const pdfjsLib = await import('pdfjs-dist')
+      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
+      pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default
+
+      progress.value = 10
+
+      const arrayBuffer = await file.arrayBuffer()
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      const totalPages = pdf.numPages
+
+      progress.value = 20
+
+      const textParts = []
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdf.getPage(i)
+        const textContent = await page.getTextContent()
+
+        const lines = []
+        let currentLine = []
+        let lastY = null
+
+        for (const item of textContent.items) {
+          if (item.str.trim() === '') continue
+          const y = Math.round(item.transform[5])
+          if (lastY !== null && Math.abs(y - lastY) > 5) {
+            if (currentLine.length) lines.push(currentLine.map(c => c.str).join(' '))
+            currentLine = []
+          }
+          currentLine.push(item)
+          lastY = y
+        }
+        if (currentLine.length) lines.push(currentLine.map(c => c.str).join(' '))
+
+        textParts.push(lines.join('\n'))
+        progress.value = 20 + Math.floor((i / totalPages) * 70)
+      }
+
+      progress.value = 95
+
+      const blob = new Blob([textParts.join('\n\n')], { type: 'text/plain;charset=utf-8' })
+      const baseName = file.name.replace(/\.pdf$/i, '')
+      convertedFileName.value = `${baseName}.txt`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'PDF 转 TXT 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Word → HTML
+   */
+  const convertWordToHtml = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 5
+
+    try {
+      const mammoth = await import('mammoth')
+      progress.value = 15
+
+      const arrayBuffer = await file.arrayBuffer()
+      const result = await mammoth.convertToHtml({ arrayBuffer })
+      const htmlContent = result.value
+
+      progress.value = 60
+
+      const fullHtml = [
+        '<!DOCTYPE html>',
+        '<html lang="zh-CN"><head><meta charset="UTF-8">',
+        `<title>${file.name}</title>`,
+        '<style>',
+        'body{font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;max-width:800px;margin:0 auto;padding:32px;background:#fff;color:#333;line-height:1.8;font-size:14px;}',
+        'h1{font-size:28px;font-weight:700;margin:32px 0 16px;}',
+        'h2{font-size:22px;font-weight:700;margin:24px 0 12px;}',
+        'h3{font-size:18px;font-weight:600;margin:20px 0 10px;}',
+        'p{margin:8px 0;}',
+        'table{border-collapse:collapse;width:100%;margin:16px 0;}',
+        'td,th{border:1px solid #d1d5db;padding:8px 12px;}',
+        'th{background:#f3f4f6;font-weight:600;}',
+        'img{max-width:100%;height:auto;}',
+        '</style></head><body>',
+        htmlContent,
+        '</body></html>',
+      ].join('\n')
+
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' })
+      const baseName = file.name.replace(/\.docx?$/i, '')
+      convertedFileName.value = `${baseName}.html`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'Word 转 HTML 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Word → TXT
+   */
+  const convertWordToTxt = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 5
+
+    try {
+      const mammoth = await import('mammoth')
+      progress.value = 15
+
+      const arrayBuffer = await file.arrayBuffer()
+      const result = await mammoth.extractRawText({ arrayBuffer })
+
+      progress.value = 70
+
+      const blob = new Blob([result.value], { type: 'text/plain;charset=utf-8' })
+      const baseName = file.name.replace(/\.docx?$/i, '')
+      convertedFileName.value = `${baseName}.txt`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'Word 转 TXT 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Markdown → HTML
+   */
+  const convertMarkdownToHtml = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 10
+
+    try {
+      const text = await file.text()
+      progress.value = 25
+
+      const { marked } = await import('marked')
+      const htmlContent = marked.parse(text)
+      progress.value = 55
+
+      const fullHtml = [
+        '<!DOCTYPE html>',
+        '<html lang="zh-CN"><head><meta charset="UTF-8">',
+        `<title>${file.name}</title>`,
+        '<style>',
+        'body{font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;max-width:800px;margin:0 auto;padding:32px;background:#fff;color:#333;line-height:1.8;font-size:14px;}',
+        'pre{background:#f6f8fa;padding:16px;border-radius:8px;overflow-x:auto;font-size:13px;}',
+        'code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em;}',
+        'pre code{background:none;padding:0;}',
+        'blockquote{border-left:4px solid #10b981;padding:12px 16px;margin:16px 0;background:#f0fdf4;color:#555;}',
+        'table{border-collapse:collapse;width:100%;margin:16px 0;}',
+        'td,th{border:1px solid #d1d5db;padding:8px 12px;}',
+        'th{background:#f3f4f6;font-weight:600;}',
+        'img{max-width:100%;height:auto;}',
+        'h1{border-bottom:2px solid #e5e7eb;padding-bottom:8px;}',
+        'h2{border-bottom:1px solid #e5e7eb;padding-bottom:6px;}',
+        '</style></head><body>',
+        htmlContent,
+        '</body></html>',
+      ].join('\n')
+
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' })
+      const baseName = file.name.replace(/\.(md|markdown)$/i, '')
+      convertedFileName.value = `${baseName}.html`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'Markdown 转 HTML 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * HTML → Markdown
+   */
+  const convertHtmlToMarkdown = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 10
+
+    try {
+      const text = await file.text()
+      progress.value = 30
+
+      const bodyMatch = text.match(/<body[^>]*>([\s\S]*)<\/body>/i)
+      const html = bodyMatch ? bodyMatch[1] : text
+
+      let md = html
+        .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
+        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
+        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
+        .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n')
+        .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n')
+        .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n')
+        .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
+        .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
+        .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
+        .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+        .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
+        .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2]($1)')
+        .replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '![]($1)')
+        .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
+        .replace(/<\/?[ou]l[^>]*>/gi, '\n')
+        .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<hr[^>]*\/?>/gi, '\n---\n\n')
+        .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
+        .replace(/<pre[^>]*>(.*?)<\/pre>/gis, '```\n$1\n```\n\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+
+      progress.value = 70
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
+      const baseName = file.name.replace(/\.(html?|htm)$/i, '')
+      convertedFileName.value = `${baseName}.md`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'HTML 转 Markdown 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * TXT → Word
+   */
+  const convertTxtToWord = async (file) => {
+    loading.value = true
+    error.value = null
+    progress.value = 10
+
+    try {
+      const text = await file.text()
+      progress.value = 30
+
+      const { Document, Packer, Paragraph, TextRun } = await import('docx')
+
+      const lines = text.split('\n')
+      const children = lines.map(line =>
+        new Paragraph({
+          children: [new TextRun({ text: line || ' ', size: 24 })],
+          spacing: { after: 80 },
+        })
+      )
+
+      const doc = new Document({
+        sections: [{
+          properties: { page: { margin: { top: 1440, right: 1080, bottom: 1440, left: 1080 } } },
+          children,
+        }],
+      })
+
+      progress.value = 75
+
+      const blob = await Packer.toBlob(doc)
+      const baseName = file.name.replace(/\.(txt|text|log)$/i, '')
+      convertedFileName.value = `${baseName}.docx`
+      saveAs(blob, convertedFileName.value)
+
+      progress.value = 100
+    } catch (e) {
+      error.value = e.message || 'TXT 转 Word 失败'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   const reset = () => {
     loading.value = false
     error.value = null
@@ -584,12 +1427,26 @@ export function useDocConvert() {
     progress,
     convertedFileName,
     convertPdfToWord,
+    convertPdfToExcel,
+    convertPdfToImages,
+    convertPdfToMarkdown,
+    convertPdfToHtml,
+    convertPdfToTxt,
     convertWordToPdf,
+    convertWordToMarkdown,
+    convertWordToHtml,
+    convertWordToTxt,
+    convertExcelToPdf,
+    convertExcelToHtml,
     convertMarkdownToPdf,
     convertMarkdownToWord,
+    convertMarkdownToHtml,
     convertHtmlToPdf,
+    convertHtmlToWord,
+    convertHtmlToMarkdown,
+    convertTxtToPdf,
+    convertTxtToWord,
     convertImagesToPdf,
-    convertPdfToImages,
     reset,
   }
 }
