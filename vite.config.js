@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import path from 'node:path'
 
 // API Keys 只从环境变量读取，不要硬编码！
 // 本地开发时在项目根目录创建 .env.local 文件写入密钥
@@ -394,6 +395,11 @@ function videoApiMiddleware() {
     },
     worker: {
       format: 'es',
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
     },
     server: {
       proxy: {

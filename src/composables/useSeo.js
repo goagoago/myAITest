@@ -31,7 +31,7 @@ const SEO_CONFIG = {
     description: '在线文档格式互转工具，支持PDF、Word、Excel、Markdown、HTML、TXT、图片等7种格式21种转换路径，浏览器端处理，安全隐私无需上传。',
     keywords: '文档转换,PDF转Word,PDF转Excel,Word转PDF,格式互转,在线转换,Markdown转PDF,HTML转Word',
   },
-  '/video/record': {
+  '/media/record': {
     title: '在线屏幕录制工具 - 浏览器端录屏 | Tools Box',
     description: '在线屏幕录制工具，无需安装软件，浏览器直接录屏，支持全屏、窗口、标签页录制，可录制系统声音和麦克风，录制文件本地保存。',
     keywords: '屏幕录制,在线录屏,浏览器录屏,录屏工具',
@@ -81,10 +81,15 @@ const SEO_CONFIG = {
     description: '在线随机身份证号码生成器，支持指定省市区、性别、出生日期范围，批量生成符合校验规则的18位身份证号码，仅供开发测试使用。',
     keywords: '身份证号生成器,随机身份证号,身份证号码,测试数据生成,开发测试工具',
   },
-  '/video/compress': {
+  '/media/compress': {
     title: '在线视频压缩工具 - 浏览器端FFmpeg压缩·多种预设 | Tools Box',
     description: '在线视频压缩工具，使用FFmpeg.wasm在浏览器端处理，支持MP4、WebM等格式，提供高质量、均衡、极致压缩三种预设，可选分辨率缩放，安全无上传。',
     keywords: '视频压缩,在线视频压缩,视频缩小,压缩视频,视频瘦身,FFmpeg,浏览器压缩',
+  },
+  '/media/audio-convert': {
+    title: '在线音频格式转换 - MP3, WAV, FLAC, M4A, OGG, AAC | Tools Box',
+    description: '在线音频格式转换工具，支持多种主流音频格式如 MP3, WAV, FLAC, M4A, OGG, AAC 互相转换，浏览器端处理，安全快速。',
+    keywords: '音频转换,格式转换,MP3转换,WAV转换,FLAC转换,M4A转换,OGG转换,AAC转换',
   },
 }
 

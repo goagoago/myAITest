@@ -47,10 +47,10 @@ const routes = [
     component: () => import('../views/ImageCompress.vue'),
   },
   {
-    path: '/video',
-    name: 'VideoTools',
-    redirect: '/video/compress',
-    component: () => import('../views/VideoTools.vue'),
+    path: '/media',
+    name: 'MediaTools',
+    redirect: '/media/compress',
+    component: () => import('../views/MediaTools.vue'),
     children: [
       {
         path: 'compress',
@@ -61,6 +61,11 @@ const routes = [
         path: 'record',
         name: 'ScreenRecord',
         component: () => import('../views/ScreenRecord.vue'),
+      },
+      {
+        path: 'audio-convert',
+        name: 'AudioConvert',
+        component: () => import('../views/AudioConvert.vue'),
       },
     ]
   },
@@ -98,7 +103,8 @@ export default createRouter({
     if (savedPosition) {
       return savedPosition
     } else {
-      return { top: 0 }
+      // 使用平滑滚动，以避免与页面过渡动画冲突
+      return { top: 0, behavior: 'smooth' }
     }
   },
 })

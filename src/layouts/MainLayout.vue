@@ -54,12 +54,13 @@ const navGroups = [
     ],
   },
   {
-    id: 'video',
-    label: '视频工具',
+    id: 'media',
+    label: '音视频工具',
     icon: Video,
     children: [
-      { path: '/video/compress', label: '视频压缩', icon: Video, desc: '浏览器端压缩' },
-      { path: '/video/record', label: '屏幕录制', icon: MonitorPlay, desc: '浏览器端录屏' },
+      { path: '/media/compress', label: '视频压缩', icon: Video, desc: '浏览器端压缩' },
+      { path: '/media/record', label: '屏幕录制', icon: MonitorPlay, desc: '浏览器端录屏' },
+      { path: '/media/audio-convert', label: '音频转换', icon: FileText, desc: '多种格式互转' },
     ],
   },
   {
