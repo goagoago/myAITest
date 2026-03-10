@@ -230,6 +230,12 @@ const resetAll = () => {
 
         <!-- Advanced Options -->
         <div class="options-grid">
+          <!-- Sample Rate -->
+          <div class="option-group">
+            <label class="option-label">采样率</label>
+            <CustomSelect v-model="sampleRate" :options="sampleRates" />
+          </div>
+
           <!-- Unified Quality/Compression Group -->
           <div v-if="showQualityOptions || showFlacOptions" class="option-group">
             <label class="option-label">压缩率</label>

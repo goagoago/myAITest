@@ -81,6 +81,11 @@ const SEO_CONFIG = {
     description: '在线随机身份证号码生成器，支持指定省市区、性别、出生日期范围，批量生成符合校验规则的18位身份证号码，仅供开发测试使用。',
     keywords: '身份证号生成器,随机身份证号,身份证号码,测试数据生成,开发测试工具',
   },
+  '/resume-builder': {
+    title: 'AI 简历工坊 - Markdown编辑·模块拖拽·PDF导出 | Tools Box',
+    description: 'AI简历工坊，支持Markdown直接编辑、模块拖拽排序、PDF/Word导入、实时预览与PDF导出，帮助你快速完成高质量简历。',
+    keywords: 'AI简历,简历制作,简历编辑,Markdown简历,PDF简历,简历优化',
+  },
   '/media/compress': {
     title: '在线视频压缩工具 - 浏览器端FFmpeg压缩·多种预设 | Tools Box',
     description: '在线视频压缩工具，使用FFmpeg.wasm在浏览器端处理，支持MP4、WebM等格式，提供高质量、均衡、极致压缩三种预设，可选分辨率缩放，安全无上传。',

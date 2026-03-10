@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { aiClient } from '../services/aiClient'
 
 /**
  * 聊天 composable
@@ -18,21 +19,12 @@ export function useChat() {
     streamingText.value = ''
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: messages.map(m => ({ role: m.role, content: m.content })),
-          temperature: 0.7,
-          max_tokens: 8192,
-          stream: true,
-        }),
+      const response = await aiClient.chat.stream({
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        temperature: 0.7,
+        max_tokens: 8192,
+        stream: true,
       })
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.error?.message || errData.error || `HTTP ${response.status}`)
-      }
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
@@ -80,22 +72,11 @@ export function useChat() {
     result.value = ''
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: messages.map(m => ({ role: m.role, content: m.content })),
-          temperature: 0.7,
-          max_tokens: 8192,
-        }),
+      const data = await aiClient.chat.complete({
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        temperature: 0.7,
+        max_tokens: 8192,
       })
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.error?.message || errData.error || `HTTP ${response.status}`)
-      }
-
-      const data = await response.json()
       result.value = data.choices?.[0]?.message?.content || ''
       return result.value
     } catch (e) {

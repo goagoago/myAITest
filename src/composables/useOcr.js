@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { createWorker, PSM } from 'tesseract.js'
+import { aiClient } from '../services/aiClient'
 
 export function useOcr() {
   const loading = ref(false)
@@ -73,39 +74,27 @@ export function useOcr() {
       progress.value = 30
 
       try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model,
-            messages: [
-              {
-                role: 'user',
-                content: [
-                  {
-                    type: 'image_url',
-                    image_url: { url: base64 },
-                  },
-                  {
-                    type: 'text',
-                    text: '请识别这张图片中的所有文字内容，完整准确地输出原文，保持原始排版格式。只输出识别到的文字，不要添加任何额外说明。',
-                  },
-                ],
-              },
-            ],
-          }),
+        const data = await aiClient.chat.complete({
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'image_url',
+                  image_url: { url: base64 },
+                },
+                {
+                  type: 'text',
+                  text: '请识别这张图片中的所有文字内容，完整准确地输出原文，保持原始排版格式。只输出识别到的文字，不要添加任何额外说明。',
+                },
+              ],
+            },
+          ],
         })
 
         progress.value = 80
 
-        if (!response.ok) {
-          const errText = await response.text().catch(() => '')
-          lastError = new Error(`${model} 返回 ${response.status}: ${errText}`)
-          console.warn(`${model} failed:`, response.status, errText)
-          continue // 尝试下一个模型
-        }
-
-        const data = await response.json()
         const text = data.choices?.[0]?.message?.content || ''
         if (!text) {
           lastError = new Error('未能识别到文字')

@@ -1,6 +1,5 @@
 import { ref } from 'vue'
-
-const VIDEO_API_URL = '/api/video'
+import { aiClient } from '../services/aiClient'
 
 export function useVideo() {
   const loading = ref(false)
@@ -16,13 +15,9 @@ export function useVideo() {
   const submitVideo = async (prompt, retryCount = 0) => {
     if (cancelled) throw new Error('已取消')
 
-    const response = await fetch(`${VIDEO_API_URL}?action=submit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
-    })
+    const { ok, status: code, data } = await aiClient.video.submit({ prompt })
 
-    if (response.status === 429 && retryCount < 3) {
+    if (code === 429 && retryCount < 3) {
       const waitSec = 10 + retryCount * 10
       status.value = 'rate_limited'
       error.value = `模型访问量过大，${waitSec}秒后自动重试（第${retryCount + 1}次）...`
@@ -33,16 +28,14 @@ export function useVideo() {
       return submitVideo(prompt, retryCount + 1)
     }
 
-    if (response.status === 429) {
+    if (code === 429) {
       throw new Error('模型当前访问量过大，请稍后再试')
     }
 
-    if (!response.ok) {
-      const errData = await response.json()
-      throw new Error(errData.detail || errData.error || `HTTP ${response.status}`)
+    if (!ok) {
+      throw new Error(data?.detail || data?.error || `HTTP ${code}`)
     }
 
-    const data = await response.json()
     console.log('[Video Submit Response]', data)
     return data.requestId
   }
@@ -50,13 +43,9 @@ export function useVideo() {
   const checkStatus = async (rid, retryCount = 0) => {
     if (cancelled) throw new Error('已取消')
 
-    const response = await fetch(`${VIDEO_API_URL}?action=status`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requestId: rid }),
-    })
+    const { ok, status: code, data } = await aiClient.video.status({ requestId: rid })
 
-    if (response.status === 429 && retryCount < 3) {
+    if (code === 429 && retryCount < 3) {
       const waitSec = 5 + retryCount * 5
       console.log(`[Video] 限流，${waitSec}秒后重试...`)
       await new Promise(r => setTimeout(r, waitSec * 1000))
@@ -64,16 +53,15 @@ export function useVideo() {
       return checkStatus(rid, retryCount + 1)
     }
 
-    if (response.status === 429) {
+    if (code === 429) {
       throw new Error('模型当前访问量过大，请稍后再试')
     }
 
-    if (!response.ok) {
-      const errData = await response.json()
-      throw new Error(errData.detail || errData.error || `HTTP ${response.status}`)
+    if (!ok) {
+      throw new Error(data?.detail || data?.error || `HTTP ${code}`)
     }
 
-    return await response.json()
+    return data
   }
 
   const generateVideo = async (prompt) => {

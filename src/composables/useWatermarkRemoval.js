@@ -1,6 +1,5 @@
 import { ref } from 'vue'
-
-const WATERMARK_API_URL = '/api/watermark-removal'
+import { aiClient } from '../services/aiClient'
 
 export function useWatermarkRemoval() {
   const loading = ref(false)
@@ -27,21 +26,12 @@ export function useWatermarkRemoval() {
   }
 
   const callApi = async (base64Image, prompt, steps = 50, guidance = 7.5) => {
-    const response = await fetch(WATERMARK_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt,
-        image: base64Image,
-        num_inference_steps: steps,
-        guidance_scale: guidance,
-      }),
+    const data = await aiClient.watermark.remove({
+      prompt,
+      image: base64Image,
+      num_inference_steps: steps,
+      guidance_scale: guidance,
     })
-    if (!response.ok) {
-      const errData = await response.json()
-      throw new Error(errData.error?.message || errData.error || `HTTP ${response.status}`)
-    }
-    const data = await response.json()
     const url = data.images?.[0]?.url
     if (!url) throw new Error('未能获取到处理后的图片')
     return url

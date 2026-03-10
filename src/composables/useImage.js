@@ -1,6 +1,5 @@
 import { ref } from 'vue'
-
-const IMAGE_API_URL = '/api/image'
+import { aiClient } from '../services/aiClient'
 
 export function useImage() {
   const loading = ref(false)
@@ -19,25 +18,15 @@ export function useImage() {
 
       progress.value = 30
 
-      const response = await fetch(IMAGE_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          model: 'Kwai-Kolors/Kolors',
-          image_size,
-          num_inference_steps: 25,
-        }),
+      const data = await aiClient.image.generate({
+        prompt,
+        model: 'Kwai-Kolors/Kolors',
+        image_size,
+        num_inference_steps: 25,
       })
 
       progress.value = 70
 
-      if (!response.ok) {
-        const errData = await response.json()
-        throw new Error(errData.error?.message || errData.error || `HTTP ${response.status}`)
-      }
-
-      const data = await response.json()
       progress.value = 100
 
       const url = data.images?.[0]?.url

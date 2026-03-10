@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Home, Plane, PenTool, Globe, Lightbulb, Sparkles, Zap, Eraser, FileText,
-  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera, QrCode, ScanLine, Scissors, CreditCard, Video
+  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera, QrCode, ScanLine, Scissors, CreditCard, Video, ScrollText
 } from 'lucide-vue-next'
 import CursorEffect from '../components/CursorEffect.vue'
 import LottieInteractive from '../components/LottieInteractive.vue'
@@ -72,6 +72,7 @@ const navGroups = [
       { path: '/qr-code', label: 'QR码生成', icon: QrCode, desc: '二维码生成美化' },
       { path: '/ocr', label: 'OCR识别', icon: ScanLine, desc: '图片文字识别' },
       { path: '/id-generator', label: '身份证号', icon: CreditCard, desc: '随机号码生成' },
+      { path: '/resume-builder', label: '简历工坊', icon: ScrollText, desc: 'Markdown编辑与PDF导出' },
     ],
   },
   {

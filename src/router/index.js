@@ -94,6 +94,11 @@ const routes = [
     name: 'IdGenerator',
     component: () => import('../views/IdGenerator.vue'),
   },
+  {
+    path: '/resume-builder',
+    name: 'ResumeBuilder',
+    component: () => import('../views/ResumeBuilder.vue'),
+  },
 ]
 
 export default createRouter({

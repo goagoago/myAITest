@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import {
   Plane, PenTool, Globe, Lightbulb, Zap, Shield, Sparkles, Clock,
   Star, Users, TrendingUp, Wand2, Eraser, FileText, ImageDown, MonitorPlay,
-  Image, Wrench, Bot, Camera, QrCode, ScanLine, Scissors, CreditCard, Video
+  Image, Wrench, Bot, Camera, QrCode, ScanLine, Scissors, CreditCard, Video, ScrollText
 } from 'lucide-vue-next'
 import UiverseCard from '../components/UiverseCard.vue'
 
@@ -131,6 +131,15 @@ const toolCategories = [
         desc: '随机生成符合规则的身份证号，支持指定省市区、性别、出生日期',
         gradient: 'linear-gradient(145deg, #3b82f6, #10b981)',
         shadowColor: 'rgba(59, 130, 246, 0.3)',
+      },
+      {
+        id: 'resume-builder',
+        path: '/resume-builder',
+        icon: ScrollText,
+        name: 'AI 简历工坊',
+        desc: 'Markdown编辑、模块拖拽、AI润色，支持 PDF/Word 导入与 PDF 导出',
+        gradient: 'linear-gradient(145deg, #14b8a6, #f59e0b)',
+        shadowColor: 'rgba(20, 184, 166, 0.3)',
       },
     ],
   },

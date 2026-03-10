@@ -28,13 +28,67 @@ function chatApiMiddleware() {
         }
 
         try {
+          if (!ZHIPU_API_KEY) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: '服务端未配置 ZHIPU_API_KEY 环境变量（请在 .env.local 中设置后重启 pnpm dev）' }))
+            return
+          }
+
+          const parsed = JSON.parse(body || '{}')
+          const {
+            messages,
+            stream = false,
+            model = 'glm-4-flash',
+            temperature = 0.7,
+            max_tokens = 8192,
+          } = parsed
+
+          if (!Array.isArray(messages) || messages.length === 0) {
+            res.statusCode = 400
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: '无效的消息格式' }))
+            return
+          }
+
+          const safeMessages = messages.slice(-20).map((m) => {
+            const role = ['user', 'assistant', 'system'].includes(m.role) ? m.role : 'user'
+            let content
+            if (typeof m.content === 'string') {
+              content = m.content.slice(0, 10000)
+            } else if (Array.isArray(m.content)) {
+              content = m.content.map(item => {
+                if (item.type === 'text') return { type: 'text', text: (item.text || '').slice(0, 10000) }
+                if (item.type === 'image_url') return { type: 'image_url', image_url: { url: item.image_url?.url || '' } }
+                return item
+              })
+            } else {
+              content = ''
+            }
+            return { role, content }
+          })
+
+          const safeTemp = Math.min(Math.max(Number(temperature) || 0.7, 0), 2)
+          const safeMaxTokens = Math.min(Math.max(Number(max_tokens) || 4096, 1), 8192)
+          const isVisionModel = model.includes('4v') || model.includes('vision')
+
+          const apiBody = {
+            model,
+            messages: safeMessages,
+            stream,
+          }
+          if (!isVisionModel) {
+            apiBody.temperature = safeTemp
+            apiBody.max_tokens = safeMaxTokens
+          }
+
           const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${ZHIPU_API_KEY}`,
             },
-            body,
+            body: JSON.stringify(apiBody),
           })
 
           const contentType = response.headers.get('content-type') || 'application/json'
