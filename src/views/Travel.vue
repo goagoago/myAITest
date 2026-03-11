@@ -85,7 +85,7 @@ const buildPrompt = () => {
 ### 4. 实用贴士
 当地注意事项、最佳游玩季节、必备物品等
 
-请使用emoji让内容更生动，确保输出【完整的${form.value.days}天行程】，不要省略任何一天！`
+可适当使用emoji或icon让内容更生动，确保输出【完整的${form.value.days}天行程】，不要省略任何一天！`
 }
 
 const startTipRotation = () => {

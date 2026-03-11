@@ -452,6 +452,70 @@ export function useResumeBuilder() {
     }
   }
 
+  /* AI 辅助写简历 */
+  const aiWriteLoading = ref(false)
+  const aiWriteError = ref('')
+
+  const aiWriteResumeSection = async ({ role, section, notes } = {}) => {
+    const rawNotes = String(notes || '').trim()
+    if (!rawNotes) {
+      aiWriteError.value = '请填写要点或经历信息'
+      return ''
+    }
+    aiWriteLoading.value = true
+    aiWriteError.value = ''
+    try {
+      const safeRole = String(role || '').trim()
+      const sectionMap = {
+        summary: '职业摘要',
+        experience: '工作经历',
+        project: '项目经历',
+        skills: '技能',
+        education: '教育背景',
+      }
+      const sectionKey = String(section || 'summary').trim()
+      const sectionLabel = sectionMap[sectionKey] || sectionKey
+      const formatGuide = {
+        summary: '输出 2-4 句职业摘要，突出经验年限、领域和结果，不要使用列表。',
+        experience: '输出一段工作经历：\n### 职位 | 公司\n时间 地点\n- 量化成果要点 3-5 条',
+        project: '输出一段项目经历：\n### 项目名称\n角色 | 项目一句话说明\n- 关键贡献 3-5 条',
+        skills: '输出技能列表：\n- 能力或工具 | 熟练度/应用场景',
+        education: '输出教育背景：\n- 学校 | 学历 专业 | 时间',
+      }
+      const guide = formatGuide[sectionKey] || '输出与该模块匹配的 Markdown 片段。'
+
+      const data = await aiClient.chat.complete({
+        messages: [
+          {
+            role: 'system',
+            content: `你是专业简历写作助手。仅使用用户提供的信息生成 Markdown 片段，不得编造或补充事实，不得虚构公司/项目/成绩。
+
+目标模块：${sectionLabel}
+目标岗位：${safeRole || '未提供'}
+
+写作要求：
+1. 只输出 Markdown 片段，不要加代码块标记，不要解释
+2. 信息不足处用 [待补充] 占位
+3. 语言简洁、动作动词开头、尽量量化成果
+4. 格式遵循：${guide}`,
+          },
+          { role: 'user', content: rawNotes },
+        ],
+        temperature: 0.5,
+        max_tokens: 800,
+      })
+
+      const md = (data.choices?.[0]?.message?.content || '').trim()
+      if (!md) throw new Error('AI 未返回有效内容')
+      return md
+    } catch (e) {
+      aiWriteError.value = 'AI 写作失败：' + (e.message || '未知错误')
+      return ''
+    } finally {
+      aiWriteLoading.value = false
+    }
+  }
+
   /* AI 评审简历质量 */
   const aiReviewLoading = ref(false)
   const aiReviewError = ref('')
@@ -546,11 +610,13 @@ export function useResumeBuilder() {
     importLoading, importError,
     aiFormatLoading, aiFormatError,
     aiReviewLoading, aiReviewError, aiReviewResult,
+    aiWriteLoading, aiWriteError,
     fillDemo, resetResume, loadFromMarkdown,
     moveSection, addSection, removeSection,
     moveItem, addItem, removeItem,
     importFile, exportMarkdownFile, formatRawResumeText,
     aiFormatResume,
     aiReviewResume,
+    aiWriteResumeSection,
   }
 }

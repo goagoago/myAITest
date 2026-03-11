@@ -2,17 +2,20 @@
 import { computed, ref, onMounted, nextTick, watch } from 'vue'
 import html2pdf from 'html2pdf.js'
 import {
-  ScrollText, Download, Zap, RefreshCw,
-  GripVertical, Plus, Trash2, Upload, Copy, Check, LoaderCircle,
+  GripVertical, Plus, Trash2, LoaderCircle,
   Bold, Italic, Underline, Strikethrough,
   Heading1, Heading2, Heading3, Heading4,
   List, ListOrdered, ListChecks,
   Link, Quote, Code, Minus,
   Superscript, Subscript,
   Table, Image, SquareCode, Palette,
-  ClipboardPaste, ChevronDown, Sparkles,
+  Sparkles,
 } from 'lucide-vue-next'
 import { useResumeBuilder } from '../composables/useResumeBuilder'
+import ResumeHero from './components/resume/ResumeHero.vue'
+import ResumeReview from './components/resume/ResumeReview.vue'
+import ResumeToolbar from './components/resume/ResumeToolbar.vue'
+import ResumePasteImport from './components/resume/ResumePasteImport.vue'
 
 const {
   headerText, sections, markdown, renderedHtml,
@@ -24,12 +27,16 @@ const {
   importFile, exportMarkdownFile, formatRawResumeText,
   aiFormatResume,
   aiReviewLoading, aiReviewError, aiReviewResult, aiReviewResume,
+  aiWriteLoading, aiWriteError, aiWriteResumeSection,
 } = useResumeBuilder()
 
 const previewRef = ref(null)
 const copied = ref(false)
 const rawPasteText = ref('')
 const pasteCollapsed = ref(false)
+const aiWriteRole = ref('')
+const aiWriteSection = ref('summary')
+const aiWriteNotes = ref('')
 const dragState = ref({ type: '', secIdx: -1, itemIdx: -1 })
 const dropTarget = ref({ secIdx: -1, itemIdx: -1 })
 const lastFocusedTextarea = ref(null)
@@ -38,24 +45,43 @@ const activeColor = ref('#f59e0b')
 const colorOpen = ref(false)
 
 onMounted(() => {
-  nextTick(resizeAllTextareas)
+  nextTick(scheduleResizeAllTextareas)
 })
 
-watch([headerText, sections], () => nextTick(resizeAllTextareas), { deep: true })
+watch([headerText, sections], () => nextTick(scheduleResizeAllTextareas), { deep: true })
 
 /* ── Textarea 自动高度 ───────────────── */
+let resizeRaf = 0
+
 function resizeTextarea(el) {
   if (!el) return
   el.style.height = 'auto'
   el.style.height = el.scrollHeight + 'px'
 }
 
+function scheduleResizeTextarea(el) {
+  if (!el) return
+  if (resizeRaf) cancelAnimationFrame(resizeRaf)
+  resizeRaf = requestAnimationFrame(() => {
+    resizeRaf = 0
+    resizeTextarea(el)
+  })
+}
+
 function resizeAllTextareas() {
   document.querySelectorAll('.md-editor textarea').forEach(resizeTextarea)
 }
 
+function scheduleResizeAllTextareas() {
+  if (resizeRaf) cancelAnimationFrame(resizeRaf)
+  resizeRaf = requestAnimationFrame(() => {
+    resizeRaf = 0
+    resizeAllTextareas()
+  })
+}
+
 function onInput(e) {
-  resizeTextarea(e.target)
+  scheduleResizeTextarea(e.target)
 }
 
 function onFocus(e) {
@@ -70,11 +96,26 @@ function getActiveTextarea() {
   return document.querySelector('.md-editor textarea')
 }
 
-function insertFormat(prefix, suffix = '') {
-  const ta = getActiveTextarea()
+function applyTextareaChange(ta, newVal, selectionStart, selectionEnd = selectionStart) {
   if (!ta) return
   lastFocusedTextarea.value = ta
   ta.focus()
+  const nativeInputEvent = new Event('input', { bubbles: true })
+  ta.value = newVal
+  ta.dispatchEvent(nativeInputEvent)
+
+  nextTick(() => {
+    if (typeof selectionStart === 'number') {
+      ta.setSelectionRange(selectionStart, selectionEnd)
+    }
+    ta.focus()
+    scheduleResizeTextarea(ta)
+  })
+}
+
+function insertFormat(prefix, suffix = '') {
+  const ta = getActiveTextarea()
+  if (!ta) return
   const start = ta.selectionStart
   const end = ta.selectionEnd
   const text = ta.value
@@ -82,24 +123,13 @@ function insertFormat(prefix, suffix = '') {
   const replacement = prefix + (selected || '文本') + (suffix || prefix)
   const newVal = text.slice(0, start) + replacement + text.slice(end)
 
-  // 触发 Vue 的 v-model 更新
-  const nativeInputEvent = new Event('input', { bubbles: true })
-  ta.value = newVal
-  ta.dispatchEvent(nativeInputEvent)
-
-  nextTick(() => {
-    const cursorPos = start + prefix.length + (selected || '文本').length + (suffix || prefix).length
-    ta.setSelectionRange(cursorPos, cursorPos)
-    ta.focus()
-    resizeTextarea(ta)
-  })
+  const cursorPos = start + prefix.length + (selected || '文本').length + (suffix || prefix).length
+  applyTextareaChange(ta, newVal, cursorPos)
 }
 
 function insertLinePrefix(prefix) {
   const ta = getActiveTextarea()
   if (!ta) return
-  lastFocusedTextarea.value = ta
-  ta.focus()
   const start = ta.selectionStart
   const text = ta.value
   const end = ta.selectionEnd
@@ -113,38 +143,20 @@ function insertLinePrefix(prefix) {
     : prefix + selectedBlock
   const newVal = text.slice(0, lineStart) + applyToLines + text.slice(safeLineEnd)
 
-  const nativeInputEvent = new Event('input', { bubbles: true })
-  ta.value = newVal
-  ta.dispatchEvent(nativeInputEvent)
-
-  nextTick(() => {
-    const added = applyToLines.length - selectedBlock.length
-    ta.setSelectionRange(start, end + Math.max(0, added))
-    ta.focus()
-    resizeTextarea(ta)
-  })
+  const added = applyToLines.length - selectedBlock.length
+  applyTextareaChange(ta, newVal, start, end + Math.max(0, added))
 }
 
 function insertBlock(block) {
   const ta = getActiveTextarea()
   if (!ta) return
-  lastFocusedTextarea.value = ta
-  ta.focus()
   const start = ta.selectionStart
   const end = ta.selectionEnd
   const text = ta.value
   const newVal = text.slice(0, start) + block + text.slice(end)
 
-  const nativeInputEvent = new Event('input', { bubbles: true })
-  ta.value = newVal
-  ta.dispatchEvent(nativeInputEvent)
-
-  nextTick(() => {
-    const cursorPos = start + block.length
-    ta.setSelectionRange(cursorPos, cursorPos)
-    ta.focus()
-    resizeTextarea(ta)
-  })
+  const cursorPos = start + block.length
+  applyTextareaChange(ta, newVal, cursorPos)
 }
 
 function insertColor(color) {
@@ -264,6 +276,17 @@ const handleAiReview = async () => {
   await aiReviewResume(markdown.value)
 }
 
+const handleAiWrite = async () => {
+  const md = await aiWriteResumeSection({
+    role: aiWriteRole.value,
+    section: aiWriteSection.value,
+    notes: aiWriteNotes.value,
+  })
+  if (md) {
+    insertBlock(`\n${md}\n`)
+  }
+}
+
 const exportPdf = async () => {
   if (!previewRef.value) return
   const el = previewRef.value
@@ -288,95 +311,69 @@ const exportPdf = async () => {
 <template>
   <div class="resume-builder">
     <!-- Hero -->
-    <header class="hero">
-      <div class="hero__left">
-        <div class="hero__badge">
-          <ScrollText :size="14" />
-          <span>AI 简历工坊</span>
-        </div>
-        <h1 class="hero__title">写出更能拿到面试的简历</h1>
-        <p class="hero__desc">Markdown 直接编辑、模块拖拽排序、PDF/WORD 导入、实时预览。</p>
-      </div>
-      <div class="hero__score">
-        <button class="btn btn--ghost btn--small hero__review-btn" @click="handleAiReview" :disabled="aiReviewLoading">
-          <component :is="aiReviewLoading ? LoaderCircle : Sparkles" :size="14" :class="{ spinning: aiReviewLoading }" />
-          <span>{{ aiReviewLoading ? '评审中...' : 'AI 评审' }}</span>
-        </button>
-      </div>
-    </header>
+    <ResumeHero :ai-review-loading="aiReviewLoading" @review="handleAiReview" />
 
-    <section v-if="aiReviewError || aiReviewResult" class="review card">
-      <div class="review__title">AI 评审结果</div>
-      <p v-if="aiReviewError" class="review__error">{{ aiReviewError }}</p>
-      <div v-else class="review__body">
-        <div class="review__summary">
-          <span class="review__badge">评分 {{ aiReviewResult.score }}</span>
-          <span class="review__text">{{ aiReviewResult.summary }}</span>
-        </div>
-        <ul v-if="aiReviewResult.suggestions?.length" class="review__list">
-          <li v-for="(item, idx) in aiReviewResult.suggestions" :key="idx" class="review__item">
-            <span class="review__item-text">{{ item.text }}</span>
-            <span class="review__stars" :aria-label="`重要程度 ${item.importance} 星`">
-              <span v-for="n in 5" :key="n" class="review__star" :class="{ 'review__star--on': n <= item.importance }">★</span>
-            </span>
-          </li>
-        </ul>
-        <p v-else class="review__hint">整体质量不错，建议保持当前结构与量化成果表达。</p>
-      </div>
-    </section>
+    <ResumeReview :ai-review-error="aiReviewError" :ai-review-result="aiReviewResult" />
 
     <!-- Toolbar -->
-    <section class="toolbar">
-      <div class="toolbar__left">
-        <button class="btn btn--accent" @click="fillDemo">
-          <Zap :size="16" />
-          <span>填充示例</span>
-        </button>
-        <button class="btn btn--ghost" @click="resetResume">
-          <RefreshCw :size="16" />
-          <span>清空重置</span>
-        </button>
-      </div>
-      <div class="toolbar__right">
-        <label class="btn btn--ghost btn--file" :class="{ 'btn--loading': importLoading }">
-          <input type="file" accept=".pdf,.doc,.docx" @change="handleImport" :disabled="importLoading" />
-          <component :is="importLoading ? LoaderCircle : Upload" :size="16" :class="{ spinning: importLoading }" />
-          <span>{{ importLoading ? '导入中...' : '导入 PDF/WORD' }}</span>
-        </label>
-        <button class="btn btn--ghost" @click="exportMarkdownFile">导出 MD</button>
-        <button class="btn btn--ghost" @click="copyMarkdown">
-          <component :is="copied ? Check : Copy" :size="14" />
-          <span>{{ copied ? '已复制' : '复制 MD' }}</span>
-        </button>
-        <button class="btn btn--primary" @click="exportPdf">
-          <Download :size="16" />
-          <span>导出 PDF</span>
-        </button>
-      </div>
-    </section>
+    <ResumeToolbar
+      :import-loading="importLoading"
+      :copied="copied"
+      @fill-demo="fillDemo"
+      @reset="resetResume"
+      @import="handleImport"
+      @export-markdown="exportMarkdownFile"
+      @copy-markdown="copyMarkdown"
+      @export-pdf="exportPdf"
+    />
 
     <p v-if="importError" class="import-error">{{ importError }}</p>
 
     <!-- 粘贴文字导入 -->
-    <section class="paste-section card">
-      <button class="paste-section__toggle" @click="pasteCollapsed = !pasteCollapsed">
-        <ClipboardPaste :size="15" />
-        <span>粘贴文字导入</span>
-        <ChevronDown :size="15" class="paste-section__arrow" :class="{ 'paste-section__arrow--open': !pasteCollapsed }" />
-      </button>
-      <div v-show="!pasteCollapsed" class="paste-section__body">
-        <p class="paste-section__hint">粘贴简历内容，支持由 AI 智能格式化后导入</p>
-        <textarea
-          v-model="rawPasteText"
-          class="paste-section__textarea"
-          rows="8"
-          placeholder="在此粘贴简历内容（纯文本或 Markdown 均可）..."
-        ></textarea>
-        <p v-if="aiFormatError" class="paste-section__error">{{ aiFormatError }}</p>
-        <div class="paste-section__actions">
-          <button class="btn btn--primary btn--small" @click="handleAiFormatImport" :disabled="!rawPasteText.trim() || aiFormatLoading">
-            <component :is="aiFormatLoading ? LoaderCircle : Sparkles" :size="14" :class="{ spinning: aiFormatLoading }" />
-            <span>{{ aiFormatLoading ? '格式化中...' : '格式化导入' }}</span>
+    <ResumePasteImport
+      v-model:raw-text="rawPasteText"
+      v-model:collapsed="pasteCollapsed"
+      :ai-format-loading="aiFormatLoading"
+      :ai-format-error="aiFormatError"
+      @format="handleAiFormatImport"
+    />
+
+    <!-- AI 写作辅助 -->
+    <section class="ai-write card">
+      <div class="ai-write__header">
+        <Sparkles :size="15" />
+        <span>AI 帮写简历</span>
+      </div>
+      <div class="ai-write__body">
+        <div class="ai-write__grid">
+          <label class="ai-write__field">
+            <span>目标岗位</span>
+            <input v-model="aiWriteRole" type="text" placeholder="如：前端开发 / 产品经理" />
+          </label>
+          <label class="ai-write__field">
+            <span>生成模块</span>
+            <select v-model="aiWriteSection">
+              <option value="summary">职业摘要</option>
+              <option value="experience">工作经历</option>
+              <option value="project">项目经历</option>
+              <option value="skills">技能</option>
+              <option value="education">教育背景</option>
+            </select>
+          </label>
+        </div>
+        <label class="ai-write__field">
+          <span>要点/经历信息</span>
+          <textarea
+            v-model="aiWriteNotes"
+            rows="5"
+            placeholder="写清楚你做过什么、用到什么技能、取得什么结果（可多行）"
+          ></textarea>
+        </label>
+        <p v-if="aiWriteError" class="ai-write__error">{{ aiWriteError }}</p>
+        <div class="ai-write__actions">
+          <button class="btn btn--primary btn--small" @click="handleAiWrite" :disabled="!aiWriteNotes.trim() || aiWriteLoading">
+            <component :is="aiWriteLoading ? LoaderCircle : Sparkles" :size="14" :class="{ spinning: aiWriteLoading }" />
+            <span>{{ aiWriteLoading ? '生成中...' : '生成并插入' }}</span>
           </button>
         </div>
       </div>
@@ -523,856 +520,4 @@ const exportPdf = async () => {
   </div>
 </template>
 
-<style scoped>
-.resume-builder {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px 28px 88px;
-  --line: rgba(255, 255, 255, 0.08);
-  --c1: #13c38b;
-  --c2: #e4a12f;
-}
-
-/* ── Hero ──────────────────────────────── */
-.hero {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  align-items: end;
-  margin-bottom: 20px;
-}
-
-.hero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border: 1px solid rgba(19, 195, 139, 0.35);
-  border-radius: 999px;
-  background: rgba(19, 195, 139, 0.12);
-  color: #57ddb3;
-  font-size: 0.8125rem;
-  margin-bottom: 10px;
-}
-
-.hero__title {
-  font-size: 2.3rem;
-  line-height: 1.15;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.hero__desc {
-  margin: 10px 0 0;
-  color: var(--text-secondary);
-}
-
-.hero__score {
-  padding: 16px 22px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--line);
-  min-width: 150px;
-  text-align: center;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-}
-
-.hero__score-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.hero__score-value {
-  font-size: 2.1rem;
-  line-height: 1;
-  display: block;
-  color: var(--text-primary);
-}
-
-.hero__review-btn {
-  margin-top: 6px;
-}
-
-/* ── Toolbar ───────────────────────────── */
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-}
-
-.toolbar__left,
-.toolbar__right {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.import-error {
-  margin: -10px 0 12px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #f87171;
-  font-size: 0.84rem;
-}
-
-/* ── Card ──────────────────────────────── */
-.card {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  backdrop-filter: blur(8px);
-}
-
-/* ── AI 评审 ─────────────────────────── */
-.review {
-  margin: 0 0 16px;
-  padding: 14px 16px;
-}
-
-.review__title {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-.review__summary {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-}
-
-.review__badge {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: rgba(19, 195, 139, 0.14);
-  border: 1px solid rgba(19, 195, 139, 0.3);
-  color: #57ddb3;
-  font-size: 0.75rem;
-}
-
-.review__text {
-  color: var(--text-secondary);
-  font-size: 0.86rem;
-}
-
-.review__list {
-  margin: 6px 0 0 18px;
-  color: var(--text-secondary);
-  font-size: 0.84rem;
-  line-height: 1.7;
-}
-
-.review__item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  justify-content: space-between;
-}
-
-.review__item-text {
-  flex: 1;
-}
-
-.review__stars {
-  display: inline-flex;
-  gap: 2px;
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.2);
-}
-
-.review__star--on {
-  color: #f6c453;
-  text-shadow: 0 0 6px rgba(246, 196, 83, 0.35);
-}
-
-.review__hint {
-  margin: 6px 0 0;
-  color: var(--text-secondary);
-  font-size: 0.84rem;
-}
-
-.review__error {
-  margin: 0;
-  color: #f87171;
-  font-size: 0.82rem;
-}
-
-/* ── Panel 双栏布局 ────────────────────── */
-.panel {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-/* ── 格式化工具栏 ─────────────────────── */
-.format-bar {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 4px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-  position: sticky;
-  top: 96px;
-  z-index: 3;
-  background: rgba(16, 18, 26, 0.92);
-  backdrop-filter: blur(8px);
-  border-radius: 12px;
-}
-
-.format-bar__sep {
-  width: 1px;
-  height: 18px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 0 4px;
-}
-
-.format-btn {
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.format-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
-}
-
-.format-btn:active {
-  background: rgba(19, 195, 139, 0.18);
-  color: #57ddb3;
-}
-
-.format-btn__label {
-  font-size: 0.72rem;
-  letter-spacing: 0.02em;
-}
-
-.format-color {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: 6px;
-  padding: 4px 8px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  position: relative;
-}
-
-.format-color__trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-secondary);
-  font-size: 0.74rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.format-color__dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
-
-.format-color__panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: 5;
-  padding: 10px;
-  border-radius: 12px;
-  background: rgba(14, 16, 24, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.format-color__swatches {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.format-color__swatch {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1px solid transparent;
-  cursor: pointer;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
-}
-
-.format-color__swatch--active {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
-}
-
-.format-color__custom {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-secondary);
-  font-size: 0.74rem;
-}
-
-.format-color__custom input {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-/* ── MD Editor ─────────────────────────── */
-.md-editor {
-  padding: 16px;
-  max-height: none;
-  overflow: visible;
-}
-
-.md-header textarea {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 0.98rem;
-  font-family: 'Noto Sans SC', 'Segoe UI', sans-serif;
-  padding: 12px 14px;
-  resize: none;
-  line-height: 1.7;
-  overflow: hidden;
-}
-
-.md-header textarea:focus {
-  outline: none;
-  border-color: rgba(19, 195, 139, 0.45);
-  box-shadow: 0 0 0 3px rgba(19, 195, 139, 0.1);
-}
-
-.md-divider {
-  height: 1px;
-  background: var(--line);
-  margin: 14px 0;
-}
-
-/* ── Section ───────────────────────────── */
-.md-section {
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  padding: 10px;
-  margin-bottom: 10px;
-  background: rgba(255, 255, 255, 0.015);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.md-section--drop-target {
-  border-color: rgba(19, 195, 139, 0.5);
-  box-shadow: 0 0 0 3px rgba(19, 195, 139, 0.12);
-}
-
-.md-section--dragging {
-  opacity: 0.5;
-}
-
-.md-section__bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.md-section__handle {
-  cursor: grab;
-  color: var(--text-muted);
-  opacity: 0.4;
-  transition: opacity 0.2s;
-  flex-shrink: 0;
-  padding: 4px 0;
-}
-
-.md-section:hover .md-section__handle {
-  opacity: 0.8;
-}
-
-.md-section__handle:active {
-  cursor: grabbing;
-}
-
-.md-section__heading-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  font-size: 0.98rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  padding: 4px 0;
-}
-
-.md-section__heading-input:focus {
-  outline: none;
-  border-bottom: 1px solid rgba(19, 195, 139, 0.4);
-}
-
-.md-section__heading-input::placeholder {
-  color: var(--text-muted);
-  font-weight: 400;
-}
-
-/* ── Item ──────────────────────────────── */
-.md-section__items {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.md-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  padding: 3px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.md-item--drop-target {
-  border-color: rgba(228, 161, 47, 0.5);
-  background: rgba(228, 161, 47, 0.06);
-}
-
-.md-item--dragging {
-  opacity: 0.5;
-}
-
-.md-item__handle {
-  cursor: grab;
-  color: var(--text-muted);
-  opacity: 0;
-  transition: opacity 0.2s;
-  flex-shrink: 0;
-  padding: 6px 0;
-}
-
-.md-item:hover .md-item__handle {
-  opacity: 0.6;
-}
-
-.md-item__handle:active {
-  cursor: grabbing;
-}
-
-.md-item textarea {
-  flex: 1;
-  width: 100%;
-  background: rgba(0, 0, 0, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  color: var(--text-primary);
-  font-size: 0.86rem;
-  font-family: 'Noto Sans SC', 'Segoe UI', sans-serif;
-  padding: 8px 10px;
-  resize: none;
-  line-height: 1.65;
-  overflow: hidden;
-}
-
-.md-item textarea:focus {
-  outline: none;
-  border-color: rgba(19, 195, 139, 0.35);
-  box-shadow: 0 0 0 2px rgba(19, 195, 139, 0.08);
-}
-
-.md-item textarea::placeholder {
-  color: var(--text-muted);
-}
-
-/* ── Preview Pane ─────────────────────── */
-.preview-pane {
-  padding: 16px;
-  position: sticky;
-  top: 16px;
-  max-height: none;
-  overflow: visible;
-}
-
-.preview-pane__label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--line);
-}
-
-.resume-paper {
-  background: #fffdf7;
-  color: #131722;
-  border-radius: 10px;
-  padding: 28px 24px;
-  min-height: 500px;
-  box-shadow: 0 25px 50px -28px rgba(0, 0, 0, 0.8);
-  font-family: 'Noto Sans SC', 'Segoe UI', sans-serif;
-  font-size: 13px;
-  line-height: 1.7;
-  border-top: 6px solid #13141a;
-}
-
-.resume-paper :deep(h1) {
-  font-size: 1.7rem;
-  margin: 0 0 4px;
-  color: #111;
-  line-height: 1.2;
-}
-
-.resume-paper :deep(h2) {
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  border-bottom: 1.5px solid #d8dbe2;
-  padding-bottom: 4px;
-  margin: 18px 0 8px;
-  color: #222;
-}
-
-.resume-paper :deep(h3) {
-  font-size: 0.88rem;
-  margin: 12px 0 2px;
-  color: #1a1f2e;
-}
-
-.resume-paper :deep(p) {
-  margin: 3px 0;
-  color: #333;
-  font-size: 0.84rem;
-}
-
-.resume-paper :deep(ul) {
-  padding-left: 18px;
-  margin: 4px 0;
-}
-
-.resume-paper :deep(li) {
-  margin: 2px 0;
-  color: #333;
-  font-size: 0.84rem;
-  line-height: 1.6;
-}
-
-.resume-paper :deep(strong) {
-  color: #111;
-}
-
-.resume-paper :deep(em) {
-  color: #444;
-}
-
-.resume-paper :deep(del) {
-  color: #999;
-}
-
-.resume-paper :deep(code) {
-  background: #f0f0f0;
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 0.82rem;
-  color: #d63384;
-}
-
-.resume-paper :deep(blockquote) {
-  border-left: 3px solid #d8dbe2;
-  padding-left: 12px;
-  margin: 8px 0;
-  color: #666;
-}
-
-.resume-paper :deep(hr) {
-  border: none;
-  border-top: 1px solid #e0e0e0;
-  margin: 12px 0;
-}
-
-.resume-paper :deep(a) {
-  color: #0969da;
-  text-decoration: none;
-}
-
-/* PDF 导出时覆盖 */
-.resume-paper.pdf-preview--exporting {
-  box-shadow: none;
-  border-radius: 0;
-  border-top: none;
-}
-
-/* ── 粘贴文字导入 ─────────────────────── */
-.paste-section {
-  margin-bottom: 16px;
-  padding: 0;
-  overflow: hidden;
-}
-
-.paste-section__toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 0.86rem;
-  cursor: pointer;
-  transition: color 0.15s, background 0.15s;
-}
-
-.paste-section__toggle:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.paste-section__arrow {
-  margin-left: auto;
-  transition: transform 0.25s;
-}
-
-.paste-section__arrow--open {
-  transform: rotate(180deg);
-}
-
-.paste-section__body {
-  padding: 0 16px 16px;
-}
-
-.paste-section__hint {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin: 0 0 10px;
-}
-
-.paste-section__textarea {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 0.82rem;
-  font-family: 'Menlo', 'Consolas', 'Monaco', monospace;
-  padding: 10px 12px;
-  resize: vertical;
-  line-height: 1.65;
-}
-
-.paste-section__textarea:focus {
-  outline: none;
-  border-color: rgba(19, 195, 139, 0.4);
-  box-shadow: 0 0 0 3px rgba(19, 195, 139, 0.1);
-}
-
-.paste-section__actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-  justify-content: flex-end;
-}
-
-.paste-section__error {
-  margin: 8px 0 0;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #f87171;
-  font-size: 0.78rem;
-}
-
-/* ── Buttons ───────────────────────────── */
-.btn {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 9px 12px;
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 0.84rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.btn--primary {
-  background: linear-gradient(120deg, #16c58e, #e3a23c);
-  color: #0e1b17;
-  border: none;
-  font-weight: 700;
-}
-
-.btn--accent {
-  background: linear-gradient(120deg, rgba(19, 195, 139, 0.22), rgba(228, 161, 47, 0.18));
-  border-color: rgba(19, 195, 139, 0.45);
-  color: #9ff0d1;
-  font-weight: 600;
-}
-
-.btn--accent:hover {
-  background: linear-gradient(120deg, rgba(19, 195, 139, 0.32), rgba(228, 161, 47, 0.28));
-}
-
-.btn--primary:hover {
-  filter: brightness(1.08);
-}
-
-.btn--soft {
-  background: rgba(19, 195, 139, 0.1);
-  border-color: rgba(19, 195, 139, 0.2);
-  font-size: 0.8rem;
-}
-
-.btn--small {
-  padding: 6px 10px;
-  font-size: 0.78rem;
-}
-
-.btn--file input {
-  display: none;
-}
-
-.btn--file {
-  cursor: pointer;
-}
-
-.btn--loading {
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-.btn--add-section {
-  width: 100%;
-  justify-content: center;
-  margin-top: 4px;
-  border-style: dashed;
-}
-
-.icon-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-muted);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.2s, color 0.15s;
-}
-
-.md-section:hover > .md-section__bar > .icon-btn,
-.md-item:hover > .icon-btn {
-  opacity: 0.6;
-}
-
-.icon-btn:hover {
-  opacity: 1 !important;
-}
-
-.icon-btn--danger:hover {
-  color: #f87171;
-  border-color: rgba(248, 113, 113, 0.4);
-}
-
-.icon-btn--small {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  margin-top: 6px;
-}
-
-.spinning {
-  animation: spin 0.9s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* ── 响应式 ────────────────────────────── */
-@media (max-width: 1100px) {
-  .panel {
-    grid-template-columns: 1fr;
-  }
-
-  .preview-pane {
-    position: static;
-    max-height: none;
-  }
-}
-
-@media (max-width: 760px) {
-  .resume-builder {
-    padding: 16px 14px 70px;
-  }
-
-  .hero {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .hero__title {
-    font-size: 1.8rem;
-  }
-
-  .toolbar {
-    flex-direction: column;
-  }
-
-  .md-editor {
-    padding: 12px;
-    max-height: none;
-  }
-}
-</style>
+<style scoped lang="scss" src="./components/resume/ResumeBuilder.scss"></style>
