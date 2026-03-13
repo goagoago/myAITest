@@ -218,14 +218,48 @@ export function useOcr() {
   }
 
   /**
-   * 识别图片中的文字
-   * @param {File} file - 图片文件
-   * @param {string} lang - 语言代码（仅离线模式使用）
-   * @param {string} engine - 'vision' 云端AI识别 | 'local' 本地离线识别
+   * 使用 PaddleOCR 后端识别（支持图片和 PDF）
    */
-  const recognize = async (file, lang = 'chi_sim+eng', engine = 'vision') => {
+  const recognizeWithPaddle = async (file) => {
+    progressStage.value = '上传文件中...'
+    progress.value = 10
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    progressStage.value = 'PaddleOCR 识别中...'
+    progress.value = 30
+
+    const res = await fetch('/api/ocr/recognize', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.message || `服务端错误: ${res.status}`)
+    }
+
+    progress.value = 80
+
+    const json = await res.json()
+    if (json.code !== 200) {
+      throw new Error(json.message || '识别失败')
+    }
+
+    progress.value = 100
+    return json.data?.text || ''
+  }
+
+  /**
+   * 识别文件中的文字
+   * @param {File} file - 图片或 PDF 文件
+   * @param {string} lang - 语言代码（仅离线模式使用）
+   * @param {string} engine - 'paddle' PaddleOCR | 'vision' 云端AI | 'local' 本地离线
+   */
+  const recognize = async (file, lang = 'chi_sim+eng', engine = 'paddle') => {
     if (!file) {
-      error.value = '请先上传图片'
+      error.value = '请先上传文件'
       return
     }
 
@@ -237,7 +271,9 @@ export function useOcr() {
 
     try {
       let text
-      if (engine === 'vision') {
+      if (engine === 'paddle') {
+        text = await recognizeWithPaddle(file)
+      } else if (engine === 'vision') {
         text = await recognizeWithVision(file)
       } else {
         text = await recognizeWithTesseract(file, lang)
@@ -245,9 +281,12 @@ export function useOcr() {
       resultText.value = text
     } catch (e) {
       console.error('OCR 识别失败:', e)
-      error.value = engine === 'vision'
-        ? 'AI 识别失败（' + e.message + '），请切换到离线模式重试'
-        : 'OCR 识别失败，请重试或更换图片'
+      const msgs = {
+        paddle: 'PaddleOCR 识别失败（' + e.message + '），请检查后端服务是否启动',
+        vision: 'AI 识别失败（' + e.message + '），请切换到其他模式重试',
+        local: 'OCR 识别失败，请重试或更换图片',
+      }
+      error.value = msgs[engine] || e.message
     } finally {
       if (worker) {
         await worker.terminate()

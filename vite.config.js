@@ -457,6 +457,11 @@ function videoApiMiddleware() {
     },
     server: {
       proxy: {
+        // Spring Boot 后端 OCR 接口代理
+        '/api/ocr': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+        },
         // 硅基流动图片生成API代理（Kolors模型）
         '/api/image': {
           target: 'https://api.siliconflow.cn/v1',

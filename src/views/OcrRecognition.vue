@@ -20,7 +20,7 @@ const selectedLang = ref('chi_sim+eng')
 const imagePreview = ref('')
 const selectedFile = ref(null)
 const copied = ref(false)
-const engine = ref('vision') // 'vision' AI识别 | 'local' 离线识别
+const engine = ref('paddle') // 'paddle' PaddleOCR | 'vision' AI识别 | 'local' 离线识别
 
 const langOptions = [
   { value: 'chi_sim+eng', label: '中英混合' },
@@ -36,14 +36,27 @@ const handleFileSelect = (e) => {
   if (file) setFile(file)
 }
 
+const acceptTypes = () => engine.value === 'paddle'
+  ? 'image/*,.pdf'
+  : 'image/*'
+
 const setFile = (file) => {
-  if (!file.type.startsWith('image/')) {
+  const isImage = file.type.startsWith('image/')
+  const isPdf = file.type === 'application/pdf' || file.name?.endsWith('.pdf')
+
+  if (engine.value === 'paddle') {
+    if (!isImage && !isPdf) {
+      error.value = '请上传图片或 PDF 文件'
+      return
+    }
+  } else if (!isImage) {
     error.value = '请上传图片文件'
     return
   }
+
   selectedFile.value = file
   if (imagePreview.value) URL.revokeObjectURL(imagePreview.value)
-  imagePreview.value = URL.createObjectURL(file)
+  imagePreview.value = isPdf ? 'pdf' : URL.createObjectURL(file)
   error.value = ''
 }
 
@@ -125,7 +138,7 @@ const resetAll = () => {
           <span class="gradient-text">一键提取</span>
         </h1>
         <p class="header__desc">
-          AI 智能识别中英文等多语言，支持手写体、印刷体、截图等场景
+          AI 智能识别中英文等多语言，支持图片、PDF、手写体、印刷体、截图等场景
         </p>
       </div>
     </header>
@@ -150,19 +163,24 @@ const resetAll = () => {
             <input
               ref="fileInput"
               type="file"
-              accept="image/*"
+              :accept="acceptTypes()"
               class="upload-input"
               @change="handleFileSelect"
             />
             <Upload :size="32" />
-            <p class="upload-zone__text">点击、拖拽或粘贴图片到此区域</p>
-            <span class="upload-zone__tip">支持 JPG、PNG、BMP、WebP 等格式</span>
+            <p class="upload-zone__text">点击、拖拽或粘贴文件到此区域</p>
+            <span class="upload-zone__tip">{{ engine === 'paddle' ? '支持 JPG、PNG、BMP、WebP、PDF 等格式' : '支持 JPG、PNG、BMP、WebP 等格式' }}</span>
           </div>
           <div v-else class="image-preview">
-            <img :src="imagePreview" alt="预览图" class="preview-img" />
+            <div v-if="imagePreview === 'pdf'" class="pdf-preview">
+              <ScanLine :size="48" />
+              <p>{{ selectedFile?.name }}</p>
+              <span class="pdf-preview__size">{{ (selectedFile?.size / 1024 / 1024).toFixed(2) }} MB</span>
+            </div>
+            <img v-else :src="imagePreview" alt="预览图" class="preview-img" />
             <button class="preview-remove" @click="resetAll">
               <RefreshCw :size="14" />
-              <span>更换图片</span>
+              <span>更换文件</span>
             </button>
           </div>
         </div>
@@ -175,15 +193,25 @@ const resetAll = () => {
           </h3>
           <div class="engine-group">
             <button
+              :class="['engine-btn', { 'engine-btn--active': engine === 'paddle' }]"
+              @click="engine = 'paddle'"
+            >
+              <Sparkles :size="18" />
+              <div class="engine-btn__text">
+                <span class="engine-btn__title">PaddleOCR 识别</span>
+                <span class="engine-btn__desc">高精度，支持图片和 PDF</span>
+              </div>
+              <span v-if="engine === 'paddle'" class="engine-btn__badge">推荐</span>
+            </button>
+            <button
               :class="['engine-btn', { 'engine-btn--active': engine === 'vision' }]"
               @click="engine = 'vision'"
             >
               <Sparkles :size="18" />
               <div class="engine-btn__text">
                 <span class="engine-btn__title">AI 智能识别</span>
-                <span class="engine-btn__desc">效果最好，支持手写体</span>
+                <span class="engine-btn__desc">支持手写体，仅图片</span>
               </div>
-              <span v-if="engine === 'vision'" class="engine-btn__badge">推荐</span>
             </button>
             <button
               :class="['engine-btn', { 'engine-btn--active': engine === 'local' }]"
@@ -277,7 +305,7 @@ const resetAll = () => {
             <ScanLine :size="48" />
           </div>
           <p>识别结果</p>
-          <span class="placeholder-tip">上传图片后点击"开始识别"提取文字</span>
+          <span class="placeholder-tip">上传图片或 PDF 后点击"开始识别"提取文字</span>
         </div>
       </div>
     </div>
@@ -724,6 +752,35 @@ const resetAll = () => {
 .placeholder-tip {
   font-size: 0.8125rem;
   opacity: 0.6;
+}
+
+/* PDF 预览 */
+.pdf-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 24px;
+  color: var(--text-secondary);
+}
+
+.pdf-preview svg {
+  color: #67e8f9;
+  opacity: 0.7;
+}
+
+.pdf-preview p {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  word-break: break-all;
+  text-align: center;
+}
+
+.pdf-preview__size {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }
 
 /* 动画 */
