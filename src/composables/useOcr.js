@@ -1,12 +1,13 @@
 import { ref } from 'vue'
 import { createWorker, PSM } from 'tesseract.js'
-import { aiClient } from '../services/aiClient'
+import { aiClient, buildApiUrl } from '../services/aiClient'
 
 export function useOcr() {
   const loading = ref(false)
   const progress = ref(0)
   const progressStage = ref('')
   const resultText = ref('')
+  const resultRichText = ref('')
   const error = ref('')
 
   let worker = null
@@ -220,17 +221,21 @@ export function useOcr() {
   /**
    * 使用 PaddleOCR 后端识别（支持图片和 PDF）
    */
-  const recognizeWithPaddle = async (file) => {
+  const recognizeWithPaddle = async (file, format = 'text') => {
     progressStage.value = '上传文件中...'
     progress.value = 10
 
     const formData = new FormData()
     formData.append('file', file)
 
+    const url = format === 'html'
+      ? buildApiUrl('/api/ocr/recognize?format=html')
+      : buildApiUrl('/api/ocr/recognize')
+
     progressStage.value = 'PaddleOCR 识别中...'
     progress.value = 30
 
-    const res = await fetch('/api/ocr/recognize', {
+    const res = await fetch(url, {
       method: 'POST',
       body: formData,
     })
@@ -248,7 +253,10 @@ export function useOcr() {
     }
 
     progress.value = 100
-    return json.data?.text || ''
+    return {
+      text: json.data?.text || '',
+      richText: json.data?.richText || '',
+    }
   }
 
   /**
@@ -256,8 +264,9 @@ export function useOcr() {
    * @param {File} file - 图片或 PDF 文件
    * @param {string} lang - 语言代码（仅离线模式使用）
    * @param {string} engine - 'paddle' PaddleOCR | 'vision' 云端AI | 'local' 本地离线
+   * @param {string} format - 'text' 纯文本 | 'html' 富文本（仅 paddle 模式）
    */
-  const recognize = async (file, lang = 'chi_sim+eng', engine = 'paddle') => {
+  const recognize = async (file, lang = 'chi_sim+eng', engine = 'paddle', format = 'text') => {
     if (!file) {
       error.value = '请先上传文件'
       return
@@ -268,11 +277,14 @@ export function useOcr() {
     progressStage.value = ''
     error.value = ''
     resultText.value = ''
+    resultRichText.value = ''
 
     try {
       let text
       if (engine === 'paddle') {
-        text = await recognizeWithPaddle(file)
+        const result = await recognizeWithPaddle(file, format)
+        text = result.text
+        resultRichText.value = result.richText || ''
       } else if (engine === 'vision') {
         text = await recognizeWithVision(file)
       } else {
@@ -302,6 +314,7 @@ export function useOcr() {
     progress.value = 0
     progressStage.value = ''
     resultText.value = ''
+    resultRichText.value = ''
     error.value = ''
   }
 
@@ -310,6 +323,7 @@ export function useOcr() {
     progress,
     progressStage,
     resultText,
+    resultRichText,
     error,
     recognize,
     reset,

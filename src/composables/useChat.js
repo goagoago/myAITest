@@ -44,7 +44,14 @@ export function useChat() {
 
             try {
               const parsed = JSON.parse(data)
-              const content = parsed.choices?.[0]?.delta?.content || ''
+              let content = ''
+              if (parsed.type === 'response.output_text.delta') {
+                content = parsed.delta || ''
+              } else if (parsed.type === 'response.output_text' || parsed.type === 'response.output_text.done') {
+                content = parsed.text || ''
+              } else {
+                content = parsed.choices?.[0]?.delta?.content || ''
+              }
               if (content) {
                 fullText += content
                 streamingText.value = fullText
@@ -77,7 +84,14 @@ export function useChat() {
         temperature: 0.7,
         max_tokens: 8192,
       })
-      result.value = data.choices?.[0]?.message?.content || ''
+      const responseText = data?.output
+        ? data.output
+            .flatMap(item => item.content || [])
+            .filter(item => item.type === 'output_text')
+            .map(item => item.text)
+            .join('')
+        : ''
+      result.value = responseText || data.choices?.[0]?.message?.content || ''
       return result.value
     } catch (e) {
       error.value = e.message

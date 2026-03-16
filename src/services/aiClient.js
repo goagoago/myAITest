@@ -1,8 +1,20 @@
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
+const normalizeBase = (base) => {
+  if (!base) return ''
+  return base.endsWith('/') ? base.slice(0, -1) : base
+}
+
+export const buildApiUrl = (path) => {
+  const base = normalizeBase(API_BASE)
+  if (!base) return path
+  return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`
+}
+
 const AI_ENDPOINTS = {
-  chat: '/api/chat',
-  image: '/api/image',
-  video: '/api/video',
-  watermark: '/api/watermark-removal',
+  chat: buildApiUrl('/api/chat'),
+  image: buildApiUrl('/api/image'),
+  video: buildApiUrl('/api/video'),
 }
 
 function parseErrorMessage(payload, status) {
@@ -78,8 +90,5 @@ export const aiClient = {
     submit: payload => postAiJsonWithStatus(`${AI_ENDPOINTS.video}?action=submit`, payload),
     submitImageToVideo: payload => postAiJsonWithStatus(`${AI_ENDPOINTS.video}?action=submit&mode=i2v`, payload),
     status: payload => postAiJsonWithStatus(`${AI_ENDPOINTS.video}?action=status`, payload),
-  },
-  watermark: {
-    remove: payload => postAiJson(AI_ENDPOINTS.watermark, payload),
   },
 }

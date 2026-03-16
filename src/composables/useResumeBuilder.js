@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { marked } from 'marked'
-import { aiClient } from '../services/aiClient'
+import { aiClient, buildApiUrl } from '../services/aiClient'
 
 /* ── ID generator ──────────────────────────────────── */
 let _id = 0
@@ -214,30 +214,24 @@ function formatRawResumeText(rawText) {
   return result.join('\n').replace(/\n{3,}/g, '\n\n').trim()
 }
 
-/* ── 文件内容提取 ─────────────────────────────────── */
+/* ── 调用后端 OCR 服务识别文件（支持 PDF / Word / 图片） ── */
 
-async function extractPdfText(file) {
-  const pdfjsLib = await import('pdfjs-dist')
-  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdn.jsdelivr.net/npm/pdfjs-dist/build/pdf.worker.min.mjs'
+async function ocrRecognizeFile(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch(buildApiUrl('/api/ocr/recognize'), {
+    method: 'POST',
+    body: formData,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.message || `OCR 服务端错误: ${res.status}`)
   }
-  const data = new Uint8Array(await file.arrayBuffer())
-  const pdf = await pdfjsLib.getDocument({ data }).promise
-  const pages = []
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i)
-    const content = await page.getTextContent()
-    pages.push(content.items.map(it => it.str).join(' '))
+  const json = await res.json()
+  if (json.code !== 200) {
+    throw new Error(json.message || 'OCR 识别失败')
   }
-  return pages.join('\n')
-}
-
-async function extractWordText(file) {
-  const mod = await import('mammoth')
-  const mammoth = mod.default || mod
-  const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })
-  return result.value
+  return json.data?.text || ''
 }
 
 /* ── Composable ────────────────────────────────────── */
@@ -375,22 +369,20 @@ export function useResumeBuilder() {
     }
   }
 
-  /* 导入文件 */
+  /* 导入文件（调用后端 OCR 识别） */
   const importFile = async (file) => {
     if (!file) return
     importLoading.value = true
     importError.value = ''
     try {
       const name = file.name.toLowerCase()
-      let text = ''
-      if (name.endsWith('.pdf')) {
-        text = await extractPdfText(file)
-      } else if (name.endsWith('.docx') || name.endsWith('.doc')) {
-        text = await extractWordText(file)
-      } else {
+      if (!name.endsWith('.pdf') && !name.endsWith('.docx') && !name.endsWith('.doc')) {
         throw new Error('仅支持 PDF 和 WORD (.docx) 格式')
       }
-      if (!text.trim()) throw new Error('未能从文件中提取到文本内容')
+
+      const text = await ocrRecognizeFile(file)
+      if (!text.trim()) throw new Error('未能从文件中识别到文本内容')
+
       const formatted = formatRawResumeText(text)
       loadFromMarkdown(formatted)
     } catch (e) {

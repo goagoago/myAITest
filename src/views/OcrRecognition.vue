@@ -11,6 +11,7 @@ const {
   progress,
   progressStage,
   resultText,
+  resultRichText,
   error,
   recognize,
   reset,
@@ -21,6 +22,7 @@ const imagePreview = ref('')
 const selectedFile = ref(null)
 const copied = ref(false)
 const engine = ref('paddle') // 'paddle' PaddleOCR | 'vision' AI识别 | 'local' 离线识别
+const outputFormat = ref('text') // 'text' 纯文本 | 'html' 富文本
 
 const langOptions = [
   { value: 'chi_sim+eng', label: '中英混合' },
@@ -87,7 +89,7 @@ const handlePaste = (e) => {
 // 开始识别
 const startRecognize = () => {
   if (!selectedFile.value) return
-  recognize(selectedFile.value, selectedLang.value, engine.value)
+  recognize(selectedFile.value, selectedLang.value, engine.value, outputFormat.value)
 }
 
 // 复制结果
@@ -242,6 +244,24 @@ const resetAll = () => {
           </div>
         </div>
 
+        <!-- 输出格式（仅 PaddleOCR + PDF 时有意义） -->
+        <div v-if="engine === 'paddle'" class="input-section">
+          <h3 class="section-label">
+            <ScanLine :size="16" />
+            <span>输出格式</span>
+          </h3>
+          <div class="lang-group">
+            <button
+              :class="['lang-btn', { 'lang-btn--active': outputFormat === 'text' }]"
+              @click="outputFormat = 'text'"
+            >纯文本</button>
+            <button
+              :class="['lang-btn', { 'lang-btn--active': outputFormat === 'html' }]"
+              @click="outputFormat = 'html'"
+            >富文本</button>
+          </div>
+        </div>
+
         <!-- 识别按钮 -->
         <button
           class="recognize-btn"
@@ -275,8 +295,19 @@ const resetAll = () => {
           <h3 class="section-label">
             <ScanLine :size="16" />
             <span>识别结果</span>
+            <span v-if="resultRichText" class="result-format-badge">富文本</span>
           </h3>
+
+          <!-- 富文本渲染 -->
+          <div
+            v-if="resultRichText"
+            class="result-richtext"
+            v-html="resultRichText"
+          ></div>
+
+          <!-- 纯文本编辑 -->
           <textarea
+            v-else
             v-model="resultText"
             class="result-textarea"
             placeholder="识别结果将显示在这里..."
@@ -655,6 +686,57 @@ const resetAll = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+.result-format-badge {
+  margin-left: auto;
+  padding: 2px 10px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(139, 92, 246, 0.15));
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 20px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #67e8f9;
+}
+
+.result-richtext {
+  flex: 1;
+  width: 100%;
+  min-height: 300px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+
+.result-richtext h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: var(--text-primary);
+}
+
+.result-richtext h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 12px 0 6px;
+  color: var(--text-primary);
+}
+
+.result-richtext strong {
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.result-richtext em {
+  font-style: italic;
+  color: #cbd5e1;
 }
 
 .result-textarea {
