@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { saveAs } from 'file-saver'
+import { buildApiUrl } from '../services/aiClient'
 
 export function useDocConvert() {
   const loading = ref(false)
@@ -8,266 +9,81 @@ export function useDocConvert() {
   const convertedFileName = ref('')
 
   /**
-   * PDF → Word
+   * 通用：调用服务端文档转换 API
    */
-  const convertPdfToWord = async (file) => {
-    loading.value = true
-    error.value = null
-    progress.value = 5
+  const convertViaServer = async (file, targetFormat) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('targetFormat', targetFormat)
 
-    try {
-      const pdfjsLib = await import('pdfjs-dist')
-      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
-      pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default
+    const url = buildApiUrl('/api/doc/convert')
+    const res = await fetch(url, { method: 'POST', body: formData })
 
-      progress.value = 10
+    if (!res.ok) throw new Error(`服务端转换失败: ${res.status}`)
 
-      const arrayBuffer = await file.arrayBuffer()
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-      const totalPages = pdf.numPages
-
-      progress.value = 20
-
-      const pages = []
-      for (let i = 1; i <= totalPages; i++) {
-        const page = await pdf.getPage(i)
-        const textContent = await page.getTextContent()
-
-        const lines = []
-        let currentLine = []
-        let lastY = null
-
-        for (const item of textContent.items) {
-          if (item.str.trim() === '') continue
-          const y = Math.round(item.transform[5])
-          if (lastY !== null && Math.abs(y - lastY) > 5) {
-            if (currentLine.length) {
-              lines.push(currentLine.map(c => c.str).join(' '))
-            }
-            currentLine = []
-          }
-          currentLine.push(item)
-          lastY = y
-        }
-        if (currentLine.length) {
-          lines.push(currentLine.map(c => c.str).join(' '))
-        }
-
-        pages.push(lines)
-        progress.value = 20 + Math.floor((i / totalPages) * 50)
-      }
-
-      progress.value = 75
-
-      const { Document, Packer, Paragraph, TextRun, PageBreak } = await import('docx')
-
-      const children = []
-      pages.forEach((lines, pageIndex) => {
-        lines.forEach((line) => {
-          children.push(
-            new Paragraph({
-              children: [new TextRun({ text: line, size: 24 })],
-              spacing: { after: 120 },
-            })
-          )
-        })
-        if (pageIndex < pages.length - 1) {
-          children.push(
-            new Paragraph({
-              children: [new PageBreak()],
-            })
-          )
-        }
-      })
-
-      const doc = new Document({
-        sections: [{ children }],
-      })
-
-      progress.value = 90
-
-      const blob = await Packer.toBlob(doc)
-      const baseName = file.name.replace(/\.pdf$/i, '')
-      convertedFileName.value = `${baseName}.docx`
-      saveAs(blob, convertedFileName.value)
-
-      progress.value = 100
-    } catch (e) {
-      error.value = e.message || 'PDF 转 Word 失败'
-      throw e
-    } finally {
-      loading.value = false
-    }
+    return await res.blob()
   }
 
   /**
-   * Word → PDF
+   * 通用：服务端转换并下载
    */
-  const convertWordToPdf = async (file) => {
-    loading.value = true
-    error.value = null
-    progress.value = 5
-
-    try {
-      const mammoth = await import('mammoth')
-      progress.value = 15
-
-      const arrayBuffer = await file.arrayBuffer()
-      const result = await mammoth.convertToHtml({ arrayBuffer })
-      const html = result.value
-
-      progress.value = 40
-
-      const html2pdf = (await import('html2pdf.js')).default
-
-      const container = document.createElement('div')
-      container.innerHTML = html
-      container.style.cssText = `
-        font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
-        font-size: 14px;
-        line-height: 1.8;
-        color: #333;
-        padding: 20px;
-        max-width: 700px;
-      `
-      container.querySelectorAll('img').forEach(img => {
-        img.style.maxWidth = '100%'
-        img.style.height = 'auto'
-      })
-      container.querySelectorAll('table').forEach(table => {
-        table.style.borderCollapse = 'collapse'
-        table.style.width = '100%'
-        table.querySelectorAll('td, th').forEach(cell => {
-          cell.style.border = '1px solid #999'
-          cell.style.padding = '6px 10px'
-        })
-      })
-
-      document.body.appendChild(container)
-
-      progress.value = 60
-
-      const baseName = file.name.replace(/\.docx?$/i, '')
-      convertedFileName.value = `${baseName}.pdf`
-
-      await html2pdf()
-        .set({
-          margin: [15, 15, 15, 15],
-          filename: convertedFileName.value,
-          image: { type: 'jpeg', quality: 0.95 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-        })
-        .from(container)
-        .save()
-
-      document.body.removeChild(container)
-
-      progress.value = 100
-    } catch (e) {
-      error.value = e.message || 'Word 转 PDF 失败'
-      throw e
-    } finally {
-      loading.value = false
-    }
-  }
-
-  /**
-   * Markdown → PDF
-   */
-  const convertMarkdownToPdf = async (file) => {
+  const serverConvertAndSave = async (file, targetFormat, extRegex, newExt, errorMsg) => {
     loading.value = true
     error.value = null
     progress.value = 10
 
     try {
-      const text = await file.text()
-      progress.value = 20
+      progress.value = 30
+      const blob = await convertViaServer(file, targetFormat)
+      progress.value = 90
 
-      const { marked } = await import('marked')
-      const htmlContent = marked.parse(text)
-      progress.value = 40
-
-      const html2pdf = (await import('html2pdf.js')).default
-
-      const container = document.createElement('div')
-      container.innerHTML = htmlContent
-      container.style.cssText = `
-        font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
-        font-size: 14px;
-        line-height: 1.8;
-        color: #333;
-        padding: 20px;
-        max-width: 700px;
-      `
-      // 代码块样式
-      container.querySelectorAll('pre').forEach(pre => {
-        pre.style.cssText = 'background:#f6f8fa;padding:16px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.5;margin:16px 0;'
-      })
-      container.querySelectorAll('code').forEach(code => {
-        if (code.parentElement.tagName !== 'PRE') {
-          code.style.cssText = 'background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.9em;'
-        }
-      })
-      // 标题样式
-      container.querySelectorAll('h1').forEach(el => { el.style.cssText = 'font-size:28px;font-weight:700;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #e5e7eb;' })
-      container.querySelectorAll('h2').forEach(el => { el.style.cssText = 'font-size:22px;font-weight:700;margin:28px 0 12px;padding-bottom:6px;border-bottom:1px solid #e5e7eb;' })
-      container.querySelectorAll('h3').forEach(el => { el.style.cssText = 'font-size:18px;font-weight:600;margin:24px 0 8px;' })
-      // 引用块
-      container.querySelectorAll('blockquote').forEach(bq => {
-        bq.style.cssText = 'border-left:4px solid #10b981;padding:12px 16px;margin:16px 0;background:#f0fdf4;color:#555;'
-      })
-      // 表格
-      container.querySelectorAll('table').forEach(table => {
-        table.style.cssText = 'border-collapse:collapse;width:100%;margin:16px 0;'
-        table.querySelectorAll('th').forEach(th => {
-          th.style.cssText = 'border:1px solid #d1d5db;padding:8px 12px;background:#f9fafb;font-weight:600;text-align:left;'
-        })
-        table.querySelectorAll('td').forEach(td => {
-          td.style.cssText = 'border:1px solid #d1d5db;padding:8px 12px;'
-        })
-      })
-      // 列表
-      container.querySelectorAll('ul, ol').forEach(list => {
-        list.style.cssText = 'padding-left:24px;margin:12px 0;'
-      })
-      // 图片
-      container.querySelectorAll('img').forEach(img => {
-        img.style.cssText = 'max-width:100%;height:auto;border-radius:4px;'
-      })
-      // 分割线
-      container.querySelectorAll('hr').forEach(hr => {
-        hr.style.cssText = 'border:none;border-top:1px solid #e5e7eb;margin:24px 0;'
-      })
-
-      document.body.appendChild(container)
-      progress.value = 60
-
-      const baseName = file.name.replace(/\.(md|markdown)$/i, '')
-      convertedFileName.value = `${baseName}.pdf`
-
-      await html2pdf()
-        .set({
-          margin: [15, 15, 15, 15],
-          filename: convertedFileName.value,
-          image: { type: 'jpeg', quality: 0.95 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-        })
-        .from(container)
-        .save()
-
-      document.body.removeChild(container)
+      const baseName = file.name.replace(extRegex, '')
+      convertedFileName.value = `${baseName}.${newExt}`
+      saveAs(blob, convertedFileName.value)
       progress.value = 100
     } catch (e) {
-      error.value = e.message || 'Markdown 转 PDF 失败'
+      error.value = e.message || errorMsg
       throw e
     } finally {
       loading.value = false
     }
   }
+
+  /**
+   * PDF → Word（服务端）
+   */
+  const convertPdfToWord = (file) =>
+    serverConvertAndSave(file, 'docx', /\.pdf$/i, 'docx', 'PDF 转 Word 失败')
+
+  /**
+   * Word → PDF（服务端）
+   */
+  const convertWordToPdf = (file) =>
+    serverConvertAndSave(file, 'pdf', /\.docx?$/i, 'pdf', 'Word 转 PDF 失败')
+
+  /**
+   * Markdown → PDF（服务端）
+   */
+  const convertMarkdownToPdf = (file) =>
+    serverConvertAndSave(file, 'pdf', /\.(md|markdown)$/i, 'pdf', 'Markdown 转 PDF 失败')
+
+  /**
+   * HTML → PDF（服务端）
+   */
+  const convertHtmlToPdf = (file) =>
+    serverConvertAndSave(file, 'pdf', /\.(html?|htm)$/i, 'pdf', 'HTML 转 PDF 失败')
+
+  /**
+   * Excel → PDF（服务端）
+   */
+  const convertExcelToPdf = (file) =>
+    serverConvertAndSave(file, 'pdf', /\.(xlsx?|csv)$/i, 'pdf', 'Excel 转 PDF 失败')
+
+  /**
+   * PPT → PDF（服务端）
+   */
+  const convertPptToPdf = (file) =>
+    serverConvertAndSave(file, 'pdf', /\.pptx?$/i, 'pdf', 'PPT 转 PDF 失败')
 
   /**
    * Markdown → Word
@@ -402,61 +218,6 @@ export function useDocConvert() {
   }
 
   /**
-   * HTML → PDF
-   */
-  const convertHtmlToPdf = async (file) => {
-    loading.value = true
-    error.value = null
-    progress.value = 10
-
-    try {
-      const text = await file.text()
-      progress.value = 30
-
-      const html2pdf = (await import('html2pdf.js')).default
-
-      const container = document.createElement('div')
-      // 提取 body 内容或使用全部内容
-      const bodyMatch = text.match(/<body[^>]*>([\s\S]*)<\/body>/i)
-      container.innerHTML = bodyMatch ? bodyMatch[1] : text
-      container.style.cssText = `
-        font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
-        font-size: 14px;
-        line-height: 1.8;
-        color: #333;
-        padding: 20px;
-        max-width: 700px;
-      `
-
-      document.body.appendChild(container)
-      progress.value = 50
-
-      const baseName = file.name.replace(/\.(html?|htm)$/i, '')
-      convertedFileName.value = `${baseName}.pdf`
-
-      await html2pdf()
-        .set({
-          margin: [15, 15, 15, 15],
-          filename: convertedFileName.value,
-          image: { type: 'jpeg', quality: 0.95 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-        })
-        .from(container)
-        .save()
-
-      document.body.removeChild(container)
-      progress.value = 100
-    } catch (e) {
-      error.value = e.message || 'HTML 转 PDF 失败'
-      throw e
-    } finally {
-      loading.value = false
-    }
-  }
-
-  /**
    * 图片 → PDF（支持多张合并）
    */
   const convertImagesToPdf = async (files) => {
@@ -527,8 +288,7 @@ export function useDocConvert() {
 
     try {
       const pdfjsLib = await import('pdfjs-dist')
-      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
-      pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
       progress.value = 10
 
@@ -581,8 +341,7 @@ export function useDocConvert() {
 
     try {
       const pdfjsLib = await import('pdfjs-dist')
-      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
-      pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
       progress.value = 10
 
@@ -637,79 +396,6 @@ export function useDocConvert() {
       progress.value = 100
     } catch (e) {
       error.value = e.message || 'PDF 转 Excel 失败'
-      throw e
-    } finally {
-      loading.value = false
-    }
-  }
-
-  /**
-   * Excel → PDF
-   */
-  const convertExcelToPdf = async (file) => {
-    loading.value = true
-    error.value = null
-    progress.value = 5
-
-    try {
-      const XLSX = await import('xlsx')
-      progress.value = 15
-
-      const arrayBuffer = await file.arrayBuffer()
-      const wb = XLSX.read(arrayBuffer, { type: 'array' })
-
-      progress.value = 30
-
-      // 将所有 sheet 渲染为 HTML 表格
-      let htmlParts = []
-      for (const name of wb.SheetNames) {
-        const ws = wb.Sheets[name]
-        const html = XLSX.utils.sheet_to_html(ws, { editable: false })
-        htmlParts.push(`<h2 style="font-size:16px;font-weight:700;margin:24px 0 12px;color:#333;">${name}</h2>${html}`)
-      }
-
-      progress.value = 50
-
-      const html2pdf = (await import('html2pdf.js')).default
-
-      const container = document.createElement('div')
-      container.innerHTML = htmlParts.join('')
-      container.style.cssText = `
-        font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
-        font-size: 12px;
-        line-height: 1.6;
-        color: #333;
-        padding: 16px;
-      `
-      container.querySelectorAll('table').forEach(table => {
-        table.style.cssText = 'border-collapse:collapse;width:100%;margin-bottom:16px;'
-        table.querySelectorAll('td, th').forEach(cell => {
-          cell.style.cssText = 'border:1px solid #d1d5db;padding:6px 10px;text-align:left;font-size:12px;'
-        })
-      })
-
-      document.body.appendChild(container)
-      progress.value = 65
-
-      const baseName = file.name.replace(/\.(xlsx?|csv)$/i, '')
-      convertedFileName.value = `${baseName}.pdf`
-
-      await html2pdf()
-        .set({
-          margin: [10, 10, 10, 10],
-          filename: convertedFileName.value,
-          image: { type: 'jpeg', quality: 0.95 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-        })
-        .from(container)
-        .save()
-
-      document.body.removeChild(container)
-      progress.value = 100
-    } catch (e) {
-      error.value = e.message || 'Excel 转 PDF 失败'
       throw e
     } finally {
       loading.value = false
@@ -983,8 +669,7 @@ export function useDocConvert() {
 
     try {
       const pdfjsLib = await import('pdfjs-dist')
-      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
-      pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
       progress.value = 10
 
@@ -1046,8 +731,7 @@ export function useDocConvert() {
 
     try {
       const pdfjsLib = await import('pdfjs-dist')
-      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
-      pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
       progress.value = 10
 
@@ -1122,8 +806,7 @@ export function useDocConvert() {
 
     try {
       const pdfjsLib = await import('pdfjs-dist')
-      const workerModule = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
-      pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
       progress.value = 10
 
@@ -1447,6 +1130,7 @@ export function useDocConvert() {
     convertTxtToPdf,
     convertTxtToWord,
     convertImagesToPdf,
+    convertPptToPdf,
     reset,
   }
 }

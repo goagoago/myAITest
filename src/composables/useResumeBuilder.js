@@ -216,22 +216,74 @@ function formatRawResumeText(rawText) {
 
 /* ── 调用后端 OCR 服务识别文件（支持 PDF / Word / 图片） ── */
 
-async function ocrRecognizeFile(file) {
+/**
+ * 将 HTML 转为简易 Markdown（用于简历导入）
+ */
+function htmlToMarkdown(html) {
+  return html
+    .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
+    .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
+    .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
+    .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n')
+    .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
+    .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
+    .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
+    .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+    .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
+    .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
+    .replace(/<\/?[ou]l[^>]*>/gi, '\n')
+    .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<hr[^>]*\/?>/gi, '\n---\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+/**
+ * 通过后端将 PDF 转为 DOCX，再用 mammoth 提取内容
+ */
+async function importPdfFile(file) {
+  // 1. PDF → DOCX（后端 pdf2docx 服务）
   const formData = new FormData()
   formData.append('file', file)
-  const res = await fetch(buildApiUrl('/api/ocr/recognize'), {
+  formData.append('targetFormat', 'docx')
+
+  const res = await fetch(buildApiUrl('/api/doc/convert'), {
     method: 'POST',
     body: formData,
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.message || `OCR 服务端错误: ${res.status}`)
-  }
-  const json = await res.json()
-  if (json.code !== 200) {
-    throw new Error(json.message || 'OCR 识别失败')
-  }
-  return json.data?.text || ''
+  if (!res.ok) throw new Error(`PDF 转换失败: ${res.status}`)
+
+  const docxBlob = await res.blob()
+  const arrayBuffer = await docxBlob.arrayBuffer()
+
+  // 2. DOCX → HTML（mammoth 前端解析）
+  const mammoth = await import('mammoth')
+  const result = await mammoth.convertToHtml({ arrayBuffer })
+  const html = result.value
+  if (!html.trim()) throw new Error('未能从 PDF 中提取到内容')
+
+  // 3. HTML → Markdown
+  return htmlToMarkdown(html)
+}
+
+/**
+ * 通过 mammoth 直接读取 DOCX 内容
+ */
+async function importDocxFile(file) {
+  const arrayBuffer = await file.arrayBuffer()
+  const mammoth = await import('mammoth')
+  const result = await mammoth.convertToHtml({ arrayBuffer })
+  const html = result.value
+  if (!html.trim()) throw new Error('未能从 Word 中提取到内容')
+  return htmlToMarkdown(html)
 }
 
 /* ── Composable ────────────────────────────────────── */
@@ -369,21 +421,26 @@ export function useResumeBuilder() {
     }
   }
 
-  /* 导入文件（调用后端 OCR 识别） */
+  /* 导入文件（PDF 通过后端转 DOCX，Word 直接解析） */
   const importFile = async (file) => {
     if (!file) return
     importLoading.value = true
     importError.value = ''
     try {
       const name = file.name.toLowerCase()
-      if (!name.endsWith('.pdf') && !name.endsWith('.docx') && !name.endsWith('.doc')) {
+      let mdText = ''
+
+      if (name.endsWith('.pdf')) {
+        mdText = await importPdfFile(file)
+      } else if (name.endsWith('.docx') || name.endsWith('.doc')) {
+        mdText = await importDocxFile(file)
+      } else {
         throw new Error('仅支持 PDF 和 WORD (.docx) 格式')
       }
 
-      const text = await ocrRecognizeFile(file)
-      if (!text.trim()) throw new Error('未能从文件中识别到文本内容')
+      if (!mdText.trim()) throw new Error('未能从文件中提取到内容')
 
-      const formatted = formatRawResumeText(text)
+      const formatted = formatRawResumeText(mdText)
       loadFromMarkdown(formatted)
     } catch (e) {
       importError.value = '导入失败：' + (e.message || '未知错误')

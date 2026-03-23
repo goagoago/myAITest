@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted, nextTick, watch } from 'vue'
-import html2pdf from 'html2pdf.js'
+import { saveAs } from 'file-saver'
 import {
   GripVertical, Plus, Trash2, LoaderCircle,
   Bold, Italic, Underline, Strikethrough,
@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from 'lucide-vue-next'
 import { useResumeBuilder } from '../composables/useResumeBuilder'
+import { buildApiUrl } from '../services/aiClient'
 import ResumeHero from './components/resume/ResumeHero.vue'
 import ResumeReview from './components/resume/ResumeReview.vue'
 import ResumeToolbar from './components/resume/ResumeToolbar.vue'
@@ -288,22 +289,51 @@ const handleAiWrite = async () => {
 }
 
 const exportPdf = async () => {
-  if (!previewRef.value) return
-  const el = previewRef.value
-  el.classList.add('pdf-preview--exporting')
+  if (!renderedHtml.value) return
+  const htmlContent = `<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<title>Resume</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+body {
+  font-family: 'Noto Sans SC', 'Segoe UI', sans-serif;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #131722;
+  padding: 28px 24px;
+  margin: 0;
+  background: #fff;
+}
+h1 { font-size: 1.7rem; margin: 0 0 4px; color: #111; line-height: 1.2; }
+h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.07em; border-bottom: 1.5px solid #d8dbe2; padding-bottom: 4px; margin: 18px 0 8px; color: #222; }
+h3 { font-size: 0.88rem; margin: 12px 0 2px; color: #1a1f2e; }
+p { margin: 3px 0; color: #333; font-size: 0.84rem; }
+ul { padding-left: 18px; margin: 4px 0; }
+li { margin: 2px 0; color: #333; font-size: 0.84rem; line-height: 1.6; }
+strong { color: #111; }
+em { color: #444; }
+del { color: #999; }
+code { background: #f0f0f0; padding: 1px 5px; border-radius: 4px; font-size: 0.82rem; color: #d63384; }
+blockquote { border-left: 3px solid #d8dbe2; padding-left: 12px; margin: 8px 0; color: #666; }
+hr { border: none; border-top: 1px solid #e0e0e0; margin: 12px 0; }
+a { color: #0969da; text-decoration: none; }
+</style></head><body>${renderedHtml.value}</body></html>`
+
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' })
+  const file = new File([blob], 'resume.html', { type: 'text/html' })
+
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('targetFormat', 'pdf')
+
   try {
-    await html2pdf()
-      .set({
-        margin: 8,
-        filename: 'resume.pdf',
-        image: { type: 'png', quality: 1 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      })
-      .from(el)
-      .save()
-  } finally {
-    el.classList.remove('pdf-preview--exporting')
+    const res = await fetch(buildApiUrl('/api/doc/convert'), { method: 'POST', body: formData })
+    if (!res.ok) throw new Error(`导出失败: ${res.status}`)
+    const pdfBlob = await res.blob()
+    saveAs(pdfBlob, 'resume.pdf')
+  } catch (e) {
+    console.error('PDF 导出失败:', e)
+    alert('PDF 导出失败: ' + e.message)
   }
 }
 </script>

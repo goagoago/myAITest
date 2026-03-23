@@ -5,7 +5,7 @@ import {
   FileText, Upload, Loader2, AlertCircle, RefreshCw,
   ArrowRightLeft, FileUp, Download, CheckCircle2, X,
   FileImage, ImagePlus,
-  Table, FileSpreadsheet, FileType, FileCode, Images, Type
+  Table, FileSpreadsheet, FileType, FileCode, Images, Type, Presentation
 } from 'lucide-vue-next'
 
 const {
@@ -18,6 +18,7 @@ const {
   convertHtmlToPdf, convertHtmlToWord, convertHtmlToMarkdown,
   convertTxtToPdf, convertTxtToWord,
   convertImagesToPdf,
+  convertPptToPdf,
   reset,
 } = useDocConvert()
 
@@ -51,6 +52,13 @@ const categories = [
     targets: [
       { id: 'pdf', label: 'PDF' },
       { id: 'html', label: 'HTML' },
+    ],
+  },
+  {
+    id: 'ppt', label: 'PPT', icon: Presentation, color: '#f59e0b',
+    accept: '.ppt,.pptx', acceptLabel: 'PPT', multiple: false,
+    targets: [
+      { id: 'pdf', label: 'PDF' },
     ],
   },
   {
@@ -103,6 +111,7 @@ const convertMap = {
   'word→txt': convertWordToTxt,
   'excel→pdf': convertExcelToPdf,
   'excel→html': convertExcelToHtml,
+  'ppt→pdf': convertPptToPdf,
   'md→pdf': convertMarkdownToPdf,
   'md→word': convertMarkdownToWord,
   'md→html': convertMarkdownToHtml,
@@ -247,7 +256,7 @@ const resetAll = () => {
           <span class="gradient-text">格式互转</span>
         </h1>
         <p class="header__desc">
-          支持 7 种格式、21 种转换路径
+          支持 8 种格式、22 种转换路径
         </p>
       </div>
     </header>

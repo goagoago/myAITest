@@ -46,7 +46,25 @@
       "Bash(pnpm add @ffmpeg/core@0.12.6)",
       "Bash(copy /Y \"D:\\\\我的项目\\\\myAITest\\\\node_modules\\\\@ffmpeg\\\\core\\\\dist\\\\esm\\\\ffmpeg-core.js\" \"D:\\\\我的项目\\\\myAITest\\\\public\\\\ffmpeg\\\\ffmpeg-core.js\")",
       "Bash(copy /Y \"D:\\\\我的项目\\\\myAITest\\\\node_modules\\\\@ffmpeg\\\\core\\\\dist\\\\esm\\\\ffmpeg-core.wasm\" \"D:\\\\我的项目\\\\myAITest\\\\public\\\\ffmpeg\\\\ffmpeg-core.wasm\")",
-      "Bash(ls \"D:/我的项目/myAITest/dist/assets/worker\"*)"
+      "Bash(ls \"D:/我的项目/myAITest/dist/assets/worker\"*)",
+      "WebFetch(domain:tools.pdf24.org)",
+      "Bash(gh repo:*)",
+      "Bash(curl -s https://api.github.com/repos/oomol-lab/pdf-craft)",
+      "Bash(curl -s https://raw.githubusercontent.com/oomol-lab/pdf-craft/main/README.md)",
+      "Bash(curl -s https://raw.githubusercontent.com/oomol-lab/pdf-craft/main/README_zh-CN.md)",
+      "Bash(curl -s https://raw.githubusercontent.com/oomol-lab/pdf-craft/main/docs/INSTALLATION.md)",
+      "Bash(find /Users/simonyu/Desktop/我的项目/my-aitest-server/src -type f -name *.yml -o -name *.yaml -o -name application*.properties)",
+      "Bash(find /Users/simonyu/Desktop/我的项目/my-aitest-server/src -type f \\\\\\(-name *Controller.java -o -name *Service.java \\\\\\))",
+      "Bash(find /Users/simonyu/Desktop/我的项目/my-aitest-server/src -name R.java -o -name *Result.java)",
+      "Bash(find /Users/simonyu/Desktop/我的项目/myAITest -name buildApiUrl -o -name *api* -type f)",
+      "Bash(grep -E \"\\\\.\\(js|ts\\)$\")",
+      "Bash(find /Users/simonyu/Desktop/我的项目/myAITest/my-aitest-server -type f -name *.yml -o -name *.yaml -o -name docker-compose* -o -name *.java)",
+      "Bash(mvn:*)",
+      "Bash(curl -s http://localhost:8080/api/doc/health)",
+      "Bash(docker info:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(curl -s http://localhost:8868/health)"
     ]
   }
 }
