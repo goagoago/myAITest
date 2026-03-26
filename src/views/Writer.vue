@@ -168,7 +168,7 @@ const charCount = computed(() => displayContent.value.length)
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page { padding: 0 24px 80px; }
 .container { max-width: 800px; margin: 0 auto; }
 

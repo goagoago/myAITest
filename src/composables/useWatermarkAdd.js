@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 
 export function useWatermarkAdd() {
+  const PREVIEW_MAX_SIDE = 1600
   // 原图 / 结果
   const sourceImage = ref(null)       // HTMLImageElement
   const sourceDataUrl = ref('')
@@ -133,21 +134,29 @@ export function useWatermarkAdd() {
   /**
    * 渲染预览
    */
-  const renderPreview = () => {
+  const renderPreview = ({ fullResolution = false } = {}) => {
     const src = sourceImage.value
     if (!src) return ''
 
-    const w = src.naturalWidth
-    const h = src.naturalHeight
+    const sourceW = src.naturalWidth
+    const sourceH = src.naturalHeight
+    const sourceMaxSide = Math.max(sourceW, sourceH)
+    const scale = fullResolution ? 1 : Math.min(1, PREVIEW_MAX_SIDE / sourceMaxSide)
+    const canvasW = Math.max(1, Math.round(sourceW * scale))
+    const canvasH = Math.max(1, Math.round(sourceH * scale))
+
     if (!offCanvas) {
       offCanvas = document.createElement('canvas')
       offCtx = offCanvas.getContext('2d')
     }
-    offCanvas.width = w
-    offCanvas.height = h
+    offCanvas.width = canvasW
+    offCanvas.height = canvasH
+
+    offCtx.setTransform(scale, 0, 0, scale, 0, 0)
+    offCtx.clearRect(0, 0, sourceW, sourceH)
 
     // 画原图
-    offCtx.drawImage(src, 0, 0, w, h)
+    offCtx.drawImage(src, 0, 0, sourceW, sourceH)
 
     const layers = getEnabledLayers()
     if (layers.length === 0) {
@@ -159,12 +168,13 @@ export function useWatermarkAdd() {
     offCtx.globalAlpha = opacity.value
 
     if (tileMode.value) {
-      drawTiledMulti(offCtx, w, h, layers)
+      drawTiledMulti(offCtx, sourceW, sourceH, layers)
     } else {
-      drawSingleMulti(offCtx, w, h, layers)
+      drawSingleMulti(offCtx, sourceW, sourceH, layers)
     }
 
     offCtx.globalAlpha = 1
+
     const url = offCanvas.toDataURL('image/png')
     resultDataUrl.value = url
     return url
@@ -251,9 +261,10 @@ export function useWatermarkAdd() {
   }
 
   const downloadResult = () => {
-    if (!resultDataUrl.value) return
+    if (!sourceImage.value) return
+    const url = renderPreview({ fullResolution: true })
     const link = document.createElement('a')
-    link.href = resultDataUrl.value
+    link.href = url
     link.download = `watermarked-${Date.now()}.png`
     link.click()
   }

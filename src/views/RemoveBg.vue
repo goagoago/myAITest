@@ -278,7 +278,7 @@ const handleReset = () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page {
   max-width: 1280px;
   margin: 0 auto;

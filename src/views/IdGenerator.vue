@@ -269,7 +269,7 @@ const countPresets = [1, 5, 10, 20, 50, 100]
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .id-generator {
   max-width: 1280px;
   margin: 0 auto;

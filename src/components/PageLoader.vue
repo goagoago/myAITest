@@ -15,7 +15,7 @@ import LottieInteractive from './LottieInteractive.vue'
 import loadingAnimation from '../assets/lottie/Loading.json'
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .page-loader {
   position: fixed;
   top: 0;

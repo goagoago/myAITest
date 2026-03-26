@@ -45,6 +45,40 @@ const colorOptions = ['#16c58e', '#f59e0b', '#ef4444', '#3b82f6', '#a855f7', '#2
 const activeColor = ref('#f59e0b')
 const colorOpen = ref(false)
 
+const aiWriteTemplates = {
+  summary: '例如：3 年前端开发经验，负责后台系统、低代码平台、数据可视化等项目；主导过组件库建设、性能优化、需求推进；有页面性能提升、交付效率提升等结果。',
+  experience: '例如：公司/行业、你的职位、服务的业务场景、负责的模块、使用的技术、做出的优化、提升的数据结果。',
+  project: '例如：项目名称、项目目标、你的角色、负责的功能或模块、技术方案、上线效果、业务指标变化。',
+  skills: '例如：核心能力、框架语言、工程化工具、数据分析/设计/协作工具，以及各自的应用场景。',
+  education: '例如：学校、学历、专业、起止时间，若有 GPA、排名、奖学金、竞赛结果再补充。',
+}
+
+const aiWriteTips = {
+  summary: [
+    '突出经验年限、细分方向和代表成绩',
+    '优先写能体现岗位匹配度的关键词',
+  ],
+  experience: [
+    '按“动作 + 场景 + 方法 + 结果”提供信息',
+    '至少给 2 个可量化成果，招聘方最看重这一点',
+  ],
+  project: [
+    '写清项目目标、你的角色和独立贡献',
+    '尽量补充复杂度、协作范围和业务价值',
+  ],
+  skills: [
+    '优先写能被招聘平台检索到的技能关键词',
+    '不要只罗列工具，最好说明使用场景',
+  ],
+  education: [
+    '基础信息优先完整准确',
+    '荣誉、证书、成绩仅在有把握时填写',
+  ],
+}
+
+const aiWritePlaceholder = computed(() => aiWriteTemplates[aiWriteSection.value] || aiWriteTemplates.summary)
+const currentAiWriteTips = computed(() => aiWriteTips[aiWriteSection.value] || aiWriteTips.summary)
+
 onMounted(() => {
   nextTick(scheduleResizeAllTextareas)
 })
@@ -293,7 +327,7 @@ const exportPdf = async () => {
   const htmlContent = `<!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="UTF-8">
 <title>Resume</title>
-<style>
+<style lang="scss">
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
 body {
   font-family: 'Noto Sans SC', 'Segoe UI', sans-serif;
@@ -391,14 +425,17 @@ a { color: #0969da; text-decoration: none; }
             </select>
           </label>
         </div>
-        <label class="ai-write__field">
-          <span>要点/经历信息</span>
-          <textarea
-            v-model="aiWriteNotes"
-            rows="5"
-            placeholder="写清楚你做过什么、用到什么技能、取得什么结果（可多行）"
-          ></textarea>
-        </label>
+          <label class="ai-write__field">
+            <span>要点/经历信息</span>
+            <div class="ai-write__tips">
+              <span v-for="tip in currentAiWriteTips" :key="tip" class="ai-write__tip">{{ tip }}</span>
+            </div>
+            <textarea
+              v-model="aiWriteNotes"
+              rows="5"
+              :placeholder="aiWritePlaceholder"
+            ></textarea>
+          </label>
         <p v-if="aiWriteError" class="ai-write__error">{{ aiWriteError }}</p>
         <div class="ai-write__actions">
           <button class="btn btn--primary btn--small" @click="handleAiWrite" :disabled="!aiWriteNotes.trim() || aiWriteLoading">

@@ -498,6 +498,24 @@
   font-size: 0.75rem;
 }
 
+.ai-write__tips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ai-write__tip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(19, 195, 139, 0.08);
+  border: 1px solid rgba(19, 195, 139, 0.14);
+  color: #9ce3ca;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
 .ai-write__field input,
 .ai-write__field select,
 .ai-write__field textarea {

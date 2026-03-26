@@ -1,4 +1,5 @@
 <script setup>
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plane, PenTool, Globe, Lightbulb, Zap, Shield, Sparkles, Clock,
@@ -8,6 +9,33 @@ import {
 import UiverseCard from '../components/UiverseCard.vue'
 
 const router = useRouter()
+const homeRef = ref(null)
+const gridCols = ref(4)
+
+let resizeObserver = null
+const updateGridCols = () => {
+  const width = homeRef.value?.clientWidth ?? window.innerWidth
+  const idealCols = Math.floor(width / 280)
+  gridCols.value = Math.min(4, Math.max(2, idealCols))
+}
+
+onMounted(() => {
+  updateGridCols()
+  if ('ResizeObserver' in window && homeRef.value) {
+    resizeObserver = new ResizeObserver(updateGridCols)
+    resizeObserver.observe(homeRef.value)
+  } else {
+    window.addEventListener('resize', updateGridCols, { passive: true })
+  }
+})
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  window.removeEventListener('resize', updateGridCols)
+})
 
 /* ═══ 数据 ═══ */
 const toolCategories = [
@@ -200,7 +228,7 @@ const toolCategories = [
 </script>
 
 <template>
-  <div class="home">
+  <div ref="homeRef" class="home" :style="{ '--home-grid-cols': gridCols }">
     <!-- ═══════════════ Hero 区域 ═══════════════ -->
     <section class="hero">
       <div class="hero__content">
@@ -218,7 +246,7 @@ const toolCategories = [
         <!-- 分类头 — 新拟物 -->
         <div class="category-head">
           <div class="category-head__icon">
-            <component :is="category.icon" :size="20" />
+            <component :is="category.icon" class="category-head__icon-svg" />
           </div>
           <div class="category-head__text">
             <h3>{{ category.label }}</h3>
@@ -238,7 +266,7 @@ const toolCategories = [
             @click="router.push(tool.path)"
           >
             <template #icon>
-              <component :is="tool.icon" :size="28" />
+              <component :is="tool.icon" class="tool-card__icon" />
             </template>
           </UiverseCard>
         </div>
@@ -247,11 +275,11 @@ const toolCategories = [
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .home {
-  max-width: 1280px;
+  max-width: var(--page-max-width);
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 var(--page-padding);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -259,7 +287,7 @@ const toolCategories = [
    ═══════════════════════════════════════════════════════════ */
 
 .hero {
-  padding: 80px 0;
+  padding: clamp(40px, 8vw, 80px) 0;
   text-align: center;
 }
 
@@ -270,10 +298,11 @@ const toolCategories = [
 
 /* 3D凸起标题 */
 .hero__title {
-  font-size: 4.5rem;
+  font-size: var(--text-hero);
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.04em;
+  text-wrap: balance;
 }
 
 .hero__title-line {
@@ -283,7 +312,7 @@ const toolCategories = [
 
 .hero__title-highlight {
   display: block;
-  font-size: 5rem;
+  font-size: calc(var(--text-hero) * 1.08);
   margin-top: 8px;
 }
 
@@ -292,11 +321,11 @@ const toolCategories = [
    ═══════════════════════════════════════════════════════════ */
 
 .tools {
-  padding: 40px 0 100px;
+  padding: clamp(20px, 3vw, 28px) 0 clamp(56px, 8vw, 84px);
 }
 
 .tools__category {
-  margin-bottom: 56px;
+  margin-bottom: clamp(32px, 5vw, 56px);
 }
 
 .tools__category:last-child {
@@ -307,13 +336,13 @@ const toolCategories = [
 .category-head {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 28px;
+  gap: clamp(10px, 1.8vw, 14px);
+  margin-bottom: clamp(18px, 3vw, 28px);
 }
 
 .category-head__icon {
-  width: 46px;
-  height: 46px;
+  width: clamp(38px, 4vw, 46px);
+  height: clamp(38px, 4vw, 46px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -325,50 +354,37 @@ const toolCategories = [
   border: 1px solid rgba(16, 185, 129, 0.12);
 }
 
+.category-head__icon-svg {
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
 .category-head__text h3 {
-  font-size: 1.25rem;
+  font-size: var(--text-lg);
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 2px;
 }
 
 .category-head__text p {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
+}
+
+.tool-card__icon {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
 }
 
 /* 网格 */
 .tools__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  justify-items: center;
+  grid-template-columns: repeat(var(--home-grid-cols), minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 24px);
+  justify-items: stretch;
 }
 
 .tools__grid--wide {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-/* ═══════════════════════════════════════════════════════════
-   响应式
-   ═══════════════════════════════════════════════════════════ */
-
-@media (max-width: 700px) {
-  .home {
-    padding: 0 20px;
-  }
-
-  .hero__title {
-    font-size: 2.5rem;
-  }
-
-  .hero__title-highlight {
-    font-size: 2.75rem;
-  }
-  
-  .tools__grid,
-  .tools__grid--wide {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(var(--home-grid-cols), minmax(0, 1fr));
 }
 </style>

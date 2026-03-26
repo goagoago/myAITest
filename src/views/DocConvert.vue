@@ -408,7 +408,7 @@ const resetAll = () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .doc-convert {
   max-width: 900px;
   margin: 0 auto;

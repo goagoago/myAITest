@@ -1,6 +1,7 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import { useWatermarkAdd } from '../composables/useWatermarkAdd'
+import NeoSlider from './ui/NeoSlider.vue'
 import {
   Upload, Download, RefreshCw, Image, X, Type, Smile, ImageIcon,
   Bold, Italic
@@ -34,12 +35,41 @@ const popularEmojis = [
 ]
 
 const quickAngles = [-45, -30, 0, 30, 45]
+const isCommittingPreview = ref(false)
+
+let previewRaf = 0
+let previewDebounceTimer = 0
+const schedulePreview = () => {
+  if (!sourceImage.value) return
+  if (previewRaf) cancelAnimationFrame(previewRaf)
+  previewRaf = requestAnimationFrame(() => {
+    previewRaf = 0
+    renderPreview()
+  })
+}
+
+const scheduleCommitPreview = () => {
+  if (previewDebounceTimer) clearTimeout(previewDebounceTimer)
+  previewDebounceTimer = window.setTimeout(() => {
+    schedulePreview()
+    previewDebounceTimer = 0
+  }, 80)
+}
+
+const onSliderStart = () => {
+  isCommittingPreview.value = true
+}
+
+const onSliderEnd = () => {
+  isCommittingPreview.value = false
+  scheduleCommitPreview()
+}
 
 const handleFile = async (file) => {
   if (!file || !file.type.startsWith('image/')) return
   if (file.size > 20 * 1024 * 1024) return
   await loadImage(file)
-  renderPreview()
+  schedulePreview()
 }
 
 const handleFileSelect = (e) => {
@@ -78,7 +108,7 @@ const handleStampSelect = async (e) => {
   const file = e.target.files?.[0]
   if (!file || !file.type.startsWith('image/')) return
   await loadStampImage(file)
-  renderPreview()
+  schedulePreview()
 }
 
 watch(
@@ -86,9 +116,15 @@ watch(
    text, fontSize, fontFamily, bold, italic, color,
    emoji, emojiSize, stampSize, opacity, rotation, tileMode, tileGap, stampDataUrl],
   () => {
-    if (sourceImage.value) renderPreview()
+    if (isCommittingPreview.value) return
+    schedulePreview()
   },
 )
+
+onBeforeUnmount(() => {
+  if (previewRaf) cancelAnimationFrame(previewRaf)
+  if (previewDebounceTimer) clearTimeout(previewDebounceTimer)
+})
 </script>
 
 <template>
@@ -163,7 +199,7 @@ watch(
             <div class="wm-row-pair">
               <div class="wm-field">
                 <label class="wm-label">字号 <span class="wm-val">{{ fontSize }}px</span></label>
-                <input type="range" class="wm-slider" v-model.number="fontSize" min="12" max="120" />
+                <NeoSlider v-model="fontSize" :min="12" :max="120" @change-start="onSliderStart" @change-end="onSliderEnd" />
               </div>
               <div class="wm-field">
                 <label class="wm-label">字体</label>
@@ -209,7 +245,7 @@ watch(
             </div>
             <input v-model="emoji" class="wm-input wm-input--mt" placeholder="自定义 Emoji" />
             <label class="wm-label">大小 <span class="wm-val">{{ emojiSize }}px</span></label>
-            <input type="range" class="wm-slider" v-model.number="emojiSize" min="20" max="200" />
+            <NeoSlider v-model="emojiSize" :min="20" :max="200" @change-start="onSliderStart" @change-end="onSliderEnd" />
           </div>
         </div>
 
@@ -235,7 +271,7 @@ watch(
               <img :src="stampDataUrl" alt="水印图片" />
             </div>
             <label class="wm-label">大小 <span class="wm-val">{{ stampSize }}px</span></label>
-            <input type="range" class="wm-slider" v-model.number="stampSize" min="20" max="500" />
+            <NeoSlider v-model="stampSize" :min="20" :max="500" @change-start="onSliderStart" @change-end="onSliderEnd" />
           </div>
         </div>
       </div>
@@ -244,11 +280,11 @@ watch(
       <div class="wm-common">
         <div class="wm-common-item">
           <label class="wm-label">透明度 <span class="wm-val">{{ Math.round(opacity * 100) }}%</span></label>
-          <input type="range" class="wm-slider" v-model.number="opacity" min="0.05" max="1" step="0.05" />
+          <NeoSlider v-model="opacity" :min="0.05" :max="1" :step="0.05" @change-start="onSliderStart" @change-end="onSliderEnd" />
         </div>
         <div class="wm-common-item">
           <label class="wm-label">旋转 <span class="wm-val">{{ rotation }}°</span></label>
-          <input type="range" class="wm-slider" v-model.number="rotation" min="-180" max="180" />
+          <NeoSlider v-model="rotation" :min="-180" :max="180" @change-start="onSliderStart" @change-end="onSliderEnd" />
           <div class="wm-quick-angles">
             <button
               v-for="a in quickAngles"
@@ -266,7 +302,7 @@ watch(
           </label>
           <div v-if="tileMode" style="margin-top: 8px;">
             <label class="wm-label">间距 <span class="wm-val">{{ tileGap }}px</span></label>
-            <input type="range" class="wm-slider" v-model.number="tileGap" min="20" max="200" />
+            <NeoSlider v-model="tileGap" :min="20" :max="200" @change-start="onSliderStart" @change-end="onSliderEnd" />
           </div>
         </div>
       </div>
@@ -274,7 +310,7 @@ watch(
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .wm-add {
   width: 100%;
 }
@@ -582,37 +618,6 @@ watch(
 .wm-select:focus {
   outline: none;
   border-color: rgba(16, 185, 129, 0.5);
-}
-
-.wm-slider {
-  width: 100%;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
-}
-
-.wm-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  background: #34d399;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 0 6px rgba(52, 211, 153, 0.4);
-}
-
-.wm-slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  background: #34d399;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
 }
 
 /* ─── 文字水印行内 ─── */

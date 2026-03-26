@@ -214,6 +214,239 @@ function formatRawResumeText(rawText) {
   return result.join('\n').replace(/\n{3,}/g, '\n\n').trim()
 }
 
+function stripCodeFence(text) {
+  const raw = String(text || '').trim()
+  if (!raw.startsWith('```')) return raw
+  return raw
+    .replace(/^```[a-zA-Z0-9_-]*\s*/, '')
+    .replace(/\s*```$/, '')
+    .trim()
+}
+
+function parseAiJson(text) {
+  const raw = stripCodeFence(text)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw)
+  } catch {
+    const start = raw.indexOf('{')
+    const end = raw.lastIndexOf('}')
+    if (start >= 0 && end > start) {
+      try {
+        return JSON.parse(raw.slice(start, end + 1))
+      } catch {
+        return null
+      }
+    }
+    return null
+  }
+}
+
+function extractAiText(data) {
+  if (!data) return ''
+  if (typeof data.output_text === 'string' && data.output_text.trim()) {
+    return data.output_text.trim()
+  }
+  if (Array.isArray(data.output)) {
+    const text = data.output
+      .flatMap(item => item?.content || [])
+      .filter(item => item?.type === 'output_text')
+      .map(item => item?.text || '')
+      .join('')
+      .trim()
+    if (text) return text
+  }
+  return String(data?.choices?.[0]?.message?.content || '').trim()
+}
+
+function clampScore(value, max = 100) {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return 0
+  return Math.max(0, Math.min(max, Math.round(num)))
+}
+
+function extractContactSignals(text) {
+  const raw = String(text || '')
+  return {
+    phone: /1\d{10}/.test(raw),
+    email: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(raw),
+    city: /(北京|上海|深圳|广州|杭州|成都|南京|苏州|武汉|西安|天津|重庆|长沙|厦门|郑州|青岛|合肥|佛山|东莞|宁波|无锡)/.test(raw),
+  }
+}
+
+function buildLocalReview(mdText) {
+  const text = String(mdText || '').trim()
+  const lines = text.split('\n').map(line => line.trim()).filter(Boolean)
+  const lower = text.toLowerCase()
+  const sectionChecks = [
+    { key: 'summary', label: '职业摘要', hit: /##\s*(职业摘要|个人简介|简介|summary|profile)/i.test(text) },
+    { key: 'experience', label: '工作经历', hit: /##\s*(工作经历|工作经验|实习经历|experience|employment)/i.test(text) },
+    { key: 'project', label: '项目经历', hit: /##\s*(项目经历|项目经验|projects?)/i.test(text) },
+    { key: 'education', label: '教育背景', hit: /##\s*(教育背景|教育经历|education)/i.test(text) },
+    { key: 'skills', label: '技能', hit: /##\s*(技能|skills?|tech stack|能力)/i.test(text) },
+  ]
+  const presentSections = sectionChecks.filter(item => item.hit)
+  const bulletCount = (text.match(/^\s*[-*]\s+/gm) || []).length
+  const quantifiedBullets = (text.match(/^\s*[-*]\s+.*?(\d+%|\d+\+|\d+万|\d+千|\d+个|\d+次|\d+人|\d+天|\d+月|\d+年)/gm) || []).length
+  const roleHeadings = (text.match(/^###\s+/gm) || []).length
+  const actionVerbHits = (text.match(/(负责|主导|推动|搭建|设计|优化|提升|落地|完成|协同|实现|重构|增长|降低|提升)/g) || []).length
+  const contact = extractContactSignals(lines.slice(0, 4).join(' '))
+  const lineLengthAvg = lines.length
+    ? Math.round(lines.reduce((sum, line) => sum + line.length, 0) / lines.length)
+    : 0
+
+  let score = 48
+  score += presentSections.length * 6
+  score += Math.min(12, bulletCount * 1.5)
+  score += Math.min(14, quantifiedBullets * 3)
+  score += Math.min(8, roleHeadings * 2)
+  score += Math.min(6, Math.floor(actionVerbHits / 3))
+  if (contact.phone) score += 2
+  if (contact.email) score += 2
+  if (contact.city) score += 1
+  if (lineLengthAvg > 55) score -= 5
+  if (bulletCount < 4) score -= 6
+  if (!presentSections.some(item => item.key === 'experience')) score -= 10
+  if (!presentSections.some(item => item.key === 'skills')) score -= 5
+  score = clampScore(score)
+
+  const dimensions = [
+    {
+      name: '结构完整度',
+      score: clampScore(45 + presentSections.length * 10),
+      comment: presentSections.length >= 4 ? '核心模块较齐全，适合继续做针对岗位的精修。' : '建议补齐摘要、经历、项目、教育、技能等核心模块。',
+    },
+    {
+      name: '成果量化',
+      score: clampScore(35 + quantifiedBullets * 14),
+      comment: quantifiedBullets >= 3 ? '已有可感知的数据表达，能帮助面试官快速判断贡献。' : '量化结果偏少，建议补充效率、规模、成本、增长等数据。',
+    },
+    {
+      name: '岗位匹配度',
+      score: clampScore(38 + actionVerbHits * 4 + (/vue|react|产品|运营|java|python|销售|设计/i.test(lower) ? 12 : 0)),
+      comment: /vue|react|typescript|产品|运营|数据|销售|设计|python|java/i.test(lower)
+        ? '已出现岗位相关关键词，建议继续贴近目标 JD 做关键词覆盖。'
+        : '岗位关键词露出不足，建议围绕目标岗位 JD 补充核心技能与业务场景。',
+    },
+    {
+      name: 'ATS 可读性',
+      score: clampScore(55 + roleHeadings * 8 + (contact.phone ? 6 : 0) + (contact.email ? 6 : 0) - (lineLengthAvg > 60 ? 6 : 0)),
+      comment: lineLengthAvg <= 55 ? '排版相对清晰，机器解析和招聘方快速扫读都更友好。' : '单行内容偏长，建议拆成短句和要点，提升 ATS 与人工筛选效率。',
+    },
+  ]
+
+  const highlights = []
+  if (presentSections.length >= 4) highlights.push('核心模块覆盖较完整，基础框架已经具备投递条件。')
+  if (quantifiedBullets >= 2) highlights.push('已使用量化结果描述成果，容易让招聘方快速理解价值。')
+  if (roleHeadings >= 2) highlights.push('经历层级清晰，便于 HR 和面试官快速扫读重点。')
+
+  const suggestions = []
+  if (!contact.phone || !contact.email) {
+    suggestions.push({
+      text: '在顶部补齐手机号、邮箱等联系方式，确保招聘方能直接联系到你。',
+      importance: 5,
+      category: '基础信息',
+      example: '姓名下方建议统一为：目标岗位 | 手机 | 邮箱 | 城市',
+    })
+  }
+  if (!presentSections.some(item => item.key === 'summary')) {
+    suggestions.push({
+      text: '补充 2-4 句职业摘要，概括经验年限、核心方向、代表性成果和目标岗位。',
+      importance: 5,
+      category: '职业摘要',
+      example: '3 年 B 端前端经验，主导后台系统重构，推动页面性能提升 42%，聚焦 Vue 3 与工程化建设。',
+    })
+  }
+  if (quantifiedBullets < 3) {
+    suggestions.push({
+      text: '把“负责/参与”改成“动作 + 场景 + 结果”，优先补充效率、转化、成本、时长、覆盖规模等数据。',
+      importance: 5,
+      category: '成果表达',
+      example: '优化首屏渲染链路，使 LCP 从 3.1s 降到 1.8s，页面跳出率下降 12%。',
+    })
+  }
+  if (roleHeadings < 2 && presentSections.some(item => item.key === 'experience')) {
+    suggestions.push({
+      text: '工作经历和项目经历建议拆成独立条目，使用“职位/项目名 + 时间 + 要点”结构，避免堆成大段文字。',
+      importance: 4,
+      category: '结构表达',
+      example: '### 前端开发工程师 | XX 科技\n2023.03 - 至今 上海\n- ...',
+    })
+  }
+  if (!presentSections.some(item => item.key === 'skills')) {
+    suggestions.push({
+      text: '增加技能模块，按“核心能力 / 工具栈 / 语言”分组，方便招聘平台关键词检索。',
+      importance: 4,
+      category: '关键词覆盖',
+      example: '- 工具栈：Vue 3 / TypeScript / Vite / Node.js',
+    })
+  }
+  suggestions.push({
+    text: '针对目标岗位 JD 做一版定制化改写，把岗位高频关键词自然放进摘要、经历和技能模块。',
+    importance: 4,
+    category: '岗位匹配',
+    example: '若目标岗位强调“低代码平台、性能优化、协作推进”，请在对应经历中直接体现这些关键词。',
+  })
+
+  return {
+    score,
+    summary: score >= 80
+      ? '整体已经具备较强投递基础，结构清晰且有一定成果感，建议继续围绕目标岗位做关键词精修。'
+      : '当前简历具备基础框架，但在量化成果、岗位关键词覆盖和重点表达上仍有明显提升空间。',
+    highlights: highlights.slice(0, 3),
+    dimensions,
+    suggestions: suggestions.slice(0, 6),
+  }
+}
+
+function normalizeAiReviewResult(parsed, fallback) {
+  const base = fallback || buildLocalReview('')
+  const suggestions = Array.isArray(parsed?.suggestions)
+    ? parsed.suggestions
+      .map(item => {
+        if (typeof item === 'string') {
+          return { text: item, importance: 3, category: '优化建议', example: '' }
+        }
+        const text = String(item?.text || '').trim()
+        if (!text) return null
+        return {
+          text,
+          importance: clampScore(item?.importance || 3, 5) || 3,
+          category: String(item?.category || '优化建议').trim() || '优化建议',
+          example: String(item?.example || '').trim(),
+        }
+      })
+      .filter(Boolean)
+    : []
+
+  const dimensions = Array.isArray(parsed?.dimensions)
+    ? parsed.dimensions
+      .map(item => {
+        const name = String(item?.name || '').trim()
+        if (!name) return null
+        return {
+          name,
+          score: clampScore(item?.score),
+          comment: String(item?.comment || '').trim(),
+        }
+      })
+      .filter(Boolean)
+    : []
+
+  const highlights = Array.isArray(parsed?.highlights)
+    ? parsed.highlights.map(item => String(item || '').trim()).filter(Boolean)
+    : []
+
+  return {
+    score: clampScore(parsed?.score || base.score),
+    summary: String(parsed?.summary || '').trim() || base.summary,
+    highlights: highlights.length ? highlights.slice(0, 3) : base.highlights,
+    dimensions: dimensions.length ? dimensions.slice(0, 4) : base.dimensions,
+    suggestions: suggestions.length ? suggestions.slice(0, 6) : base.suggestions,
+    source: parsed ? 'ai' : 'local',
+  }
+}
+
 /* ── 调用后端 OCR 服务识别文件（支持 PDF / Word / 图片） ── */
 
 /**
@@ -490,7 +723,7 @@ export function useResumeBuilder() {
         temperature: 0.3,
         max_tokens: 4096,
       })
-      const md = (data.choices?.[0]?.message?.content || '').trim()
+      const md = extractAiText(data)
       if (!md) throw new Error('AI 未返回有效内容')
       return md
     } catch (e) {
@@ -525,11 +758,11 @@ export function useResumeBuilder() {
       const sectionKey = String(section || 'summary').trim()
       const sectionLabel = sectionMap[sectionKey] || sectionKey
       const formatGuide = {
-        summary: '输出 2-4 句职业摘要，突出经验年限、领域和结果，不要使用列表。',
-        experience: '输出一段工作经历：\n### 职位 | 公司\n时间 地点\n- 量化成果要点 3-5 条',
-        project: '输出一段项目经历：\n### 项目名称\n角色 | 项目一句话说明\n- 关键贡献 3-5 条',
-        skills: '输出技能列表：\n- 能力或工具 | 熟练度/应用场景',
-        education: '输出教育背景：\n- 学校 | 学历 专业 | 时间',
+        summary: '输出 2-4 句职业摘要，按照招聘平台常见筛选偏好写法，依次突出经验年限、细分方向、代表成果、岗位匹配关键词，不要使用列表。',
+        experience: '输出一段工作经历：\n### 职位 | 公司\n时间 地点\n- 每条采用“动作 + 业务场景 + 方法/工具 + 结果”结构\n- 输出 3-5 条，要有 2 条以上量化成果\n- 优先写主导、推动、优化、落地、协同等招聘平台高频表达',
+        project: '输出一段项目经历：\n### 项目名称\n角色 | 项目一句话说明\n- 输出 3-5 条，写清项目目标、个人职责、关键动作、业务结果\n- 尽量体现复杂度、协作范围、指标提升或交付价值',
+        skills: '输出技能列表：\n- 核心能力：能力标签 3-5 个\n- 工具栈：技术/工具 5-8 个\n- 可按招聘平台常见检索习惯自然覆盖关键词',
+        education: '输出教育背景：\n- 学校 | 学历 | 专业 | 时间\n- 如用户提供成绩、排名、荣誉则保留，否则不要编造',
       }
       const guide = formatGuide[sectionKey] || '输出与该模块匹配的 Markdown 片段。'
 
@@ -537,7 +770,7 @@ export function useResumeBuilder() {
         messages: [
           {
             role: 'system',
-            content: `你是专业简历写作助手。仅使用用户提供的信息生成 Markdown 片段，不得编造或补充事实，不得虚构公司/项目/成绩。
+            content: `你是专业简历写作助手，熟悉 BOSS 直聘、智联招聘、前程无忧、猎聘等招聘平台常见筛选方式。仅使用用户提供的信息生成 Markdown 片段，不得编造或补充事实，不得虚构公司/项目/成绩。
 
 目标模块：${sectionLabel}
 目标岗位：${safeRole || '未提供'}
@@ -545,8 +778,11 @@ export function useResumeBuilder() {
 写作要求：
 1. 只输出 Markdown 片段，不要加代码块标记，不要解释
 2. 信息不足处用 [待补充] 占位
-3. 语言简洁、动作动词开头、尽量量化成果
-4. 格式遵循：${guide}`,
+ 3. 语言风格要像成熟招聘平台上的高通过率简历，避免空话、套话、学生作文式表达
+ 4. 经历类内容优先使用“主导/负责/推动/优化/搭建/落地/协同”等动词开头，并尽量量化成果
+ 5. 如果用户给了目标岗位，就自然融入岗位关键词，但不能生造技术、成绩或职责
+ 6. 优先保留对招聘方最敏感的信息：业务场景、职责边界、使用工具、影响结果
+ 7. 格式遵循：${guide}`,
           },
           { role: 'user', content: rawNotes },
         ],
@@ -554,7 +790,7 @@ export function useResumeBuilder() {
         max_tokens: 800,
       })
 
-      const md = (data.choices?.[0]?.message?.content || '').trim()
+      const md = extractAiText(data)
       if (!md) throw new Error('AI 未返回有效内容')
       return md
     } catch (e) {
@@ -570,24 +806,6 @@ export function useResumeBuilder() {
   const aiReviewError = ref('')
   const aiReviewResult = ref(null)
 
-  const parseAiReview = (text) => {
-    if (!text) return null
-    try {
-      return JSON.parse(text)
-    } catch {
-      const start = text.indexOf('{')
-      const end = text.lastIndexOf('}')
-      if (start >= 0 && end > start) {
-        try {
-          return JSON.parse(text.slice(start, end + 1))
-        } catch {
-          return null
-        }
-      }
-      return null
-    }
-  }
-
   const aiReviewResume = async (mdText) => {
     if (!mdText?.trim()) {
       aiReviewError.value = '请先填写简历内容后再评审'
@@ -597,6 +815,7 @@ export function useResumeBuilder() {
     aiReviewLoading.value = true
     aiReviewError.value = ''
     try {
+      const fallback = buildLocalReview(mdText)
       const data = await aiClient.chat.complete({
         messages: [
           {
@@ -605,50 +824,41 @@ export function useResumeBuilder() {
 {
   "score": 0-100 的整数,
   "summary": 1-2 句总体评价,
+  "highlights": ["1 句亮点总结"],
+  "dimensions": [
+    {"name": "结构完整度", "score": 0-100 的整数, "comment": "一句点评"},
+    {"name": "成果量化", "score": 0-100 的整数, "comment": "一句点评"},
+    {"name": "岗位匹配度", "score": 0-100 的整数, "comment": "一句点评"},
+    {"name": "ATS 可读性", "score": 0-100 的整数, "comment": "一句点评"}
+  ],
   "suggestions": [
-    {"text": "具体可执行的建议", "importance": 1-5 的整数}
+    {"text": "具体可执行的建议", "importance": 1-5 的整数, "category": "建议分类", "example": "可参考的写法"}
   ]
 }
 
 要求：
-1. 如果简历质量一般或较差，suggestions 给出 4-8 条具体改进建议
-2. 如果质量较好，suggestions 可以为空数组，但 summary 需说明亮点
-3. importance 5 表示最重要
-4. 只输出 JSON，不要额外文字、不需要 Markdown 代码块`
+ 1. 评审标准参考主流招聘平台和 ATS 筛选逻辑：信息完整度、关键词匹配、结果量化、条目清晰度、可读性
+ 2. 如果简历质量一般或较差，suggestions 给出 4-6 条具体改进建议；如果质量较好，也至少给出 2 条进阶优化建议
+ 3. 建议要尽量指出缺什么、怎么改、改成什么样，优先使用招聘方常见表达方式
+ 4. importance 5 表示最重要
+ 5. 只输出 JSON，不要额外文字、不需要 Markdown 代码块`
           },
           { role: 'user', content: mdText.trim() }
         ],
         temperature: 0.2,
         max_tokens: 1200,
       })
-      const raw = (data.choices?.[0]?.message?.content || '').trim()
-      const parsed = parseAiReview(raw)
-      if (!parsed) throw new Error('AI 返回内容无法解析为JSON')
-      const score = Number(parsed.score)
-      const normalizedSuggestions = Array.isArray(parsed.suggestions)
-        ? parsed.suggestions
-          .map(item => {
-            if (typeof item === 'string') {
-              return { text: item, importance: 3 }
-            }
-            const text = String(item?.text || '').trim()
-            const importance = Number(item?.importance)
-            if (!text) return null
-            const level = Number.isFinite(importance) ? Math.max(1, Math.min(5, Math.round(importance))) : 3
-            return { text, importance: level }
-          })
-          .filter(Boolean)
-        : []
-      aiReviewResult.value = {
-        score: Number.isFinite(score) ? Math.max(0, Math.min(100, Math.round(score))) : 0,
-        summary: String(parsed.summary || '').trim() || '暂无总结',
-        suggestions: normalizedSuggestions,
+      const raw = extractAiText(data)
+      const parsed = parseAiJson(raw)
+      aiReviewResult.value = normalizeAiReviewResult(parsed, fallback)
+      if (!parsed) {
+        aiReviewError.value = 'AI 评审结果格式异常，已为你切换为本地智能评审。'
       }
       return aiReviewResult.value
     } catch (e) {
-      aiReviewError.value = 'AI 评审失败：' + (e.message || '未知错误')
-      aiReviewResult.value = null
-      return null
+      aiReviewError.value = 'AI 评审暂时不可用，已切换为本地智能评审。'
+      aiReviewResult.value = normalizeAiReviewResult(null, buildLocalReview(mdText))
+      return aiReviewResult.value
     } finally {
       aiReviewLoading.value = false
     }

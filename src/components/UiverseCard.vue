@@ -25,10 +25,11 @@ defineProps({
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .card {
   width: 100%;
   max-width: 300px;
+  min-width: 0;
   height: 220px;
   background: var(--neo-surface);
   position: relative;
@@ -72,8 +73,8 @@ defineProps({
 }
 
 .icon-container {
-  width: 60px;
-  height: 60px;
+  width: clamp(50px, 4vw, 60px);
+  height: clamp(50px, 4vw, 60px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,7 +87,7 @@ defineProps({
 
 .card-title {
   color: var(--text-primary);
-  font-size: 1.1rem;
+  font-size: var(--text-md);
   font-weight: 600;
   margin: 0;
   transition: all 0.3s ease;
@@ -94,7 +95,7 @@ defineProps({
 
 .card-description {
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
   height: 0;
   padding: 0 20px;
@@ -128,7 +129,7 @@ defineProps({
 }
 
 .card:hover .card-title {
-  font-size: 1.25rem;
+  font-size: var(--text-lg);
   transform: translateY(-15px);
   background: var(--gradient);
   -webkit-background-clip: text;
@@ -140,5 +141,78 @@ defineProps({
   height: 40px; /* Approx 2 lines */
   opacity: 1;
   transform: translateY(-10px);
+}
+
+@media (hover: none) {
+  .card:hover {
+    transform: none;
+    box-shadow: var(--neo-shadow-up);
+  }
+
+  .card:hover::before {
+    opacity: 0;
+  }
+
+  .card:hover .content {
+    transform: none;
+    background: var(--neo-surface);
+    inset: 1px;
+    width: calc(100% - 2px);
+    height: calc(100% - 2px);
+  }
+
+  .card:hover .icon-container,
+  .card:hover .card-title,
+  .card:hover .card-description {
+    transform: none;
+  }
+
+  .card:hover .card-title {
+    font-size: var(--text-md);
+    background: none;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    -webkit-text-fill-color: currentColor;
+  }
+
+  .card:hover .card-description {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .card {
+    max-width: none;
+    height: 184px;
+    border-radius: 20px;
+  }
+
+  .card::before {
+    border-radius: 20px;
+  }
+
+  .content {
+    border-radius: 19px;
+    padding: 14px 12px;
+    gap: 8px;
+  }
+
+  .icon-container {
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+  }
+
+  .card-title {
+    font-size: var(--text-sm);
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    height: 196px;
+  }
 }
 </style>

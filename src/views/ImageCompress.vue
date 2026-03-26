@@ -614,7 +614,7 @@ const handleCompareMove = (e) => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .image-compress {
   max-width: 1280px;
   margin: 0 auto;

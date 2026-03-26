@@ -247,33 +247,10 @@ const resetAll = () => {
       </div>
     </div>
 
-    <!-- 功能说明 -->
-    <div class="features-section">
-      <div class="feature-item">
-        <div class="feature-icon">🖥️</div>
-        <h3>多种录制模式</h3>
-        <p>支持录制全屏、应用窗口或浏览器标签页</p>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon">🎙️</div>
-        <h3>音频录制</h3>
-        <p>可同时录制系统声音和麦克风语音</p>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon">🔒</div>
-        <h3>安全私密</h3>
-        <p>纯浏览器端处理，视频不经过任何服务器</p>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon">⏯️</div>
-        <h3>灵活控制</h3>
-        <p>支持暂停/继续录制，随时掌控录制节奏</p>
-      </div>
-    </div>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .screen-record {
   max-width: 1100px;
   margin: 0 auto;

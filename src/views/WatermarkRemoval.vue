@@ -155,9 +155,6 @@ const fileSize = computed(() => {
           <span>智能水印工具，</span>
           <span class="gradient-text">一键搞定</span>
         </h1>
-        <p class="header__desc">
-          基于 YOLO + LaMa 模型，自动检测并去除图片水印
-        </p>
       </div>
     </header>
 
@@ -359,7 +356,7 @@ const fileSize = computed(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .watermark-removal {
   max-width: 1280px;
   margin: 0 auto;

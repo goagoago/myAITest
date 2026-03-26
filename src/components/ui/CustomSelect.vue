@@ -74,7 +74,7 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .custom-select {
   position: relative;
   width: 100%;

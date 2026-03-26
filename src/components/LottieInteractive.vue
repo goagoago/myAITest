@@ -114,7 +114,7 @@ defineExpose({ play, stop, pause, goToFrame })
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .lottie-interactive-wrap {
   position: relative;
   display: inline-flex;

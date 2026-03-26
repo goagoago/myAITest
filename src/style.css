@@ -6,6 +6,34 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap');
 
 :root {
+  --bp-xs: 480px;
+  --bp-sm: 768px;
+  --bp-md: 1024px;
+  --bp-lg: 1280px;
+
+  --page-max-width: 1280px;
+  --page-padding: clamp(16px, 3vw, 32px);
+  --page-padding-mobile: 16px;
+  --section-gap: clamp(20px, 3vw, 32px);
+  --card-radius: 24px;
+  --touch-target: clamp(40px, 5vw, 46px);
+
+  --text-xs: clamp(0.7rem, 0.62rem + 0.32vw, 0.88rem);
+  --text-sm: clamp(0.82rem, 0.72rem + 0.38vw, 1rem);
+  --text-md: clamp(0.95rem, 0.82rem + 0.48vw, 1.16rem);
+  --text-lg: clamp(1.1rem, 0.94rem + 0.72vw, 1.46rem);
+  --text-xl: clamp(1.34rem, 1.08rem + 1.1vw, 2rem);
+  --text-hero: clamp(2rem, 1.2rem + 4.8vw, 5.4rem);
+
+  --text-title: clamp(1.5rem, 1rem + 2vw, 3rem);
+
+  --icon-xs: clamp(14px, 12px + 0.3vw, 16px);
+  --icon-sm: clamp(16px, 14px + 0.35vw, 18px);
+  --icon-md: clamp(18px, 15px + 0.5vw, 22px);
+  --icon-lg: clamp(24px, 18px + 1vw, 32px);
+  --icon-xl: clamp(36px, 24px + 2vw, 56px);
+  --icon-fluid: clamp(14px, 9px + 1.6vw, 30px);
+
   /* 主色 */
   --primary: #10b981;
   --primary-rgb: 16, 185, 129;
@@ -84,15 +112,19 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
+  font-size: clamp(11px, 1.2vw + 7px, 22px);
 }
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   background: transparent;
   color: var(--text-primary);
   overflow-x: hidden;
   position: relative;
   cursor: none; /* 隐藏默认光标，用自定义光标 */
+  font-size: var(--text-md);
 }
 
 /* 移动端恢复默认光标 */
@@ -127,8 +159,57 @@ body::after {
 
 #app {
   min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   z-index: 1;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+svg.lucide {
+  width: var(--icon-fluid);
+  height: var(--icon-fluid);
+}
+
+:where(.header__title) {
+  font-size: var(--text-title) !important;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+button,
+[role='button'],
+input,
+select {
+  min-height: var(--touch-target);
+}
+
+.page-shell {
+  width: min(100%, var(--page-max-width));
+  margin: 0 auto;
+  padding-inline: var(--page-padding);
+}
+
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--section-gap);
+}
+
+.responsive-scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 选中 */

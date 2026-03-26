@@ -769,7 +769,7 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .ai-studio {
   max-width: 1280px;
   margin: 0 auto;

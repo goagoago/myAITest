@@ -343,7 +343,7 @@ const resetAll = () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .ocr-page {
   max-width: 1280px;
   margin: 0 auto;

@@ -1,103 +1,123 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+const Home = () => import('../views/Home.vue')
+const Travel = () => import('../views/Travel.vue')
+const Writer = () => import('../views/Writer.vue')
+const Translator = () => import('../views/Translator.vue')
+const Mind = () => import('../views/Mind.vue')
+const AIStudio = () => import('../views/AIStudio.vue')
+const WatermarkRemoval = () => import('../views/WatermarkRemoval.vue')
+const DocConvert = () => import('../views/DocConvert.vue')
+const ImageCompress = () => import('../views/ImageCompress.vue')
+const MediaTools = () => import('../views/MediaTools.vue')
+const VideoCompress = () => import('../views/VideoCompress.vue')
+const ScreenRecord = () => import('../views/ScreenRecord.vue')
+const AudioConvert = () => import('../views/AudioConvert.vue')
+const IdPhoto = () => import('../views/IdPhoto.vue')
+const QrCode = () => import('../views/QrCode.vue')
+const OcrRecognition = () => import('../views/OcrRecognition.vue')
+const RemoveBg = () => import('../views/RemoveBg.vue')
+const IdGenerator = () => import('../views/IdGenerator.vue')
+const ResumeBuilder = () => import('../views/ResumeBuilder.vue')
+
 const routes = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('../views/Home.vue'),
+    component: Home,
   },
   {
     path: '/travel',
     name: 'Travel',
-    component: () => import('../views/Travel.vue'),
+    component: Travel,
   },
   {
     path: '/writer',
     name: 'Writer',
-    component: () => import('../views/Writer.vue'),
+    component: Writer,
   },
   {
     path: '/translator',
     name: 'Translator',
-    component: () => import('../views/Translator.vue'),
+    component: Translator,
   },
   {
     path: '/mind',
     name: 'Mind',
-    component: () => import('../views/Mind.vue'),
+    component: Mind,
   },
   {
     path: '/ai-studio',
     name: 'AIStudio',
-    component: () => import('../views/AIStudio.vue'),
+    component: AIStudio,
   },
   {
     path: '/watermark-removal',
     name: 'WatermarkRemoval',
-    component: () => import('../views/WatermarkRemoval.vue'),
+    component: WatermarkRemoval,
   },
   {
     path: '/doc-convert',
     name: 'DocConvert',
-    component: () => import('../views/DocConvert.vue'),
+    component: DocConvert,
   },
   {
     path: '/image-compress',
     name: 'ImageCompress',
-    component: () => import('../views/ImageCompress.vue'),
+    component: ImageCompress,
   },
   {
     path: '/media',
     name: 'MediaTools',
     redirect: '/media/compress',
-    component: () => import('../views/MediaTools.vue'),
+    component: MediaTools,
     children: [
       {
         path: 'compress',
         name: 'VideoCompress',
-        component: () => import('../views/VideoCompress.vue'),
+        component: VideoCompress,
       },
       {
         path: 'record',
         name: 'ScreenRecord',
-        component: () => import('../views/ScreenRecord.vue'),
+        component: ScreenRecord,
       },
       {
         path: 'audio-convert',
         name: 'AudioConvert',
-        component: () => import('../views/AudioConvert.vue'),
+        component: AudioConvert,
       },
     ]
   },
   {
     path: '/id-photo',
     name: 'IdPhoto',
-    component: () => import('../views/IdPhoto.vue'),
+    component: IdPhoto,
   },
   {
     path: '/qr-code',
     name: 'QrCode',
-    component: () => import('../views/QrCode.vue'),
+    component: QrCode,
   },
   {
     path: '/ocr',
     name: 'OcrRecognition',
-    component: () => import('../views/OcrRecognition.vue'),
+    component: OcrRecognition,
   },
   {
     path: '/remove-bg',
     name: 'RemoveBg',
-    component: () => import('../views/RemoveBg.vue'),
+    component: RemoveBg,
   },
   {
     path: '/id-generator',
     name: 'IdGenerator',
-    component: () => import('../views/IdGenerator.vue'),
+    component: IdGenerator,
   },
   {
     path: '/resume-builder',
     name: 'ResumeBuilder',
-    component: () => import('../views/ResumeBuilder.vue'),
+    component: ResumeBuilder,
   },
 ]
 

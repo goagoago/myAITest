@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useResponsive } from '../composables/useResponsive'
 import {
   Home, Plane, PenTool, Globe, Lightbulb, Sparkles, Zap, Eraser, FileText,
   ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera, QrCode, ScanLine, Scissors, CreditCard, Video, ScrollText
@@ -18,24 +19,21 @@ const scrolled = ref(false)
 const mobileMenuOpen = ref(false)
 const openDropdown = ref(null)
 const isLoading = ref(false)
+const { isMobile } = useResponsive()
 
 // 全局加载逻辑
 let loadingTimer = null
 router.beforeEach(() => {
-  console.log('Router: beforeEach triggered')
   clearTimeout(loadingTimer)
   // 200ms 后再显示 loading，防止快速切换时闪烁
   loadingTimer = setTimeout(() => {
-    console.log('Router: Setting isLoading to true')
     isLoading.value = true
   }, 200)
 })
 router.afterEach(() => {
-  console.log('Router: afterEach triggered')
   clearTimeout(loadingTimer)
   // 保证 loading 至少可见 300ms，防止体验突兀
   setTimeout(() => {
-    console.log('Router: Setting isLoading to false')
     isLoading.value = false
   }, 300)
 })
@@ -95,6 +93,16 @@ const isGroupActive = (group) => {
   return group.children.some(child => route.path === child.path)
 }
 
+watch(() => route.fullPath, () => {
+  mobileMenuOpen.value = false
+})
+
+watch(isMobile, (mobile) => {
+  if (!mobile) {
+    mobileMenuOpen.value = false
+  }
+})
+
 let dropdownTimer = null
 const showDropdown = (id) => {
   clearTimeout(dropdownTimer)
@@ -134,7 +142,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="layout">
+  <div class="layout" :class="{ 'layout--mobile': isMobile, 'layout--desktop': !isMobile }">
     <video class="global-bg" autoplay loop muted playsinline :src="bgVideo"></video>
 
     <!-- 全局加载动画 -->
@@ -153,8 +161,8 @@ onUnmounted(() => {
               :animation-data="toolboxAnim"
               trigger="hover"
               :loop="false"
-              width="26px"
-              height="26px"
+              width="100%"
+              height="100%"
             />
           </div>
           <span class="logo__text">Tools Box</span>
@@ -167,7 +175,7 @@ onUnmounted(() => {
             class="nav__link"
             :class="{ 'nav__link--active': isActive('/') }"
           >
-            <Home :size="17" class="nav__icon" />
+            <Home class="nav__icon" />
             <span class="nav__label">首页</span>
           </router-link>
 
@@ -182,9 +190,9 @@ onUnmounted(() => {
               class="nav__link nav__link--trigger"
               :class="{ 'nav__link--active': isGroupActive(group) }"
             >
-              <component :is="group.icon" :size="17" class="nav__icon" />
+              <component :is="group.icon" class="nav__icon" />
               <span class="nav__label">{{ group.label }}</span>
-              <ChevronDown :size="13" class="nav__chevron" :class="{ 'nav__chevron--open': openDropdown === group.id }" />
+              <ChevronDown class="nav__chevron" :class="{ 'nav__chevron--open': openDropdown === group.id }" />
             </button>
 
             <Transition name="dropdown">
@@ -197,7 +205,7 @@ onUnmounted(() => {
                   @click="navigateTo(item.path)"
                 >
                   <div class="dropdown__icon">
-                    <component :is="item.icon" :size="17" />
+                    <component :is="item.icon" class="dropdown__icon-svg" />
                   </div>
                   <div class="dropdown__text">
                     <span class="dropdown__name">{{ item.label }}</span>
@@ -211,7 +219,7 @@ onUnmounted(() => {
 
         <!-- 移动端菜单按钮 -->
         <button class="mobile-toggle" @click="mobileMenuOpen = !mobileMenuOpen">
-          <component :is="mobileMenuOpen ? X : Menu" :size="22" />
+          <component :is="mobileMenuOpen ? X : Menu" class="mobile-toggle__icon" />
         </button>
       </div>
     </header>
@@ -227,13 +235,13 @@ onUnmounted(() => {
           :class="{ 'mobile-menu__link--active': isActive('/') }"
           @click="navigateTo('/')"
         >
-          <Home :size="20" />
+          <Home class="mobile-menu__icon" />
           <span>首页</span>
         </button>
 
         <div v-for="group in navGroups" :key="group.id" class="mobile-menu__group">
           <div class="mobile-menu__group-label">
-            <component :is="group.icon" :size="16" />
+            <component :is="group.icon" class="mobile-menu__group-icon" />
             <span>{{ group.label }}</span>
           </div>
           <button
@@ -243,7 +251,7 @@ onUnmounted(() => {
             :class="{ 'mobile-menu__link--active': isActive(item.path) }"
             @click="navigateTo(item.path)"
           >
-            <component :is="item.icon" :size="20" />
+            <component :is="item.icon" class="mobile-menu__icon" />
             <span>{{ item.label }}</span>
           </button>
         </div>
@@ -271,9 +279,12 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .layout {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   background-color: transparent; /* Ensure layout background is transparent */
 }
@@ -299,7 +310,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   z-index: 100;
-  padding: 16px 0;
+  padding: 12px 0;
   transition: all 0.4s var(--transition-smooth);
 }
 
@@ -314,26 +325,27 @@ onUnmounted(() => {
 }
 
 .navbar__inner {
-  max-width: 1280px;
+  max-width: var(--page-max-width);
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 var(--page-padding);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: clamp(10px, 2vw, 16px);
 }
 
 /* Logo — 新拟物凸起 */
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: clamp(8px, 1.4vw, 12px);
   text-decoration: none;
   flex-shrink: 0;
 }
 
 .logo__icon-wrap {
-  width: 44px;
-  height: 44px;
+  width: clamp(40px, 3.4vw, 44px);
+  height: clamp(40px, 3.4vw, 44px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -358,7 +370,7 @@ onUnmounted(() => {
 }
 
 .logo__text {
-  font-size: 1.375rem;
+  font-size: var(--text-xl);
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.03em;
@@ -371,8 +383,8 @@ onUnmounted(() => {
 
 .nav {
   display: flex;
-  gap: 3px;
-  padding: 5px;
+  gap: clamp(2px, 0.4vw, 4px);
+  padding: clamp(4px, 0.5vw, 6px);
   background: var(--neo-surface);
   border: 1px solid rgba(255, 255, 255, 0.03);
   border-radius: 16px;
@@ -384,10 +396,10 @@ onUnmounted(() => {
 .nav__link {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 9px 16px;
+  gap: clamp(5px, 0.8vw, 8px);
+  padding: clamp(8px, 0.9vw, 10px) clamp(10px, 1.6vw, 16px);
   border-radius: 12px;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text-secondary);
   transition: all 0.25s var(--transition-smooth);
@@ -419,6 +431,8 @@ onUnmounted(() => {
 .nav__icon {
   flex-shrink: 0;
   transition: all 0.25s;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
 }
 
 .nav__label {
@@ -430,6 +444,8 @@ onUnmounted(() => {
   transition: transform 0.25s;
   opacity: 0.5;
   flex-shrink: 0;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
 }
 
 .nav__chevron--open {
@@ -449,7 +465,7 @@ onUnmounted(() => {
   top: calc(100% + 14px);
   left: 50%;
   transform: translateX(-50%);
-  min-width: 230px;
+  min-width: clamp(210px, 18vw, 260px);
   padding: 8px;
   background: var(--neo-surface);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -496,8 +512,8 @@ onUnmounted(() => {
 }
 
 .dropdown__icon {
-  width: 38px;
-  height: 38px;
+  width: clamp(34px, 2.8vw, 38px);
+  height: clamp(34px, 2.8vw, 38px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -507,6 +523,11 @@ onUnmounted(() => {
   flex-shrink: 0;
   transition: all 0.25s;
   box-shadow: var(--neo-shadow-up-sm);
+}
+
+.dropdown__icon-svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
 }
 
 .dropdown__item:hover .dropdown__icon {
@@ -529,13 +550,13 @@ onUnmounted(() => {
 }
 
 .dropdown__name {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .dropdown__desc {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
@@ -563,8 +584,8 @@ onUnmounted(() => {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: var(--touch-target);
+  height: var(--touch-target);
   background: var(--neo-surface);
   border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: 14px;
@@ -572,6 +593,11 @@ onUnmounted(() => {
   color: var(--text-secondary);
   cursor: none;
   transition: all 0.3s;
+}
+
+.mobile-toggle__icon {
+  width: var(--icon-md);
+  height: var(--icon-md);
 }
 
 .mobile-toggle:hover {
@@ -596,13 +622,14 @@ onUnmounted(() => {
   position: fixed;
   top: 0;
   right: 0;
-  width: 300px;
+  width: min(88vw, 320px);
   height: 100vh;
+  height: 100dvh;
   background: var(--neo-bg);
   border-left: 1px solid rgba(255, 255, 255, 0.04);
   box-shadow: -12px 0 40px rgba(0, 0, 0, 0.5);
   z-index: 200;
-  padding: 80px 20px 20px;
+  padding: max(76px, calc(env(safe-area-inset-top) + 56px)) 20px max(20px, env(safe-area-inset-bottom)) 20px;
   overflow-y: auto;
 }
 
@@ -615,11 +642,16 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 12px 14px 8px;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.mobile-menu__group-icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
 }
 
 .mobile-menu__link {
@@ -632,12 +664,18 @@ onUnmounted(() => {
   background: none;
   border: none;
   cursor: none;
-  font-size: 0.9375rem;
+  font-size: var(--text-md);
   font-weight: 500;
   color: var(--text-secondary);
   transition: all 0.25s;
   text-align: left;
   margin-bottom: 4px;
+}
+
+.mobile-menu__icon {
+  width: var(--icon-md);
+  height: var(--icon-md);
+  flex-shrink: 0;
 }
 
 .mobile-menu__link:hover {
@@ -680,14 +718,16 @@ onUnmounted(() => {
 .main {
   position: relative;
   z-index: 1;
-  min-height: calc(100vh - 80px);
-  padding-top: 100px;
+  flex: 1 0 auto;
+  min-height: 0;
+  padding-top: clamp(84px, 9vw, 92px);
 }
 
 .footer {
   position: relative;
   z-index: 1;
-  padding: 40px 20px 32px;
+  flex-shrink: 0;
+  padding: clamp(28px, 5vw, 40px) var(--page-padding) clamp(24px, 3.2vw, 32px);
 }
 
 .footer__content {
@@ -696,8 +736,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 28px 0;
+  gap: clamp(12px, 1.8vw, 16px);
+  padding: clamp(20px, 3vw, 28px) 0;
   border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
@@ -705,15 +745,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
   font-weight: 700;
   color: var(--text-primary);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .footer__logo-dot {
-  width: 10px;
-  height: 10px;
+  width: clamp(8px, 0.8vw, 10px);
+  height: clamp(8px, 0.8vw, 10px);
   background: linear-gradient(145deg, #12c98e, #0ea572);
   border-radius: 50%;
   box-shadow:
@@ -731,27 +771,20 @@ onUnmounted(() => {
   animation: page3DOut 0.25s ease;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   响应式
-   ═══════════════════════════════════════════════════════════ */
-
-@media (max-width: 900px) {
-  .nav {
-    display: none;
-  }
-
-  .mobile-toggle {
-    display: flex;
-  }
+.layout--mobile .nav {
+  display: none;
 }
 
-@media (max-width: 600px) {
-  .navbar__inner {
-    padding: 0 16px;
-  }
+.layout--mobile .mobile-toggle {
+  display: flex;
+}
 
-  .logo__text {
-    display: none;
-  }
+.layout--mobile .logo__text {
+  display: none;
+}
+
+.layout--mobile .mobile-menu {
+  width: min(100vw, 360px);
+  border-left: none;
 }
 </style>

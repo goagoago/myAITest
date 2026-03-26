@@ -86,7 +86,7 @@ onBeforeUnmount(() => {
   ></div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .cursor-dot,
 .cursor-glow,
 .cursor-ripple {

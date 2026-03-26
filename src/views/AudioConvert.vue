@@ -288,7 +288,7 @@ const resetAll = () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .audio-convert {
   max-width: 800px;
   margin: 0 auto;

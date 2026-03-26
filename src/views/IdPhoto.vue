@@ -431,7 +431,7 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .id-photo {
   max-width: 1100px;
   margin: 0 auto;
@@ -454,7 +454,7 @@ onUnmounted(() => {
 }
 .header__badge svg { color: #34d399; }
 
-.header__title { font-size: 3rem; font-weight: 800; line-height: 1.2; color: var(--text-primary); margin-bottom: 16px; }
+.header__title { font-size: var(--text-title); font-weight: 800; line-height: 1.2; color: var(--text-primary); margin-bottom: 16px; }
 
 .gradient-text {
   background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%);
@@ -649,7 +649,7 @@ onUnmounted(() => {
 /* ═══ 响应式 ═══ */
 @media (max-width: 900px) { .editor { flex-direction: column; } .preview { width: 100%; } .preview__canvas { margin: 0 auto; } }
 @media (max-width: 700px) {
-  .id-photo { padding: 0 20px 60px; } .header__title { font-size: 2rem; }
+  .id-photo { padding: 0 20px 60px; }
   .preset-grid { grid-template-columns: repeat(2, 1fr); }
   .features-section { grid-template-columns: repeat(2, 1fr); }
   .download-actions { flex-direction: column; } .color-options { gap: 6px; }
