@@ -1,11 +1,11 @@
 <script setup>
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plane, PenTool, Globe, Lightbulb, Sparkles,
   Eraser, FileText, ImageDown, MonitorPlay,
   Image, Wrench, Bot, Camera, QrCode, ScanLine, Scissors, CreditCard, Video, ScrollText,
-  ArrowRight, Zap, ShieldCheck, Cpu, Wand2, Star, Layers3, CheckCircle2
+  ArrowRight, Wand2
 } from 'lucide-vue-next'
 import UiverseCard from '../components/UiverseCard.vue'
 
@@ -37,18 +37,6 @@ onUnmounted(() => {
   }
   window.removeEventListener('resize', updateGridCols)
 })
-
-const heroStats = [
-  { label: '打开即用', value: '浏览器内完成', icon: ShieldCheck },
-  { label: '覆盖场景', value: '图片 / 文档 / AI / 音视频', icon: Cpu },
-  { label: '上手体验', value: '高频工具更好找', icon: Zap },
-]
-
-const heroHighlights = [
-  '浅白产品化视觉，信息更清晰',
-  '热门能力前置，减少选择成本',
-  '动效更轻盈，整体更像成熟产品',
-]
 
 const toolCategories = [
   {
@@ -241,87 +229,6 @@ const toolCategories = [
     ],
   },
 ]
-
-const featuredTools = [
-  {
-    id: 'watermark-removal',
-    path: '/watermark-removal',
-    icon: Eraser,
-    name: '图片去水印',
-    desc: '复杂水印一键清理，适合高频图片处理',
-    tag: '热门',
-    accent: 'teal',
-  },
-  {
-    id: 'doc-convert',
-    path: '/doc-convert',
-    icon: FileText,
-    name: '文档转换',
-    desc: 'PDF / Word / Markdown / 图片等常见格式互转',
-    tag: '高频',
-    accent: 'indigo',
-  },
-  {
-    id: 'ai-studio',
-    path: '/ai-studio',
-    icon: Wand2,
-    name: 'AI 创作',
-    desc: '把图片、视频和灵感生成整合到一个入口',
-    tag: '灵感',
-    accent: 'amber',
-  },
-  {
-    id: 'id-photo',
-    path: '/id-photo',
-    icon: Camera,
-    name: '证件照制作',
-    desc: '换底色、裁剪排版、标准尺寸一步到位',
-    tag: '实用',
-    accent: 'cyan',
-  },
-  {
-    id: 'ocr',
-    path: '/ocr',
-    icon: ScanLine,
-    name: 'OCR 识别',
-    desc: '图片转文字，适合票据、截图和文档提取',
-    tag: '效率',
-    accent: 'violet',
-  },
-  {
-    id: 'video-compress',
-    path: '/media/compress',
-    icon: Video,
-    name: '视频压缩',
-    desc: '浏览器端压缩视频，不必频繁切换工具',
-    tag: '媒体',
-    accent: 'rose',
-  },
-]
-
-const quickLinks = computed(() => [
-  toolCategories[0].tools[0],
-  toolCategories[2].tools[0],
-  toolCategories[3].tools[0],
-])
-
-const productValues = [
-  {
-    title: '打开即用',
-    desc: '无需安装软件，把高频工具尽量收进浏览器里。',
-    icon: Layers3,
-  },
-  {
-    title: '场景集中',
-    desc: '图片、文档、音视频和 AI 创作放在一个顺手入口。',
-    icon: CheckCircle2,
-  },
-  {
-    title: '体验更顺',
-    desc: '首页先给你最常用的能力，再慢慢展开更多选择。',
-    icon: Star,
-  },
-]
 </script>
 
 <template>
@@ -330,7 +237,7 @@ const productValues = [
       <div class="hero-bg-orb hero-bg-orb--one"></div>
       <div class="hero-bg-orb hero-bg-orb--two"></div>
 
-      <div class="hero-grid">
+      <div class="hero-grid hero-grid--single">
         <div class="hero-copy hero-panel hero-panel--main">
           <div class="hero-badge">
             <Sparkles :size="14" />
@@ -344,7 +251,6 @@ const productValues = [
 
           <p class="hero-desc">
             处理图片、文档、音视频和 AI 创作，不必在一堆站点之间来回跳。
-            打开就能用，重点更清晰，体验也更像一款成熟产品。
           </p>
 
           <div class="hero-actions">
@@ -357,112 +263,11 @@ const productValues = [
               <span>查看热门工具</span>
             </button>
           </div>
-
-          <div class="hero-highlights">
-            <div v-for="item in heroHighlights" :key="item" class="hero-highlights__item">
-              <span class="hero-highlights__dot"></span>
-              <span>{{ item }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="hero-side">
-          <div class="hero-panel hero-panel--preview">
-            <div class="preview-topline">
-              <span class="preview-kicker">精选入口</span>
-              <span class="preview-year">2026</span>
-            </div>
-
-            <div class="preview-title-wrap">
-              <span class="preview-overline">Most used</span>
-              <h2>从最常用的工具开始</h2>
-              <p>先把使用频率最高的功能摆到前面，减少选择成本。</p>
-            </div>
-
-            <div class="preview-stack">
-              <article
-                v-for="tool in quickLinks"
-                :key="tool.id"
-                class="preview-mini-card"
-                @click="router.push(tool.path)"
-              >
-                <div class="preview-mini-card__icon" :style="{ background: tool.gradient }">
-                  <component :is="tool.icon" :size="18" />
-                </div>
-                <div class="preview-mini-card__text">
-                  <strong>{{ tool.name }}</strong>
-                  <span>{{ tool.desc }}</span>
-                </div>
-              </article>
-            </div>
-
-            <div class="preview-meta">
-              <div v-for="item in heroStats" :key="item.label" class="preview-meta__item">
-                <component :is="item.icon" :size="16" />
-                <div>
-                  <strong>{{ item.value }}</strong>
-                  <span>{{ item.label }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
 
-    <section class="featured-section">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Popular picks</span>
-          <h2>先看最常用的入口</h2>
-        </div>
-        <p>
-          把最常见的图片、文档、AI 和媒体工具前置，不用一上来就面对整面卡片墙。
-        </p>
-      </div>
-
-      <div class="featured-grid">
-        <article
-          v-for="tool in featuredTools"
-          :key="tool.id"
-          class="featured-card"
-          :data-accent="tool.accent"
-          @click="router.push(tool.path)"
-        >
-          <div class="featured-card__tag">{{ tool.tag }}</div>
-          <div class="featured-card__icon">
-            <component :is="tool.icon" :size="22" />
-          </div>
-          <h3>{{ tool.name }}</h3>
-          <p>{{ tool.desc }}</p>
-          <span class="featured-card__link">
-            进入工具
-            <ArrowRight :size="16" />
-          </span>
-        </article>
-      </div>
-    </section>
-
-    <section class="value-section">
-      <div class="section-head section-head--compact">
-        <div>
-          <span class="section-kicker">Why it feels better</span>
-          <h2>不只是工具多，而是更顺手</h2>
-        </div>
-      </div>
-
-      <div class="value-grid">
-        <article v-for="item in productValues" :key="item.title" class="value-card">
-          <div class="value-card__icon">
-            <component :is="item.icon" :size="20" />
-          </div>
-          <h3>{{ item.title }}</h3>
-          <p>{{ item.desc }}</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="tools">
+    <section class="tools tools--first">
       <div v-for="category in toolCategories" :key="category.id" class="tools__category">
         <div class="category-head" :data-tone="category.tone">
           <div class="category-head__main">
@@ -504,7 +309,7 @@ const productValues = [
         <div>
           <span class="section-kicker">Start here</span>
           <h2>从最受欢迎的工具开始试</h2>
-          <p>如果你只想先试一个入口，推荐从图片处理或文档转换开始，最快感受到这套体验的差别。</p>
+          <p>先从图片处理、文档转换或 AI 创作里挑一个顺手的入口就行。</p>
         </div>
         <div class="bottom-cta__actions">
           <button class="hero-cta hero-cta--primary" @click="router.push('/watermark-removal')">立即体验</button>
@@ -531,7 +336,6 @@ const productValues = [
   --home-shadow-hover: 0 26px 58px rgba(99, 102, 241, 0.16);
   --home-accent: #4f46e5;
   --home-accent-soft: rgba(79, 70, 229, 0.1);
-  --home-cyan: #06b6d4;
 
   max-width: var(--page-max-width);
   margin: 0 auto;
@@ -541,7 +345,7 @@ const productValues = [
 
 .hero-shell {
   position: relative;
-  padding: clamp(28px, 4vw, 52px) 0 28px;
+  padding: clamp(28px, 4vw, 52px) 0 12px;
 }
 
 .hero-bg-orb {
@@ -577,6 +381,10 @@ const productValues = [
   align-items: stretch;
 }
 
+.hero-grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .hero-panel {
   position: relative;
   overflow: hidden;
@@ -591,13 +399,6 @@ const productValues = [
 .hero-panel--main {
   border-radius: 36px;
   padding: clamp(28px, 4vw, 44px);
-}
-
-.hero-panel--preview {
-  border-radius: 32px;
-  min-height: 100%;
-  padding: 24px;
-  animation: previewFloat 7s ease-in-out infinite;
 }
 
 .hero-panel::before {
@@ -653,7 +454,7 @@ const productValues = [
 }
 
 .hero-desc {
-  max-width: 700px;
+  max-width: 680px;
   margin-top: 22px;
   color: var(--home-text-muted);
   font-size: clamp(1rem, 0.92rem + 0.32vw, 1.12rem);
@@ -696,350 +497,20 @@ const productValues = [
 .hero-cta--ghost {
   color: var(--home-text-main);
   border-color: var(--home-line-strong);
-  background: rgba(255, 255, 255, 0.76);
+  background: rgba(236, 241, 250, 0.76);
 }
 
 .hero-cta--soft {
-  background: rgba(255, 255, 255, 0.62);
-}
-
-.hero-highlights {
-  display: grid;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.hero-highlights__item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--home-text-main);
-}
-
-.hero-highlights__dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
-  box-shadow: 0 0 0 6px rgba(79, 70, 229, 0.08);
-}
-
-.hero-side {
-  min-width: 0;
-}
-
-.preview-topline,
-.preview-title-wrap,
-.preview-stack,
-.preview-meta {
-  position: relative;
-  z-index: 1;
-}
-
-.preview-topline {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-}
-
-.preview-kicker,
-.preview-year {
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.preview-kicker {
-  background: rgba(79, 70, 229, 0.1);
-  color: var(--home-accent);
-}
-
-.preview-year {
-  background: rgba(14, 165, 233, 0.1);
-  color: #0369a1;
-}
-
-.preview-title-wrap {
-  margin-top: 28px;
-}
-
-.preview-overline {
-  display: inline-block;
-  font-size: 0.78rem;
-  color: var(--home-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.preview-title-wrap h2 {
-  margin-top: 10px;
-  color: var(--home-text-strong);
-  font-size: clamp(1.5rem, 1.2rem + 1vw, 2.1rem);
-  line-height: 1.08;
-}
-
-.preview-title-wrap p {
-  margin-top: 10px;
-  color: var(--home-text-muted);
-  line-height: 1.7;
-}
-
-.preview-stack {
-  display: grid;
-  gap: 12px;
-  margin-top: 26px;
-}
-
-.preview-mini-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: var(--home-shadow-soft);
-  cursor: pointer;
-  transition: transform .22s ease, box-shadow .22s ease, background .22s ease;
-}
-
-.preview-mini-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--home-shadow-hover);
-  background: rgba(255, 255, 255, 0.92);
-}
-
-.preview-mini-card__icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  flex-shrink: 0;
-  box-shadow: 0 12px 22px rgba(99, 102, 241, 0.16);
-}
-
-.preview-mini-card__text {
-  display: grid;
-  gap: 4px;
-}
-
-.preview-mini-card__text strong {
-  color: var(--home-text-strong);
-  font-size: 0.98rem;
-}
-
-.preview-mini-card__text span {
-  color: var(--home-text-muted);
-  font-size: 0.84rem;
-  line-height: 1.6;
-}
-
-.preview-meta {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 22px;
-}
-
-.preview-meta__item {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(15, 23, 42, 0.06);
-}
-
-.preview-meta__item svg {
-  color: var(--home-accent);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.preview-meta__item strong {
-  display: block;
-  color: var(--home-text-strong);
-  font-size: 0.88rem;
-}
-
-.preview-meta__item span {
-  display: block;
-  margin-top: 4px;
-  color: var(--home-text-muted);
-  font-size: 0.76rem;
-  line-height: 1.5;
-}
-
-.featured-section,
-.value-section,
-.tools,
-.bottom-cta {
-  margin-top: clamp(34px, 4vw, 54px);
-}
-
-.section-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  align-items: end;
-  margin-bottom: 22px;
-}
-
-.section-head--compact {
-  margin-bottom: 18px;
-}
-
-.section-head h2 {
-  margin-top: 12px;
-  color: var(--home-text-strong);
-  font-size: clamp(1.9rem, 1.5rem + 1vw, 2.6rem);
-  line-height: 1.06;
-}
-
-.section-head p {
-  max-width: 520px;
-  color: var(--home-text-muted);
-  line-height: 1.75;
-}
-
-.featured-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.featured-card {
-  position: relative;
-  padding: 24px;
-  border-radius: 28px;
-  border: 1px solid var(--home-line);
-  background: rgba(231, 237, 248, 0.78);
-  box-shadow: var(--home-shadow-soft);
-  cursor: pointer;
-  transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease;
-  overflow: hidden;
-}
-
-.featured-card::before {
-  content: '';
-  position: absolute;
-  inset: auto -10% -35% auto;
-  width: 180px;
-  height: 180px;
-  border-radius: 999px;
-  filter: blur(26px);
-  opacity: 0.55;
-}
-
-.featured-card[data-accent='teal']::before { background: rgba(20, 184, 166, 0.16); }
-.featured-card[data-accent='indigo']::before { background: rgba(79, 70, 229, 0.15); }
-.featured-card[data-accent='amber']::before { background: rgba(245, 158, 11, 0.16); }
-.featured-card[data-accent='cyan']::before { background: rgba(6, 182, 212, 0.16); }
-.featured-card[data-accent='violet']::before { background: rgba(139, 92, 246, 0.16); }
-.featured-card[data-accent='rose']::before { background: rgba(244, 63, 94, 0.16); }
-
-.featured-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--home-shadow-hover);
-  border-color: rgba(99, 102, 241, 0.16);
-}
-
-.featured-card__tag {
-  position: relative;
-  z-index: 1;
-  width: fit-content;
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: rgba(79, 70, 229, 0.08);
-  color: var(--home-accent);
-  font-size: 0.74rem;
-  font-weight: 700;
-}
-
-.featured-card__icon {
-  position: relative;
-  z-index: 1;
-  margin-top: 18px;
-  width: 54px;
-  height: 54px;
-  border-radius: 18px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(6, 182, 212, 0.14));
-  color: var(--home-accent);
-}
-
-.featured-card h3 {
-  position: relative;
-  z-index: 1;
-  margin-top: 18px;
-  color: var(--home-text-strong);
-  font-size: 1.2rem;
-}
-
-.featured-card p {
-  position: relative;
-  z-index: 1;
-  margin-top: 10px;
-  color: var(--home-text-muted);
-  line-height: 1.72;
-}
-
-.featured-card__link {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 18px;
-  color: var(--home-accent);
-  font-weight: 700;
-}
-
-.value-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.value-card {
-  padding: 22px;
-  border-radius: 24px;
-  border: 1px solid var(--home-line);
-  background: rgba(229, 235, 247, 0.76);
-  box-shadow: var(--home-shadow-soft);
-}
-
-.value-card__icon {
-  width: 48px;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  border-radius: 16px;
-  background: rgba(79, 70, 229, 0.08);
-  color: var(--home-accent);
-}
-
-.value-card h3 {
-  margin-top: 18px;
-  color: var(--home-text-strong);
-  font-size: 1.06rem;
-}
-
-.value-card p {
-  margin-top: 10px;
-  color: var(--home-text-muted);
-  line-height: 1.75;
+  background: rgba(230, 236, 248, 0.78);
 }
 
 .tools {
   display: grid;
   gap: clamp(30px, 4vw, 42px);
+}
+
+.tools--first {
+  margin-top: 28px;
 }
 
 .tools__category {
@@ -1119,7 +590,7 @@ const productValues = [
   padding: 0 16px;
   border-radius: 14px;
   border: 1px solid var(--home-line-strong);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(236, 241, 250, 0.9);
   color: var(--home-text-main);
   display: inline-flex;
   align-items: center;
@@ -1143,6 +614,10 @@ const productValues = [
 .tool-card__icon {
   width: var(--icon-lg);
   height: var(--icon-lg);
+}
+
+.bottom-cta {
+  margin-top: clamp(34px, 4vw, 54px);
 }
 
 .bottom-cta__panel {
@@ -1179,43 +654,15 @@ const productValues = [
   50% { transform: translateY(-10px) translateX(8px); }
 }
 
-@keyframes previewFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-@media (max-width: 1180px) {
-  .featured-grid,
-  .value-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .preview-meta {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 1080px) {
-  .hero-grid,
-  .bottom-cta__panel,
-  .section-head {
+  .bottom-cta__panel {
     grid-template-columns: 1fr;
     display: grid;
     align-items: start;
   }
-
-  .section-head {
-    gap: 14px;
-  }
-
-  .hero-panel--preview {
-    animation: none;
-  }
 }
 
 @media (max-width: 820px) {
-  .featured-grid,
-  .value-grid,
   .tools__grid {
     grid-template-columns: 1fr;
   }
@@ -1233,9 +680,6 @@ const productValues = [
   }
 
   .hero-panel--main,
-  .hero-panel--preview,
-  .featured-card,
-  .value-card,
   .category-head,
   .bottom-cta__panel {
     padding: 20px;
@@ -1254,10 +698,6 @@ const productValues = [
   .hero-cta,
   .category-head__action {
     width: 100%;
-  }
-
-  .preview-mini-card {
-    align-items: flex-start;
   }
 }
 </style>
