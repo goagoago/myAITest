@@ -1,33 +1,166 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import * as THREE from 'three'
 import {
   Plane, PenTool, Globe, Lightbulb, Sparkles,
   Eraser, FileText, ImageDown, MonitorPlay,
   Image, Wrench, Bot, Camera, QrCode, ScanLine, Scissors, CreditCard, Video, ScrollText,
-  ArrowRight, Wand2
+  ArrowRight, Wand2, Zap
 } from 'lucide-vue-next'
 import UiverseCard from '../components/UiverseCard.vue'
 
 const router = useRouter()
 const homeRef = ref(null)
+const heroSceneRef = ref(null)
 const gridCols = ref(4)
 
 let resizeObserver = null
+let scene = null
+let camera = null
+let renderer = null
+let gridGroup = null
+let animationFrameId = 0
+
 const updateGridCols = () => {
   const width = homeRef.value?.clientWidth ?? window.innerWidth
   const idealCols = Math.floor(width / 280)
   gridCols.value = Math.min(4, Math.max(2, idealCols))
 }
 
+const createHeroScene = () => {
+  if (!heroSceneRef.value) return
+
+  scene = new THREE.Scene()
+  scene.fog = new THREE.Fog(0xffffff, 10, 38)
+
+  const width = heroSceneRef.value.clientWidth || window.innerWidth
+  const height = heroSceneRef.value.clientHeight || Math.max(window.innerHeight * 0.72, 560)
+
+  camera = new THREE.PerspectiveCamera(44, width / height, 0.1, 100)
+  camera.position.set(0, 7.5, 15.5)
+  camera.lookAt(0, 0, -16)
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8))
+  renderer.setSize(width, height)
+  renderer.setClearColor(0xffffff, 0)
+  heroSceneRef.value.appendChild(renderer.domElement)
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.15)
+  scene.add(ambientLight)
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6)
+  directionalLight.position.set(2, 8, 6)
+  scene.add(directionalLight)
+
+  gridGroup = new THREE.Group()
+
+  const horizontalMaterial = new THREE.LineBasicMaterial({
+    color: 0xd7dbe3,
+    transparent: true,
+    opacity: 0.9,
+  })
+
+  const verticalMaterial = new THREE.LineBasicMaterial({
+    color: 0xe1e4ea,
+    transparent: true,
+    opacity: 0.72,
+  })
+
+  const depth = 44
+  const widthSpan = 36
+  const segments = 30
+
+  for (let i = 0; i <= segments; i += 1) {
+    const x = -widthSpan / 2 + (widthSpan / segments) * i
+    const points = [
+      new THREE.Vector3(x, 0, 2),
+      new THREE.Vector3(x, 0, -depth),
+    ]
+    const geometry = new THREE.BufferGeometry().setFromPoints(points)
+    const line = new THREE.Line(geometry, verticalMaterial)
+    gridGroup.add(line)
+  }
+
+  for (let i = 0; i <= 18; i += 1) {
+    const z = 2 - i * 2.35
+    const points = [
+      new THREE.Vector3(-widthSpan / 2, 0, z),
+      new THREE.Vector3(widthSpan / 2, 0, z),
+    ]
+    const geometry = new THREE.BufferGeometry().setFromPoints(points)
+    const line = new THREE.Line(geometry, horizontalMaterial)
+    gridGroup.add(line)
+  }
+
+  gridGroup.position.y = -2.6
+  gridGroup.rotation.x = -0.01
+  scene.add(gridGroup)
+
+  const animate = () => {
+    animationFrameId = window.requestAnimationFrame(animate)
+    if (gridGroup) {
+      gridGroup.position.x = Math.sin(Date.now() * 0.00012) * 0.18
+    }
+    renderer?.render(scene, camera)
+  }
+
+  animate()
+}
+
+const resizeHeroScene = () => {
+  updateGridCols()
+  if (!heroSceneRef.value || !camera || !renderer) return
+
+  const width = heroSceneRef.value.clientWidth || window.innerWidth
+  const height = heroSceneRef.value.clientHeight || Math.max(window.innerHeight * 0.72, 560)
+
+  camera.aspect = width / height
+  camera.updateProjectionMatrix()
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8))
+  renderer.setSize(width, height)
+}
+
+const destroyHeroScene = () => {
+  if (animationFrameId) {
+    window.cancelAnimationFrame(animationFrameId)
+    animationFrameId = 0
+  }
+
+  if (gridGroup) {
+    gridGroup.traverse((child) => {
+      if (child.geometry) child.geometry.dispose()
+      if (child.material) {
+        if (Array.isArray(child.material)) child.material.forEach((material) => material.dispose())
+        else child.material.dispose()
+      }
+    })
+  }
+
+  if (renderer) {
+    renderer.dispose()
+    renderer.domElement?.remove()
+  }
+
+  scene = null
+  camera = null
+  renderer = null
+  gridGroup = null
+}
+
 onMounted(() => {
   updateGridCols()
+  createHeroScene()
+
   if ('ResizeObserver' in window && homeRef.value) {
-    resizeObserver = new ResizeObserver(updateGridCols)
+    resizeObserver = new ResizeObserver(() => {
+      resizeHeroScene()
+    })
     resizeObserver.observe(homeRef.value)
-  } else {
-    window.addEventListener('resize', updateGridCols, { passive: true })
   }
+
+  window.addEventListener('resize', resizeHeroScene, { passive: true })
 })
 
 onUnmounted(() => {
@@ -35,7 +168,8 @@ onUnmounted(() => {
     resizeObserver.disconnect()
     resizeObserver = null
   }
-  window.removeEventListener('resize', updateGridCols)
+  window.removeEventListener('resize', resizeHeroScene)
+  destroyHeroScene()
 })
 
 const toolCategories = [
@@ -234,34 +368,47 @@ const toolCategories = [
 <template>
   <div ref="homeRef" class="home" :style="{ '--home-grid-cols': gridCols }">
     <section class="hero-shell">
-      <div class="hero-bg-orb hero-bg-orb--one"></div>
-      <div class="hero-bg-orb hero-bg-orb--two"></div>
+      <div ref="heroSceneRef" class="hero-scene"></div>
+      <div class="hero-atmosphere hero-atmosphere--top"></div>
+      <div class="hero-atmosphere hero-atmosphere--bottom"></div>
 
-      <div class="hero-grid hero-grid--single">
-        <div class="hero-copy hero-panel hero-panel--main">
-          <div class="hero-badge">
-            <Sparkles :size="14" />
-            <span>Browser-first creative toolbox</span>
-          </div>
+      <div class="hero-content">
+        <div class="hero-badge hero-badge--floating">
+          <Zap :size="14" />
+          <span>AI API Gateway</span>
+        </div>
 
-          <h1 class="hero-title">
-            一站式在线工具箱，
-            <span class="hero-title__gradient">把高频任务做得更顺手</span>
-          </h1>
+        <div class="hero-grid hero-grid--single">
+          <div class="hero-copy">
+            <h1 class="hero-title hero-title--display">Pond Hub</h1>
 
-          <p class="hero-desc">
-            处理图片、文档、音视频和 AI 创作，不必在一堆站点之间来回跳。
-          </p>
+            <p class="hero-desc hero-desc--lead">
+              欢迎使用 Pond Hub API 公益服务，支持多种主流模型。
+            </p>
 
-          <div class="hero-actions">
-            <button class="hero-cta hero-cta--primary" @click="router.push('/watermark-removal')">
-              <Sparkles :size="18" />
-              <span>立即开始</span>
-            </button>
-            <button class="hero-cta hero-cta--ghost" @click="router.push('/doc-convert')">
-              <ArrowRight :size="18" />
-              <span>查看热门工具</span>
-            </button>
+            <div class="hero-intro">
+              <h2>准备好开始了吗？</h2>
+              <p>几分钟内即可完成接入，开始使用全球主流 AI 模型。</p>
+            </div>
+
+            <div class="hero-actions hero-actions--centered">
+              <button class="hero-cta hero-cta--dark" @click="router.push('/watermark-removal')">
+                <span>控制台</span>
+                <ArrowRight :size="18" />
+              </button>
+              <button class="hero-cta hero-cta--outline" @click="router.push('/doc-convert')">
+                <FileText :size="18" />
+                <span>留言板</span>
+              </button>
+              <button class="hero-cta hero-cta--outline" @click="router.push('/ai-studio')">
+                <ArrowRight :size="18" />
+                <span>查看模型价格</span>
+              </button>
+              <button class="hero-cta hero-cta--outline" @click="router.push('/travel')">
+                <ArrowRight :size="18" />
+                <span>查看服务状态</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -308,92 +455,95 @@ const toolCategories = [
 
 <style scoped lang="scss">
 .home {
-  --home-bg: #dde4f2;
-  --home-surface: rgba(234, 239, 248, 0.76);
-  --home-surface-solid: #eef3fb;
-  --home-surface-muted: rgba(226, 233, 245, 0.78);
-  --home-line: rgba(82, 97, 138, 0.14);
-  --home-line-strong: rgba(70, 86, 128, 0.22);
-  --home-text-strong: #243047;
-  --home-text-main: #31415e;
-  --home-text-muted: #6c7891;
-  --home-shadow: 0 18px 44px rgba(90, 103, 145, 0.16);
-  --home-shadow-soft: 0 12px 28px rgba(90, 103, 145, 0.12);
-  --home-shadow-hover: 0 26px 58px rgba(99, 102, 241, 0.16);
-  --home-accent: #4f46e5;
-  --home-accent-soft: rgba(79, 70, 229, 0.1);
+  --home-bg: #ffffff;
+  --home-surface: rgba(255, 255, 255, 0.92);
+  --home-surface-solid: #ffffff;
+  --home-surface-muted: rgba(255, 255, 255, 0.72);
+  --home-line: rgba(15, 23, 42, 0.08);
+  --home-line-strong: rgba(15, 23, 42, 0.16);
+  --home-text-strong: #060b1f;
+  --home-text-main: #1f2937;
+  --home-text-muted: #6b7280;
+  --home-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+  --home-shadow-soft: 0 10px 28px rgba(15, 23, 42, 0.06);
+  --home-shadow-hover: 0 22px 54px rgba(15, 23, 42, 0.12);
+  --home-accent: #111827;
+  --home-accent-soft: rgba(17, 24, 39, 0.08);
 
-  max-width: var(--page-max-width);
+  position: relative;
+  max-width: min(1480px, 100%);
   margin: 0 auto;
-  padding: 0 var(--page-padding) 96px;
+  padding: 0 clamp(20px, 4vw, 40px) 96px;
   color: var(--home-text-main);
+  background: linear-gradient(180deg, #ffffff 0%, #fcfcfd 100%);
 }
 
 .hero-shell {
   position: relative;
-  padding: clamp(28px, 4vw, 52px) 0 12px;
+  overflow: hidden;
+  min-height: clamp(760px, 88vh, 980px);
+  padding: clamp(32px, 4vw, 56px) 0 32px;
+  border-radius: 0 0 40px 40px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbfc 58%, #ffffff 100%);
 }
 
-.hero-bg-orb {
+.hero-scene {
   position: absolute;
-  border-radius: 999px;
-  filter: blur(50px);
+  inset: 0;
+  z-index: 0;
   pointer-events: none;
-  animation: floatOrb 10s ease-in-out infinite;
 }
 
-.hero-bg-orb--one {
-  top: 16px;
+.hero-scene :deep(canvas) {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  opacity: 0.98;
+}
+
+.hero-atmosphere {
+  position: absolute;
   left: 0;
-  width: 260px;
-  height: 260px;
-  background: rgba(59, 130, 246, 0.12);
+  width: 100%;
+  pointer-events: none;
+  z-index: 1;
 }
 
-.hero-bg-orb--two {
-  top: 80px;
-  right: 4%;
-  width: 320px;
-  height: 320px;
-  background: rgba(168, 85, 247, 0.1);
-  animation-delay: -3s;
+.hero-atmosphere--top {
+  top: 0;
+  height: 54%;
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.98) 44%, rgba(255, 255, 255, 0.34) 100%);
 }
 
-.hero-grid {
+.hero-atmosphere--bottom {
+  bottom: 0;
+  height: 30%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.82) 60%, #ffffff 100%);
+}
+
+.hero-content {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
-  gap: clamp(20px, 2.4vw, 30px);
-  align-items: stretch;
+  z-index: 2;
+  min-height: clamp(760px, 88vh, 980px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
 }
 
+.hero-grid,
 .hero-grid--single {
+  width: 100%;
+  display: grid;
   grid-template-columns: minmax(0, 1fr);
 }
 
-.hero-panel {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--home-line);
-  background:
-    linear-gradient(180deg, rgba(245, 248, 255, 0.92), rgba(227, 233, 246, 0.82)),
-    var(--home-surface);
-  backdrop-filter: blur(18px) saturate(120%);
-  box-shadow: var(--home-shadow);
-}
-
-.hero-panel--main {
-  border-radius: 36px;
-  padding: clamp(28px, 4vw, 44px);
-}
-
-.hero-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto auto 0;
+.hero-copy {
   width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.96), transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-badge,
@@ -402,14 +552,19 @@ const toolCategories = [
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  padding: 10px 18px;
   border-radius: 999px;
-  background: rgba(236, 241, 250, 0.8);
-  border: 1px solid rgba(99, 102, 241, 0.12);
-  color: var(--home-accent);
-  font-size: 0.82rem;
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  color: #374151;
+  font-size: 0.92rem;
+  font-weight: 600;
   letter-spacing: 0.01em;
+}
+
+.hero-badge--floating {
+  margin-top: clamp(26px, 5vw, 62px);
 }
 
 .section-kicker {
@@ -422,49 +577,75 @@ const toolCategories = [
 }
 
 .hero-title {
-  margin-top: 20px;
-  font-size: clamp(3rem, 2rem + 3vw, 5.4rem);
-  line-height: 0.95;
-  letter-spacing: -0.06em;
-  font-weight: 900;
+  margin: 0;
   color: var(--home-text-strong);
 }
 
-.hero-title__gradient {
-  display: block;
-  margin-top: 10px;
-  background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 42%, #14b8a6 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.hero-title--display {
+  margin-top: clamp(110px, 14vw, 220px);
+  font-size: clamp(4.4rem, 7vw, 9rem);
+  line-height: 0.92;
+  letter-spacing: -0.075em;
+  font-weight: 900;
 }
 
 .hero-desc {
-  max-width: 680px;
-  margin-top: 22px;
+  max-width: 980px;
   color: var(--home-text-muted);
-  font-size: clamp(1rem, 0.92rem + 0.32vw, 1.12rem);
-  line-height: 1.85;
+  line-height: 1.75;
+}
+
+.hero-desc--lead {
+  margin-top: 40px;
+  font-size: clamp(1.5rem, 1rem + 1.2vw, 2.4rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.hero-intro {
+  margin-top: clamp(84px, 14vw, 188px);
+}
+
+.hero-intro h2 {
+  margin: 0;
+  color: var(--home-text-strong);
+  font-size: clamp(2.8rem, 2rem + 2vw, 4.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.05em;
+  font-weight: 900;
+}
+
+.hero-intro p {
+  margin: 24px auto 0;
+  max-width: 880px;
+  color: var(--home-text-muted);
+  font-size: clamp(1.28rem, 0.98rem + 0.8vw, 2rem);
+  line-height: 1.75;
 }
 
 .hero-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 26px;
+  gap: 18px;
+  margin-top: 34px;
   flex-wrap: wrap;
 }
 
+.hero-actions--centered {
+  align-items: center;
+  justify-content: center;
+}
+
 .hero-cta {
-  min-height: 52px;
-  padding: 0 20px;
-  border-radius: 16px;
-  border: 1px solid transparent;
+  min-height: 72px;
+  padding: 0 32px;
+  border-radius: 22px;
+  border: 1.5px solid transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: clamp(1rem, 0.92rem + 0.3vw, 1.18rem);
   font-weight: 700;
   transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease, color .22s ease;
 }
@@ -473,20 +654,17 @@ const toolCategories = [
   transform: translateY(-2px);
 }
 
-.hero-cta--primary {
+.hero-cta--dark {
   color: #ffffff;
-  background: linear-gradient(135deg, #4f46e5, #6366f1 45%, #06b6d4);
-  box-shadow: 0 16px 34px rgba(79, 70, 229, 0.22);
+  background: linear-gradient(180deg, #31343c 0%, #181b22 100%);
+  box-shadow: 0 16px 34px rgba(17, 24, 39, 0.22);
 }
 
-.hero-cta--ghost {
-  color: var(--home-text-main);
-  border-color: var(--home-line-strong);
-  background: rgba(236, 241, 250, 0.76);
-}
-
-.hero-cta--soft {
-  background: rgba(230, 236, 248, 0.78);
+.hero-cta--outline {
+  color: #111827;
+  border-color: rgba(15, 23, 42, 0.16);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
 }
 
 .tools {
@@ -495,7 +673,7 @@ const toolCategories = [
 }
 
 .tools--first {
-  margin-top: 28px;
+  margin-top: 10px;
 }
 
 .tools__category {
@@ -511,8 +689,9 @@ const toolCategories = [
   padding: 24px;
   border-radius: 28px;
   border: 1px solid var(--home-line);
-  background: rgba(228, 235, 247, 0.78);
+  background: rgba(255, 255, 255, 0.86);
   box-shadow: var(--home-shadow-soft);
+  backdrop-filter: blur(12px);
 }
 
 .category-head__main {
@@ -575,7 +754,7 @@ const toolCategories = [
   padding: 0 16px;
   border-radius: 14px;
   border: 1px solid var(--home-line-strong);
-  background: rgba(236, 241, 250, 0.9);
+  background: rgba(255, 255, 255, 0.94);
   color: var(--home-text-main);
   display: inline-flex;
   align-items: center;
@@ -601,10 +780,15 @@ const toolCategories = [
   height: var(--icon-lg);
 }
 
+@media (max-width: 1100px) {
+  .hero-title--display {
+    margin-top: clamp(100px, 16vw, 180px);
+    font-size: clamp(3.6rem, 9vw, 6.2rem);
+  }
 
-@keyframes floatOrb {
-  0%, 100% { transform: translateY(0) translateX(0); }
-  50% { transform: translateY(-10px) translateX(8px); }
+  .hero-intro {
+    margin-top: clamp(72px, 12vw, 120px);
+  }
 }
 
 @media (max-width: 820px) {
@@ -616,6 +800,15 @@ const toolCategories = [
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .hero-shell,
+  .hero-content {
+    min-height: 720px;
+  }
+
+  .hero-actions--centered {
+    gap: 14px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -624,24 +817,56 @@ const toolCategories = [
     padding-bottom: 84px;
   }
 
-  .hero-panel--main,
-  .category-head,
-  .bottom-cta__panel {
-    padding: 20px;
-    border-radius: 24px;
+  .hero-shell {
+    min-height: 680px;
+    border-radius: 0 0 28px 28px;
   }
 
-  .hero-title {
-    font-size: clamp(2.4rem, 10vw, 4rem);
+  .hero-content {
+    min-height: 680px;
+  }
+
+  .hero-badge--floating {
+    margin-top: 18px;
+  }
+
+  .hero-title--display {
+    margin-top: 84px;
+    font-size: clamp(3rem, 18vw, 4.6rem);
+  }
+
+  .hero-desc--lead {
+    margin-top: 24px;
+    font-size: 1.18rem;
+    line-height: 1.6;
+  }
+
+  .hero-intro {
+    margin-top: 64px;
+  }
+
+  .hero-intro h2 {
+    font-size: clamp(2.2rem, 11vw, 3rem);
+  }
+
+  .hero-intro p {
+    margin-top: 16px;
+    font-size: 1rem;
   }
 
   .hero-actions {
     flex-direction: column;
+    width: 100%;
   }
 
   .hero-cta,
   .category-head__action {
     width: 100%;
+  }
+
+  .category-head {
+    padding: 20px;
+    border-radius: 22px;
   }
 }
 </style>
