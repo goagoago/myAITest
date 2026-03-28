@@ -4,23 +4,26 @@ defineProps({
   description: String,
   gradient: {
     type: String,
-    default: 'linear-gradient(145deg, #12c98e, #0ea572)',
+    default: 'linear-gradient(145deg, #4f46e5, #06b6d4)',
   },
   shadowColor: {
     type: String,
-    default: 'rgba(16, 185, 129, 0.3)',
+    default: 'rgba(79, 70, 229, 0.22)',
   }
 })
 </script>
 
 <template>
   <div class="card" :style="{ '--gradient': gradient, '--shadow-color': shadowColor }">
+    <div class="card-glow"></div>
     <div class="content">
       <div class="icon-container">
         <slot name="icon"></slot>
       </div>
-      <h3 class="card-title">{{ name }}</h3>
-      <p class="card-description">{{ description }}</p>
+      <div class="text-wrap">
+        <h3 class="card-title">{{ name }}</h3>
+        <p class="card-description">{{ description }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -30,189 +33,130 @@ defineProps({
   width: 100%;
   max-width: 300px;
   min-width: 0;
-  height: 220px;
-  background: var(--neo-surface);
+  min-height: 220px;
   position: relative;
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: var(--neo-shadow-up);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 14px 36px rgba(148, 163, 184, 0.14);
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
 }
 
-/* The new gradient border implementation */
 .card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--gradient);
+  inset: 0;
   border-radius: 24px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: 0;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.card-glow {
+  position: absolute;
+  inset: auto -20% -28% auto;
+  width: 170px;
+  height: 170px;
+  border-radius: 999px;
+  background: var(--gradient);
+  filter: blur(34px);
+  opacity: 0.12;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .content {
-  position: absolute;
-  inset: 1px; /* To prevent flickering edges */
-  width: calc(100% - 2px);
-  height: calc(100% - 2px);
-  background: var(--neo-surface);
-  border-radius: 23px; /* Slightly smaller than parent */
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: 220px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  transition: all 0.4s ease, background 0.2s ease;
-  z-index: 1;
+  justify-content: space-between;
+  gap: 18px;
 }
 
 .icon-container {
-  width: clamp(50px, 4vw, 60px);
-  height: clamp(50px, 4vw, 60px);
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 18px;
   color: white;
   background: var(--gradient);
-  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.4), -3px -3px 8px rgba(255, 255, 255, 0.02);
-  transition: all 0.35s var(--transition-bounce);
+  box-shadow: 0 14px 26px var(--shadow-color);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.text-wrap {
+  display: grid;
+  gap: 10px;
 }
 
 .card-title {
-  color: var(--text-primary);
-  font-size: var(--text-md);
-  font-weight: 600;
+  color: #0f172a;
+  font-size: clamp(1rem, 0.9rem + 0.22vw, 1.16rem);
+  font-weight: 700;
+  line-height: 1.3;
   margin: 0;
-  transition: all 0.3s ease;
 }
 
 .card-description {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  line-height: 1.5;
-  height: 0;
-  padding: 0 20px;
-  overflow: hidden;
-  opacity: 0;
-  transition: height 0.4s ease, opacity 0.3s ease, transform 0.4s ease;
+  color: #64748b;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  margin: 0;
 }
-
-
-/* --- Hover States --- */
 
 .card:hover {
-  transform: translateY(-8px) scale(1.05);
-  box-shadow: var(--neo-shadow-up-lg), 0 0 50px -10px var(--shadow-color);
+  transform: translateY(-6px);
+  box-shadow: 0 22px 54px rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 102, 241, 0.14);
+  background: rgba(255, 255, 255, 0.94);
 }
 
-.card:hover::before {
-  opacity: 1; /* Reveal the gradient background */
-}
-
-.card:hover .content {
-  transform: translateY(0); /* Content position doesn't need to change now */
-  background: var(--neo-surface-raised);
-  inset: 2px;
-  width: calc(100% - 4px);
-  height: calc(100% - 4px);
+.card:hover .card-glow {
+  opacity: 0.18;
+  transform: scale(1.04);
 }
 
 .card:hover .icon-container {
-  transform: scale(0.9) translateY(-15px);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px var(--shadow-color);
 }
 
-.card:hover .card-title {
-  font-size: var(--text-lg);
-  transform: translateY(-15px);
-  background: var(--gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.card:hover .card-description {
-  height: 40px; /* Approx 2 lines */
-  opacity: 1;
-  transform: translateY(-10px);
-}
-
-@media (hover: none) {
-  .card:hover {
-    transform: none;
-    box-shadow: var(--neo-shadow-up);
-  }
-
-  .card:hover::before {
-    opacity: 0;
-  }
-
-  .card:hover .content {
-    transform: none;
-    background: var(--neo-surface);
-    inset: 1px;
-    width: calc(100% - 2px);
-    height: calc(100% - 2px);
-  }
-
-  .card:hover .icon-container,
-  .card:hover .card-title,
-  .card:hover .card-description {
-    transform: none;
-  }
-
-  .card:hover .card-title {
-    font-size: var(--text-md);
-    background: none;
-    -webkit-background-clip: border-box;
-    background-clip: border-box;
-    -webkit-text-fill-color: currentColor;
-  }
-
-  .card:hover .card-description {
-    height: 0;
-    opacity: 0;
-  }
+.card:focus-visible {
+  outline: 2px solid rgba(79, 70, 229, 0.35);
+  outline-offset: 3px;
 }
 
 @media (max-width: 768px) {
   .card {
     max-width: none;
-    height: 184px;
-    border-radius: 20px;
-  }
-
-  .card::before {
+    min-height: 188px;
     border-radius: 20px;
   }
 
   .content {
-    border-radius: 19px;
-    padding: 14px 12px;
-    gap: 8px;
+    min-height: 188px;
+    padding: 18px;
+    gap: 14px;
   }
 
   .icon-container {
     width: 50px;
     height: 50px;
-    border-radius: 15px;
+    border-radius: 16px;
   }
 
-  .card-title {
-    font-size: var(--text-sm);
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .card {
-    height: 196px;
+  .card-description {
+    font-size: 0.88rem;
   }
 }
 </style>

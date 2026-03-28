@@ -11,7 +11,6 @@ import LottieInteractive from '../components/LottieInteractive.vue'
 import toolboxAnim from '../assets/lottie/toolbox.js'
 import PageLoader from '../components/PageLoader.vue'
 
-import bgVideo from '../assets/BG.mp4'
 
 const route = useRoute()
 const router = useRouter()
@@ -143,8 +142,6 @@ onUnmounted(() => {
 
 <template>
   <div class="layout" :class="{ 'layout--mobile': isMobile, 'layout--desktop': !isMobile }">
-    <video class="global-bg" autoplay loop muted playsinline :src="bgVideo"></video>
-
     <!-- 全局加载动画 -->
     <PageLoader v-if="isLoading" />
 
@@ -286,18 +283,10 @@ onUnmounted(() => {
   min-height: 100vh;
   min-height: 100dvh;
   position: relative;
-  background-color: transparent; /* Ensure layout background is transparent */
-}
-
-.global-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: -1;
-  filter: brightness(0.7);
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.08), transparent 28%),
+    radial-gradient(circle at top right, rgba(6, 182, 212, 0.08), transparent 26%),
+    linear-gradient(180deg, #f8fafc 0%, #f4f7fb 42%, #f7f8fc 100%);
 }
 
 /* ═══════════════════════════════════════════════════════════
