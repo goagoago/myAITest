@@ -2,142 +2,236 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 
 const canvasRef = ref(null)
-let rafId = 0
+let animationId = 0
 let resizeHandler = null
+let loseContextHandler = null
+let restoreContextHandler = null
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768
+const vertexShaderSource = `
+attribute vec2 a_position;
+varying vec2 v_uv;
+void main() {
+  v_uv = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}
+`
+
+const fragmentShaderSource = `
+precision mediump float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform float u_motion;
+varying vec2 v_uv;
+
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+
+  return mix(
+    mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+    mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+    u.y
+  );
+}
+
+float fbm(vec2 p) {
+  float value = 0.0;
+  float amplitude = 0.5;
+  for (int i = 0; i < 6; i++) {
+    value += amplitude * noise(p);
+    p *= 2.0;
+    amplitude *= 0.5;
+  }
+  return value;
+}
+
+mat2 rotate2d(float a) {
+  float s = sin(a);
+  float c = cos(a);
+  return mat2(c, -s, s, c);
+}
+
+void main() {
+  vec2 uv = v_uv;
+  vec2 p = uv * 2.0 - 1.0;
+  p.x *= u_resolution.x / u_resolution.y;
+
+  float t = u_time * (0.08 * u_motion + 0.008);
+
+  vec3 baseA = vec3(0.84, 0.88, 0.95);
+  vec3 baseB = vec3(0.90, 0.93, 0.98);
+  vec3 color = mix(baseA, baseB, uv.y + 0.08 * sin(t));
+
+  vec2 q = p;
+  q *= rotate2d(0.18 * sin(t * 0.8));
+  float field1 = fbm(q * 1.35 + vec2(t * 0.9, -t * 0.45));
+  float field2 = fbm((q + field1) * 1.8 - vec2(t * 0.55, t * 0.25));
+  float field3 = fbm((q - field2) * 2.25 + vec2(-t * 0.35, t * 0.42));
+
+  float blend = smoothstep(0.18, 0.86, field1 * 0.55 + field2 * 0.3 + field3 * 0.22);
+  color += vec3(0.17, 0.15, 0.34) * blend * 0.25;
+  color += vec3(0.10, 0.32, 0.58) * smoothstep(0.24, 0.88, field2) * 0.18;
+  color += vec3(0.96, 0.97, 1.0) * smoothstep(0.42, 0.98, field3) * 0.13;
+
+  vec2 glow1Pos = vec2(-0.82 + 0.14 * sin(t * 0.9), 0.86 + 0.04 * cos(t * 0.7));
+  vec2 glow2Pos = vec2(0.9 + 0.08 * cos(t * 0.6), 0.88 + 0.03 * sin(t * 0.8));
+  vec2 glow3Pos = vec2(0.0, 1.18 + 0.02 * sin(t * 0.5));
+
+  float glow1 = 1.0 - smoothstep(0.0, 1.12, length(p - glow1Pos));
+  float glow2 = 1.0 - smoothstep(0.0, 1.0, length(p - glow2Pos));
+  float glow3 = 1.0 - smoothstep(0.0, 1.42, length(p - glow3Pos));
+
+  color += vec3(0.44, 0.38, 0.93) * glow1 * 0.16;
+  color += vec3(0.20, 0.56, 0.94) * glow2 * 0.15;
+  color += vec3(1.0, 1.0, 1.0) * glow3 * 0.22;
+
+  float vignette = smoothstep(1.28, 0.18, length(p));
+  color *= vignette + 0.12;
+
+  float grid = 0.0;
+  vec2 g = uv * vec2(22.0, 18.0);
+  vec2 gv = abs(fract(g - 0.5) - 0.5) / fwidth(g);
+  float line = min(gv.x, gv.y);
+  grid = 1.0 - min(line, 1.0);
+  color += vec3(1.0) * grid * 0.018;
+
+  gl_FragColor = vec4(color, 1.0);
+}
+`
+
+function createShader(gl, type, source) {
+  const shader = gl.createShader(type)
+  if (!shader) return null
+  gl.shaderSource(shader, source)
+  gl.compileShader(shader)
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error(gl.getShaderInfoLog(shader))
+    gl.deleteShader(shader)
+    return null
+  }
+  return shader
+}
+
+function createProgram(gl, vertexSource, fragmentSource) {
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource)
+  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource)
+  if (!vertexShader || !fragmentShader) return null
+
+  const program = gl.createProgram()
+  if (!program) return null
+  gl.attachShader(program, vertexShader)
+  gl.attachShader(program, fragmentShader)
+  gl.linkProgram(program)
+
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.error(gl.getProgramInfoLog(program))
+    gl.deleteProgram(program)
+    return null
+  }
+
+  gl.deleteShader(vertexShader)
+  gl.deleteShader(fragmentShader)
+  return program
+}
 
 onMounted(() => {
   const canvas = canvasRef.value
   if (!canvas) return
 
-  const ctx = canvas.getContext('2d', { alpha: true })
-  if (!ctx) return
+  const gl = canvas.getContext('webgl', {
+    alpha: false,
+    antialias: true,
+    powerPreference: 'high-performance',
+    premultipliedAlpha: false,
+  })
 
-  const dpr = Math.min(window.devicePixelRatio || 1, 1.8)
-  const blobs = [
-    {
-      x: 0.18,
-      y: 0.18,
-      radius: 0.22,
-      color: '139, 92, 246',
-      alpha: 0.18,
-      speedX: 0.00045,
-      speedY: 0.00032,
-      phase: 0,
-    },
-    {
-      x: 0.82,
-      y: 0.14,
-      radius: 0.2,
-      color: '59, 130, 246',
-      alpha: 0.16,
-      speedX: -0.00038,
-      speedY: 0.00028,
-      phase: 1.8,
-    },
-    {
-      x: 0.52,
-      y: 0.08,
-      radius: 0.26,
-      color: '255, 255, 255',
-      alpha: 0.24,
-      speedX: 0.00025,
-      speedY: 0.00018,
-      phase: 3.2,
-    },
-    {
-      x: 0.58,
-      y: 0.72,
-      radius: 0.24,
-      color: '6, 182, 212',
-      alpha: 0.12,
-      speedX: -0.00022,
-      speedY: -0.00024,
-      phase: 4.4,
-    },
-  ]
+  if (!gl) return
+
+  const program = createProgram(gl, vertexShaderSource, fragmentShaderSource)
+  if (!program) return
+
+  const positionLocation = gl.getAttribLocation(program, 'a_position')
+  const resolutionLocation = gl.getUniformLocation(program, 'u_resolution')
+  const timeLocation = gl.getUniformLocation(program, 'u_time')
+  const motionLocation = gl.getUniformLocation(program, 'u_motion')
+
+  const buffer = gl.createBuffer()
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([
+      -1, -1,
+       1, -1,
+      -1,  1,
+      -1,  1,
+       1, -1,
+       1,  1,
+    ]),
+    gl.STATIC_DRAW
+  )
 
   const setSize = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
     const width = window.innerWidth
     const height = Math.max(window.innerHeight, document.documentElement.clientHeight)
     canvas.width = Math.floor(width * dpr)
     canvas.height = Math.floor(height * dpr)
     canvas.style.width = `${width}px`
     canvas.style.height = `${height}px`
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    gl.viewport(0, 0, canvas.width, canvas.height)
   }
 
-  const drawGrid = (width, height) => {
-    const step = isMobile() ? 36 : 44
-    ctx.save()
-    ctx.strokeStyle = 'rgba(255,255,255,0.045)'
-    ctx.lineWidth = 1
-    for (let x = 0; x < width; x += step) {
-      ctx.beginPath()
-      ctx.moveTo(x + 0.5, 0)
-      ctx.lineTo(x + 0.5, height)
-      ctx.stroke()
-    }
-    for (let y = 0; y < height; y += step) {
-      ctx.beginPath()
-      ctx.moveTo(0, y + 0.5)
-      ctx.lineTo(width, y + 0.5)
-      ctx.stroke()
-    }
-    ctx.restore()
+  const render = (now) => {
+    gl.useProgram(program)
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+    gl.enableVertexAttribArray(positionLocation)
+    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0)
+
+    gl.uniform2f(resolutionLocation, canvas.width, canvas.height)
+    gl.uniform1f(timeLocation, now * 0.001)
+    gl.uniform1f(motionLocation, prefersReducedMotion() ? 0.0 : 1.0)
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6)
+    animationId = window.requestAnimationFrame(render)
   }
 
-  const render = (time) => {
-    const width = canvas.clientWidth
-    const height = canvas.clientHeight
-    const t = time * 0.001
+  loseContextHandler = (event) => {
+    event.preventDefault()
+    if (animationId) window.cancelAnimationFrame(animationId)
+  }
 
-    ctx.clearRect(0, 0, width, height)
-
-    const base = ctx.createLinearGradient(0, 0, 0, height)
-    base.addColorStop(0, '#d7dfef')
-    base.addColorStop(0.4, '#e3eaf7')
-    base.addColorStop(1, '#dde5f2')
-    ctx.fillStyle = base
-    ctx.fillRect(0, 0, width, height)
-
-    blobs.forEach((blob, index) => {
-      const motion = prefersReducedMotion() ? 0 : 1
-      const cx = (blob.x + Math.sin(t * (0.18 + index * 0.03) + blob.phase) * blob.speedX * time * motion) * width
-      const cy = (blob.y + Math.cos(t * (0.16 + index * 0.025) + blob.phase) * blob.speedY * time * motion) * height
-      const radius = Math.max(width, height) * blob.radius
-      const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius)
-      gradient.addColorStop(0, `rgba(${blob.color}, ${blob.alpha})`)
-      gradient.addColorStop(0.45, `rgba(${blob.color}, ${blob.alpha * 0.45})`)
-      gradient.addColorStop(1, `rgba(${blob.color}, 0)`)
-      ctx.fillStyle = gradient
-      ctx.fillRect(0, 0, width, height)
-    })
-
-    const topGlow = ctx.createRadialGradient(width * 0.5, -height * 0.1, 0, width * 0.5, -height * 0.1, width * 0.48)
-    topGlow.addColorStop(0, 'rgba(255,255,255,0.38)')
-    topGlow.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = topGlow
-    ctx.fillRect(0, 0, width, height)
-
-    drawGrid(width, height)
-
-    rafId = window.requestAnimationFrame(render)
+  restoreContextHandler = () => {
+    setSize()
+    animationId = window.requestAnimationFrame(render)
   }
 
   resizeHandler = () => setSize()
-  setSize()
+  canvas.addEventListener('webglcontextlost', loseContextHandler, false)
+  canvas.addEventListener('webglcontextrestored', restoreContextHandler, false)
   window.addEventListener('resize', resizeHandler, { passive: true })
-  rafId = window.requestAnimationFrame(render)
+
+  setSize()
+  animationId = window.requestAnimationFrame(render)
 })
 
 onUnmounted(() => {
-  if (rafId) window.cancelAnimationFrame(rafId)
+  if (animationId) window.cancelAnimationFrame(animationId)
   if (resizeHandler) window.removeEventListener('resize', resizeHandler)
+  if (canvasRef.value && loseContextHandler) {
+    canvasRef.value.removeEventListener('webglcontextlost', loseContextHandler)
+  }
+  if (canvasRef.value && restoreContextHandler) {
+    canvasRef.value.removeEventListener('webglcontextrestored', restoreContextHandler)
+  }
 })
 </script>
 
