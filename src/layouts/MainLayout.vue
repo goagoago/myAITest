@@ -284,9 +284,9 @@ onUnmounted(() => {
   min-height: 100dvh;
   position: relative;
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.08), transparent 28%),
-    radial-gradient(circle at top right, rgba(6, 182, 212, 0.08), transparent 26%),
-    linear-gradient(180deg, #f8fafc 0%, #f4f7fb 42%, #f7f8fc 100%);
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 26%),
+    radial-gradient(circle at top right, rgba(6, 182, 212, 0.1), transparent 24%),
+    linear-gradient(180deg, #dbe3f2 0%, #e6edf8 42%, #dfe7f4 100%);
 }
 
 /* ═══════════════════════════════════════════════════════════

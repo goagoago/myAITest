@@ -517,18 +517,18 @@ const productValues = [
 
 <style scoped lang="scss">
 .home {
-  --home-bg: #f6f7fb;
-  --home-surface: rgba(255, 255, 255, 0.82);
-  --home-surface-solid: #ffffff;
-  --home-surface-muted: rgba(255, 255, 255, 0.66);
-  --home-line: rgba(15, 23, 42, 0.08);
-  --home-line-strong: rgba(15, 23, 42, 0.12);
-  --home-text-strong: #0f172a;
-  --home-text-main: #1e293b;
-  --home-text-muted: #64748b;
-  --home-shadow: 0 18px 48px rgba(148, 163, 184, 0.16);
-  --home-shadow-soft: 0 10px 30px rgba(148, 163, 184, 0.12);
-  --home-shadow-hover: 0 22px 56px rgba(99, 102, 241, 0.16);
+  --home-bg: #dde4f2;
+  --home-surface: rgba(234, 239, 248, 0.76);
+  --home-surface-solid: #eef3fb;
+  --home-surface-muted: rgba(226, 233, 245, 0.78);
+  --home-line: rgba(82, 97, 138, 0.14);
+  --home-line-strong: rgba(70, 86, 128, 0.22);
+  --home-text-strong: #243047;
+  --home-text-main: #31415e;
+  --home-text-muted: #6c7891;
+  --home-shadow: 0 18px 44px rgba(90, 103, 145, 0.16);
+  --home-shadow-soft: 0 12px 28px rgba(90, 103, 145, 0.12);
+  --home-shadow-hover: 0 26px 58px rgba(99, 102, 241, 0.16);
   --home-accent: #4f46e5;
   --home-accent-soft: rgba(79, 70, 229, 0.1);
   --home-cyan: #06b6d4;
@@ -582,7 +582,7 @@ const productValues = [
   overflow: hidden;
   border: 1px solid var(--home-line);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72)),
+    linear-gradient(180deg, rgba(245, 248, 255, 0.92), rgba(227, 233, 246, 0.82)),
     var(--home-surface);
   backdrop-filter: blur(18px) saturate(120%);
   box-shadow: var(--home-shadow);
@@ -617,7 +617,7 @@ const productValues = [
   gap: 8px;
   padding: 8px 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(236, 241, 250, 0.8);
   border: 1px solid rgba(99, 102, 241, 0.12);
   color: var(--home-accent);
   font-size: 0.82rem;
@@ -918,7 +918,7 @@ const productValues = [
   padding: 24px;
   border-radius: 28px;
   border: 1px solid var(--home-line);
-  background: rgba(255, 255, 255, 0.76);
+  background: rgba(231, 237, 248, 0.78);
   box-shadow: var(--home-shadow-soft);
   cursor: pointer;
   transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease;
@@ -1011,7 +1011,7 @@ const productValues = [
   padding: 22px;
   border-radius: 24px;
   border: 1px solid var(--home-line);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(229, 235, 247, 0.76);
   box-shadow: var(--home-shadow-soft);
 }
 
@@ -1055,7 +1055,7 @@ const productValues = [
   padding: 24px;
   border-radius: 28px;
   border: 1px solid var(--home-line);
-  background: rgba(255, 255, 255, 0.76);
+  background: rgba(228, 235, 247, 0.78);
   box-shadow: var(--home-shadow-soft);
 }
 
@@ -1154,9 +1154,9 @@ const productValues = [
   border-radius: 32px;
   border: 1px solid var(--home-line);
   background:
-    radial-gradient(circle at top right, rgba(6, 182, 212, 0.08), transparent 30%),
-    radial-gradient(circle at left bottom, rgba(79, 70, 229, 0.08), transparent 30%),
-    rgba(255, 255, 255, 0.82);
+    radial-gradient(circle at top right, rgba(6, 182, 212, 0.1), transparent 30%),
+    radial-gradient(circle at left bottom, rgba(79, 70, 229, 0.1), transparent 30%),
+    rgba(228, 235, 247, 0.86);
   box-shadow: var(--home-shadow);
 }
 
