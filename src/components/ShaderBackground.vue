@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 
 const canvasRef = ref(null)
+const fallbackVisible = ref(false)
 let animationId = 0
 let resizeHandler = null
 let loseContextHandler = null
@@ -35,7 +36,6 @@ float noise(vec2 p) {
   vec2 i = floor(p);
   vec2 f = fract(p);
   vec2 u = f * f * (3.0 - 2.0 * f);
-
   return mix(
     mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
     mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
@@ -65,22 +65,22 @@ void main() {
   vec2 p = uv * 2.0 - 1.0;
   p.x *= u_resolution.x / u_resolution.y;
 
-  float t = u_time * (0.08 * u_motion + 0.008);
+  float t = u_time * (0.1 * u_motion + 0.008);
 
   vec3 baseA = vec3(0.84, 0.88, 0.95);
   vec3 baseB = vec3(0.90, 0.93, 0.98);
   vec3 color = mix(baseA, baseB, uv.y + 0.08 * sin(t));
 
   vec2 q = p;
-  q *= rotate2d(0.18 * sin(t * 0.8));
+  q *= rotate2d(0.22 * sin(t * 0.8));
   float field1 = fbm(q * 1.35 + vec2(t * 0.9, -t * 0.45));
-  float field2 = fbm((q + field1) * 1.8 - vec2(t * 0.55, t * 0.25));
-  float field3 = fbm((q - field2) * 2.25 + vec2(-t * 0.35, t * 0.42));
+  float field2 = fbm((q + field1) * 1.9 - vec2(t * 0.55, t * 0.25));
+  float field3 = fbm((q - field2) * 2.35 + vec2(-t * 0.35, t * 0.42));
 
   float blend = smoothstep(0.18, 0.86, field1 * 0.55 + field2 * 0.3 + field3 * 0.22);
-  color += vec3(0.17, 0.15, 0.34) * blend * 0.25;
-  color += vec3(0.10, 0.32, 0.58) * smoothstep(0.24, 0.88, field2) * 0.18;
-  color += vec3(0.96, 0.97, 1.0) * smoothstep(0.42, 0.98, field3) * 0.13;
+  color += vec3(0.17, 0.15, 0.34) * blend * 0.28;
+  color += vec3(0.10, 0.32, 0.58) * smoothstep(0.24, 0.88, field2) * 0.2;
+  color += vec3(0.96, 0.97, 1.0) * smoothstep(0.42, 0.98, field3) * 0.14;
 
   vec2 glow1Pos = vec2(-0.82 + 0.14 * sin(t * 0.9), 0.86 + 0.04 * cos(t * 0.7));
   vec2 glow2Pos = vec2(0.9 + 0.08 * cos(t * 0.6), 0.88 + 0.03 * sin(t * 0.8));
@@ -90,9 +90,9 @@ void main() {
   float glow2 = 1.0 - smoothstep(0.0, 1.0, length(p - glow2Pos));
   float glow3 = 1.0 - smoothstep(0.0, 1.42, length(p - glow3Pos));
 
-  color += vec3(0.44, 0.38, 0.93) * glow1 * 0.16;
-  color += vec3(0.20, 0.56, 0.94) * glow2 * 0.15;
-  color += vec3(1.0, 1.0, 1.0) * glow3 * 0.22;
+  color += vec3(0.44, 0.38, 0.93) * glow1 * 0.18;
+  color += vec3(0.20, 0.56, 0.94) * glow2 * 0.16;
+  color += vec3(1.0, 1.0, 1.0) * glow3 * 0.24;
 
   float vignette = smoothstep(1.28, 0.18, length(p));
   color *= vignette + 0.12;
@@ -102,7 +102,7 @@ void main() {
   vec2 gv = abs(fract(g - 0.5) - 0.5) / fwidth(g);
   float line = min(gv.x, gv.y);
   grid = 1.0 - min(line, 1.0);
-  color += vec3(1.0) * grid * 0.018;
+  color += vec3(1.0) * grid * 0.02;
 
   gl_FragColor = vec4(color, 1.0);
 }
@@ -145,7 +145,10 @@ function createProgram(gl, vertexSource, fragmentSource) {
 
 onMounted(() => {
   const canvas = canvasRef.value
-  if (!canvas) return
+  if (!canvas) {
+    fallbackVisible.value = true
+    return
+  }
 
   const gl = canvas.getContext('webgl', {
     alpha: false,
@@ -154,10 +157,18 @@ onMounted(() => {
     premultipliedAlpha: false,
   })
 
-  if (!gl) return
+  if (!gl) {
+    fallbackVisible.value = true
+    return
+  }
 
   const program = createProgram(gl, vertexShaderSource, fragmentShaderSource)
-  if (!program) return
+  if (!program) {
+    fallbackVisible.value = true
+    return
+  }
+
+  fallbackVisible.value = false
 
   const positionLocation = gl.getAttribLocation(program, 'a_position')
   const resolutionLocation = gl.getUniformLocation(program, 'u_resolution')
@@ -206,10 +217,12 @@ onMounted(() => {
 
   loseContextHandler = (event) => {
     event.preventDefault()
+    fallbackVisible.value = true
     if (animationId) window.cancelAnimationFrame(animationId)
   }
 
   restoreContextHandler = () => {
+    fallbackVisible.value = false
     setSize()
     animationId = window.requestAnimationFrame(render)
   }
@@ -236,16 +249,84 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <canvas ref="canvasRef" class="shader-bg" aria-hidden="true"></canvas>
+  <div class="shader-bg-wrap" aria-hidden="true">
+    <div v-if="fallbackVisible" class="shader-fallback"></div>
+    <canvas ref="canvasRef" class="shader-bg"></canvas>
+  </div>
 </template>
 
 <style scoped>
-.shader-bg {
+.shader-bg-wrap {
   position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.shader-bg,
+.shader-fallback {
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none;
-  z-index: 0;
+}
+
+.shader-bg {
+  display: block;
+}
+
+.shader-fallback {
+  background:
+    radial-gradient(circle at 14% 16%, rgba(139, 92, 246, 0.18), transparent 20%),
+    radial-gradient(circle at 84% 14%, rgba(59, 130, 246, 0.18), transparent 18%),
+    radial-gradient(circle at 50% -4%, rgba(255, 255, 255, 0.48), transparent 34%),
+    linear-gradient(180deg, #d7dfef 0%, #e3eaf7 42%, #dde5f2 100%);
+  animation: shaderFallbackFloat 14s ease-in-out infinite alternate;
+}
+
+.shader-fallback::before,
+.shader-fallback::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.shader-fallback::before {
+  background:
+    radial-gradient(circle at 28% 38%, rgba(255, 255, 255, 0.18), transparent 18%),
+    radial-gradient(circle at 70% 56%, rgba(6, 182, 212, 0.12), transparent 20%);
+  filter: blur(28px);
+  animation: shaderFallbackGlow 18s ease-in-out infinite;
+}
+
+.shader-fallback::after {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 38px 38px;
+  opacity: 0.32;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.04));
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.04));
+}
+
+@keyframes shaderFallbackFloat {
+  0% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  100% {
+    transform: scale(1.04) translate3d(0, -1.5%, 0);
+  }
+}
+
+@keyframes shaderFallbackGlow {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate3d(1.2%, -1.5%, 0);
+    opacity: 1;
+  }
 }
 </style>
