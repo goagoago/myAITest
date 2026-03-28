@@ -284,9 +284,36 @@ onUnmounted(() => {
   min-height: 100dvh;
   position: relative;
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 26%),
-    radial-gradient(circle at top right, rgba(6, 182, 212, 0.1), transparent 24%),
-    linear-gradient(180deg, #dbe3f2 0%, #e6edf8 42%, #dfe7f4 100%);
+    radial-gradient(circle at 12% 12%, rgba(139, 92, 246, 0.12), transparent 22%),
+    radial-gradient(circle at 86% 14%, rgba(59, 130, 246, 0.12), transparent 20%),
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.5), transparent 38%),
+    linear-gradient(180deg, #d7dfef 0%, #e2e9f6 36%, #dde5f2 100%);
+}
+
+.layout::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.42), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
+  z-index: 0;
+}
+
+.layout::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.02));
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.02));
+  opacity: 0.34;
+  z-index: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -301,6 +328,13 @@ onUnmounted(() => {
   z-index: 100;
   padding: 12px 0;
   transition: all 0.4s var(--transition-smooth);
+}
+
+.navbar,
+.main,
+.footer {
+  position: relative;
+  z-index: 1;
 }
 
 .navbar--scrolled {
