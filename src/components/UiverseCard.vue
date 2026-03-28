@@ -31,7 +31,7 @@ defineProps({
   width: 100%;
   max-width: 300px;
   min-width: 0;
-  height: 220px;
+  height: 236px;
   position: relative;
   border-radius: 24px;
   border: 1px solid rgba(70, 85, 130, 0.2);
@@ -70,7 +70,7 @@ defineProps({
   position: absolute;
   inset: 1px;
   width: calc(100% - 2px);
-  height: calc(100% - 2px);
+  min-height: calc(100% - 2px);
   padding: 22px 20px;
   background: linear-gradient(180deg, rgba(248, 250, 255, 0.96), rgba(235, 240, 249, 0.92));
   border-radius: 23px;
@@ -136,7 +136,7 @@ defineProps({
   background: linear-gradient(180deg, rgba(252, 253, 255, 0.98), rgba(240, 244, 252, 0.96));
   inset: 2px;
   width: calc(100% - 4px);
-  height: calc(100% - 4px);
+  min-height: calc(100% - 4px);
 }
 
 .card:hover .icon-container {
@@ -153,7 +153,7 @@ defineProps({
 }
 
 .card:hover .card-description {
-  height: 46px;
+  height: 64px;
   opacity: 1;
   transform: translateY(-10px);
 }
@@ -206,7 +206,7 @@ defineProps({
 @media (max-width: 768px) {
   .card {
     max-width: none;
-    height: 188px;
+    height: 204px;
     border-radius: 20px;
   }
 
@@ -228,7 +228,7 @@ defineProps({
 
 @media (max-width: 480px) {
   .card {
-    height: 198px;
+    height: 214px;
   }
 }
 </style>

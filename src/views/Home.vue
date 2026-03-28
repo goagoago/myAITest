@@ -303,20 +303,6 @@ const toolCategories = [
         </div>
       </div>
     </section>
-
-    <section class="bottom-cta">
-      <div class="bottom-cta__panel">
-        <div>
-          <span class="section-kicker">Start here</span>
-          <h2>从最受欢迎的工具开始试</h2>
-          <p>先从图片处理、文档转换或 AI 创作里挑一个顺手的入口就行。</p>
-        </div>
-        <div class="bottom-cta__actions">
-          <button class="hero-cta hero-cta--primary" @click="router.push('/watermark-removal')">立即体验</button>
-          <button class="hero-cta hero-cta--ghost hero-cta--soft" @click="router.push('/ai-studio')">逛逛 AI 创作</button>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
@@ -461,8 +447,7 @@ const toolCategories = [
   line-height: 1.85;
 }
 
-.hero-actions,
-.bottom-cta__actions {
+.hero-actions {
   display: flex;
   gap: 12px;
   margin-top: 26px;
@@ -616,50 +601,10 @@ const toolCategories = [
   height: var(--icon-lg);
 }
 
-.bottom-cta {
-  margin-top: clamp(34px, 4vw, 54px);
-}
-
-.bottom-cta__panel {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  align-items: center;
-  padding: clamp(24px, 4vw, 36px);
-  border-radius: 32px;
-  border: 1px solid var(--home-line);
-  background:
-    radial-gradient(circle at top right, rgba(6, 182, 212, 0.1), transparent 30%),
-    radial-gradient(circle at left bottom, rgba(79, 70, 229, 0.1), transparent 30%),
-    rgba(228, 235, 247, 0.86);
-  box-shadow: var(--home-shadow);
-}
-
-.bottom-cta__panel h2 {
-  margin-top: 12px;
-  color: var(--home-text-strong);
-  font-size: clamp(1.8rem, 1.4rem + 1vw, 2.4rem);
-  line-height: 1.08;
-}
-
-.bottom-cta__panel p {
-  max-width: 720px;
-  margin-top: 12px;
-  color: var(--home-text-muted);
-  line-height: 1.8;
-}
 
 @keyframes floatOrb {
   0%, 100% { transform: translateY(0) translateX(0); }
   50% { transform: translateY(-10px) translateX(8px); }
-}
-
-@media (max-width: 1080px) {
-  .bottom-cta__panel {
-    grid-template-columns: 1fr;
-    display: grid;
-    align-items: start;
-  }
 }
 
 @media (max-width: 820px) {
@@ -690,8 +635,7 @@ const toolCategories = [
     font-size: clamp(2.4rem, 10vw, 4rem);
   }
 
-  .hero-actions,
-  .bottom-cta__actions {
+  .hero-actions {
     flex-direction: column;
   }
 
