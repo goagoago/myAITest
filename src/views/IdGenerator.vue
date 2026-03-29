@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import '../styles/shared-sliders.scss'
 import { useIdGenerator } from '../composables/useIdGenerator'
+import NeoSlider from '../components/ui/NeoSlider.vue'
 import {
   CreditCard, MapPin, User, Calendar, Hash, Copy, Check, RefreshCw, Sparkles, ChevronDown, Download
 } from 'lucide-vue-next'
@@ -194,13 +195,11 @@ const countPresets = [1, 5, 10, 20, 50, 100]
             >{{ c }}</button>
           </div>
           <div class="slider-row">
-            <input
-              type="range"
-              class="slider shared-range-slider" :style="{ '--range-progress': ((Number(options.size ?? options.count ?? qualityLevel ?? resizeScale ?? targetSizeKB) - Number(($event?.target?.min) || 0)) / 100) + '%' }"
-              v-model.number="options.count"
-              min="1"
-              max="200"
-              step="1"
+            <NeoSlider
+              v-model="options.count"
+              :min="1"
+              :max="200"
+              :step="1"
             />
             <span class="slider-value">{{ options.count }}</span>
           </div>

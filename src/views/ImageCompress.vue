@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import '../styles/shared-sliders.scss'
 import { ref, computed, watch } from 'vue'
+import NeoSlider from '../components/ui/NeoSlider.vue'
 import { useImageCompress } from '../composables/useImageCompress'
 import {
   ImageDown, Upload, Loader2, AlertCircle, RefreshCw,
@@ -352,12 +353,10 @@ const handleCompareMove = (e) => {
                   </button>
                 </div>
                 <div class="slider-row">
-                  <input
-                    type="range"
-                    class="slider shared-range-slider" :style="{ '--range-progress': ((Number(options.size ?? options.count ?? qualityLevel ?? resizeScale ?? targetSizeKB) - Number(($event?.target?.min) || 0)) / 100) + '%' }"
-                    v-model.number="qualityLevel"
-                    min="1"
-                    max="100"
+                  <NeoSlider
+                    v-model="qualityLevel"
+                    :min="1"
+                    :max="100"
                     :disabled="loading"
                   />
                   <span class="slider-value">{{ qualityLevel }}%</span>
@@ -409,12 +408,10 @@ const handleCompareMove = (e) => {
                   >{{ s }}%</button>
                 </div>
                 <div class="slider-row">
-                  <input
-                    type="range"
-                    class="slider shared-range-slider" :style="{ '--range-progress': ((Number(options.size ?? options.count ?? qualityLevel ?? resizeScale ?? targetSizeKB) - Number(($event?.target?.min) || 0)) / 100) + '%' }"
-                    v-model.number="resizeScale"
-                    min="10"
-                    max="100"
+                  <NeoSlider
+                    v-model="resizeScale"
+                    :min="10"
+                    :max="100"
                     :disabled="loading"
                   />
                   <span class="slider-value">{{ resizeScale }}%</span>
@@ -475,13 +472,11 @@ const handleCompareMove = (e) => {
                   >{{ t.label }}</button>
                 </div>
                 <div class="slider-row">
-                  <input
-                    type="range"
-                    class="slider shared-range-slider" :style="{ '--range-progress': ((Number(options.size ?? options.count ?? qualityLevel ?? resizeScale ?? targetSizeKB) - Number(($event?.target?.min) || 0)) / 100) + '%' }"
-                    v-model.number="targetSizeKB"
-                    min="10"
-                    max="5120"
-                    step="10"
+                  <NeoSlider
+                    v-model="targetSizeKB"
+                    :min="10"
+                    :max="5120"
+                    :step="10"
                     :disabled="loading"
                   />
                   <span class="slider-value">{{ targetSizeKB >= 1024 ? (targetSizeKB / 1024).toFixed(1) + ' MB' : targetSizeKB + ' KB' }}</span>

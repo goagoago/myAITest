@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import '../styles/shared-sliders.scss'
 import { watch } from 'vue'
+import NeoSlider from '../components/ui/NeoSlider.vue'
 import { useQrCode } from '../composables/useQrCode'
 import {
   QrCode, Upload, Download, RefreshCw, AlertCircle, Loader2,
@@ -177,14 +178,11 @@ const resetAll = () => {
             >{{ s.label }}</button>
           </div>
           <div class="slider-row">
-            <input
-              type="range"
-              class="slider shared-range-slider"
-              :style="{ '--range-progress': `${((options.size - 100) / (800 - 100)) * 100}%` }"
-              v-model.number="options.size"
-              min="100"
-              max="800"
-              step="10"
+            <NeoSlider
+              v-model="options.size"
+              :min="100"
+              :max="800"
+              :step="10"
             />
             <span class="slider-value">{{ options.size }}px</span>
           </div>
