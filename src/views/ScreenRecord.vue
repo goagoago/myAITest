@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useScreenRecord } from '../composables/useScreenRecord'
 import {
@@ -70,7 +71,7 @@ const resetAll = () => {
 </script>
 
 <template>
-  <div class="screen-record">
+  <div class="screen-record internal-page">
     <!-- 头部 -->
     <header class="header">
       <div class="header__content">

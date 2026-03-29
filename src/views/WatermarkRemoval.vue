@@ -1,4 +1,6 @@
 <script setup>
+import '../styles/internal-page.scss'
+import '../styles/shared-sliders.scss'
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { useWatermarkRemoval } from '../composables/useWatermarkRemoval'
 import WatermarkAdd from '../components/WatermarkAdd.vue'
@@ -141,7 +143,7 @@ const fileSize = computed(() => {
 </script>
 
 <template>
-  <div class="watermark-removal" @paste="handlePaste">
+  <div class="watermark-removal internal-page" @paste="handlePaste">
     <!-- 头部 -->
     <header class="header">
       <div class="header__character">
@@ -212,7 +214,7 @@ const fileSize = computed(() => {
           </div>
 
           <!-- 已上传图片预览 -->
-          <div v-if="originalImageUrl" class="preview-section">
+          <div v-if="originalImageUrl" class="preview-section content-shell">
             <div class="preview-header">
               <div class="preview-label">
                 <Image :size="16" />
@@ -277,21 +279,21 @@ const fileSize = computed(() => {
         </div>
 
         <!-- 右侧：结果展示 -->
-        <div class="result-section">
+        <div class="result-section section-shell">
           <!-- 有结果时 -->
           <div v-if="resultImageUrl && originalImageUrl" class="result-content">
             <!-- 对比模式 -->
-            <div v-if="compareMode" class="compare-container" @mousemove="handleCompareMove">
-              <div class="compare-image compare-image--original">
+            <div v-if="compareMode" class="compare-container shared-compare-container" :style="{ '--compare-x': comparePosition + '%' }" @mousemove="handleCompareMove">
+              <div class="compare-image compare-image--original shared-compare-image">
                 <img :src="originalImageUrl" alt="原图" />
-                <span class="compare-label compare-label--left">原图</span>
+                <span class="compare-label compare-label--left shared-compare-label shared-compare-label--left">原图</span>
               </div>
-              <div class="compare-image compare-image--result" :style="{ clipPath: `inset(0 ${100 - comparePosition}% 0 0)` }">
+              <div class="compare-image compare-image--result shared-compare-image" :style="{ clipPath: `inset(0 ${100 - comparePosition}% 0 0)` }">
                 <img :src="resultImageUrl" alt="去水印后" />
-                <span class="compare-label compare-label--right">去水印后</span>
+                <span class="compare-label compare-label--right shared-compare-label shared-compare-label--right">去水印后</span>
               </div>
-              <div class="compare-slider" :style="{ left: comparePosition + '%' }">
-                <div class="compare-handle">
+              <div class="compare-slider shared-compare-slider" :style="{ left: comparePosition + '%', '--compare-x': comparePosition + '%' }">
+                <div class="compare-handle shared-compare-handle">
                   <ArrowLeftRight :size="16" />
                 </div>
               </div>
@@ -303,7 +305,7 @@ const fileSize = computed(() => {
             </div>
 
             <!-- 操作按钮 -->
-            <div class="result-actions">
+            <div class="result-actions content-shell">
               <button class="action-btn" @click="compareMode = !compareMode">
                 <ArrowLeftRight :size="18" />
                 <span>{{ compareMode ? '退出对比' : '效果对比' }}</span>
@@ -331,7 +333,7 @@ const fileSize = computed(() => {
       </div>
 
       <!-- 历史记录 -->
-      <div v-if="history.length" class="history">
+      <div v-if="history.length" class="history content-shell">
         <h3 class="history-title">
           <Clock :size="16" />
           <span>处理记录</span>
@@ -443,18 +445,20 @@ const fileSize = computed(() => {
 }
 
 .main-tab:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(101, 118, 151, 0.2);
+  color: #182235;
 }
 
 .main-tab.active {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.5);
-  color: #34d399;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(59, 130, 246, 0.12));
+  border-color: rgba(16, 185, 129, 0.34);
+  color: #0f8f68;
+  box-shadow: 0 10px 22px rgba(16, 185, 129, 0.12);
 }
 
 .main-tab.active svg {
-  color: #34d399;
+  color: #0f8f68;
 }
 
 /* 主面板 */
@@ -467,10 +471,11 @@ const fileSize = computed(() => {
 
 .input-section,
 .result-section {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(252, 254, 255, 0.95), rgba(238, 244, 250, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 24px;
   padding: 28px;
+  box-shadow: 0 18px 36px rgba(101, 118, 151, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
 /* 上传区域 */
@@ -522,6 +527,26 @@ const fileSize = computed(() => {
   font-size: 0.8125rem;
   color: var(--text-muted);
   margin-top: 4px;
+}
+
+/* 预览区域 */
+.content-shell {
+  background: linear-gradient(180deg, rgba(252, 254, 255, 0.94), rgba(238, 244, 250, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.14);
+  border-radius: 18px;
+  box-shadow: 0 14px 28px rgba(101, 118, 151, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+.preview-section.content-shell {
+  padding: 16px;
+}
+
+.result-actions.content-shell {
+  padding: 14px;
+}
+
+.history.content-shell {
+  padding: 22px;
 }
 
 /* 预览区域 */
@@ -582,13 +607,16 @@ const fileSize = computed(() => {
 /* 图片预览容器 */
 .mask-container {
   position: relative;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2);
-  margin-bottom: 12px;
+  background: linear-gradient(180deg, rgba(250, 252, 255, 0.94), rgba(236, 242, 249, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  margin-bottom: 14px;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 14px;
 }
 
 .mask-wrapper {
@@ -609,19 +637,21 @@ const fileSize = computed(() => {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 12px;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: #22466f;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .reselect-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(101, 118, 151, 0.24);
+  color: #182235;
 }
 
 .reselect-btn:disabled {
@@ -661,9 +691,10 @@ const fileSize = computed(() => {
 
 /* 进度条 */
 .progress-bar {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  height: 8px;
+  background: rgba(216, 225, 238, 0.88);
+  border: 1px solid rgba(101, 118, 151, 0.14);
+  border-radius: 999px;
   margin-top: 16px;
   overflow: hidden;
 }
@@ -739,9 +770,12 @@ const fileSize = computed(() => {
 
 .result-image {
   flex: 1;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2);
+  background: linear-gradient(180deg, rgba(250, 252, 255, 0.94), rgba(236, 242, 249, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  padding: 14px;
 }
 
 .result-image img {
@@ -755,7 +789,8 @@ const fileSize = computed(() => {
 .compare-container {
   position: relative;
   flex: 1;
-  border-radius: 16px;
+  min-height: 320px;
+  border-radius: 22px;
   overflow: hidden;
   cursor: col-resize;
   user-select: none;
@@ -843,26 +878,26 @@ const fileSize = computed(() => {
   justify-content: center;
   gap: 8px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 12px;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: #22466f;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(101, 118, 151, 0.24);
+  color: #182235;
 }
 
 /* 历史记录 */
 .history {
   padding-top: 32px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(101, 118, 151, 0.14);
 }
 
 .history-title {
@@ -886,17 +921,19 @@ const fileSize = computed(() => {
 }
 
 .history-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(252, 254, 255, 0.94), rgba(238, 244, 250, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.14);
   border-radius: 14px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s;
+  box-shadow: 0 12px 26px rgba(101, 118, 151, 0.08);
 }
 
 .history-item:hover {
-  border-color: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.24);
   transform: translateY(-2px);
+  box-shadow: 0 16px 28px rgba(101, 118, 151, 0.12);
 }
 
 .history-images {

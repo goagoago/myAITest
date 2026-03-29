@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { computed, ref, onMounted, nextTick, watch } from 'vue'
 import { saveAs } from 'file-saver'
 import {
@@ -373,7 +374,7 @@ a { color: #0969da; text-decoration: none; }
 </script>
 
 <template>
-  <div class="resume-builder">
+  <div class="resume-builder internal-page">
     <!-- Hero -->
     <ResumeHero :ai-review-loading="aiReviewLoading" @review="handleAiReview" />
 

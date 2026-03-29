@@ -1,5 +1,6 @@
 <script setup>
 import '../styles/internal-page.scss'
+import '../styles/shared-sliders.scss'
 import { useIdGenerator } from '../composables/useIdGenerator'
 import {
   CreditCard, MapPin, User, Calendar, Hash, Copy, Check, RefreshCw, Sparkles, ChevronDown, Download
@@ -159,7 +160,7 @@ const countPresets = [1, 5, 10, 20, 50, 100]
               />
             </div>
 
-            <div class="month-day-row">
+            <div class="month-day-row section-shell">
               <div class="select-wrap select-wrap--half">
                 <select v-model.number="options.specificMonth" class="neo-select">
                   <option :value="0">随机月份</option>
@@ -195,7 +196,7 @@ const countPresets = [1, 5, 10, 20, 50, 100]
           <div class="slider-row">
             <input
               type="range"
-              class="slider"
+              class="slider shared-range-slider" :style="{ '--range-progress': ((Number(options.size ?? options.count ?? qualityLevel ?? resizeScale ?? targetSizeKB) - Number(($event?.target?.min) || 0)) / 100) + '%' }"
               v-model.number="options.count"
               min="1"
               max="200"

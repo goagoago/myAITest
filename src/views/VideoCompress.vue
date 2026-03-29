@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { ref, computed, watch } from 'vue'
 import { useVideoCompress } from '../composables/useVideoCompress'
 import {
@@ -184,7 +185,7 @@ const resetAll = () => {
 </script>
 
 <template>
-  <div class="video-compress">
+  <div class="video-compress internal-page">
     <!-- 头部 -->
     <header class="header">
       <div class="header__content">

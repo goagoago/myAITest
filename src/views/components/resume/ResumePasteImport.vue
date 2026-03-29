@@ -55,10 +55,11 @@ const toggle = () => emit('update:collapsed', !props.collapsed)
 
 <style scoped lang="scss">
 .card {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(252, 254, 255, 0.95), rgba(236, 242, 249, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 20px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 34px rgba(101, 118, 151, 0.12);
 }
 
 .paste-section {
@@ -75,15 +76,15 @@ const toggle = () => emit('update:collapsed', !props.collapsed)
   padding: 12px 16px;
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: #344256;
   font-size: 0.86rem;
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
 }
 
 .paste-section__toggle:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.03);
+  color: #182235;
+  background: rgba(255, 255, 255, 0.42);
 }
 
 .paste-section__arrow {
@@ -107,10 +108,10 @@ const toggle = () => emit('update:collapsed', !props.collapsed)
 
 .paste-section__textarea {
   width: 100%;
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(101, 118, 151, 0.18);
   border-radius: 12px;
-  color: var(--text-primary);
+  color: #182235;
   font-size: 0.82rem;
   font-family: 'Menlo', 'Consolas', 'Monaco', monospace;
   padding: 10px 12px;

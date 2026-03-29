@@ -13,15 +13,23 @@
   --muted-chip: rgba(235, 241, 249, 0.88);
   --input-bg: rgba(255, 255, 255, 0.86);
   --placeholder: #73839a;
+  --space-page-x: 28px;
+  --space-page-bottom: 84px;
+  --space-header-top: 64px;
+  --space-header-bottom: 34px;
+  --space-block: 28px;
+  --space-card-padding: 22px;
+  --space-card-padding-lg: 26px;
+  --space-control-gap: 16px;
   max-width: var(--page-shell-max);
   margin: 0 auto;
-  padding: 0 28px 84px;
+  padding: 0 var(--space-page-x) var(--space-page-bottom);
   color: var(--text-main);
 }
 
 .internal-page .header,
 .internal-page .page-header {
-  padding: 64px 0 40px;
+  padding: var(--space-header-top) 0 var(--space-header-bottom);
   margin-bottom: 0;
 }
 
@@ -51,6 +59,23 @@
   box-shadow: var(--panel-shadow) !important;
   backdrop-filter: blur(16px) saturate(115%);
   -webkit-backdrop-filter: blur(16px) saturate(115%);
+}
+
+.internal-page .panel,
+.internal-page .card,
+.internal-page .main-panel,
+.internal-page .result-card,
+.internal-page .file-card,
+.internal-page .stats-bar {
+  padding: var(--space-card-padding);
+}
+
+.internal-page .panel--input,
+.internal-page .panel--result,
+.internal-page .panel--control,
+.internal-page .panel--preview,
+.internal-page .result-content {
+  padding: var(--space-card-padding-lg);
 }
 
 .internal-page .upload-zone,
@@ -95,7 +120,15 @@
 .internal-page .placeholder-icon,
 .internal-page .file-size-tag,
 .internal-page .streaming-badge,
-.internal-page .result-format-badge {
+.internal-page .result-format-badge,
+.internal-page .input-section,
+.internal-page .form-group,
+.internal-page .option-group,
+.internal-page .mode-section,
+.internal-page .options-panel,
+.internal-page .settings-panel,
+.internal-page .card__input-area,
+.internal-page .result-section {
   background: var(--soft-surface) !important;
   border-color: var(--soft-border) !important;
   color: var(--text-main);
@@ -195,8 +228,45 @@
   min-height: 520px;
 }
 
+.internal-page .input-section,
+.internal-page .form-group,
+.internal-page .option-group,
+.internal-page .mode-section,
+.internal-page .settings-panel,
+.internal-page .result-section,
+.internal-page .card__input-area {
+  padding: 18px;
+  border-radius: 18px;
+}
+
+.internal-page .input-section + .input-section,
+.internal-page .form-group + .form-group,
+.internal-page .option-group + .option-group,
+.internal-page .mode-section + .options-panel,
+.internal-page .settings-panel + .settings-panel {
+  margin-top: 18px;
+}
+
+.internal-page .main-area,
+.internal-page .content,
+.internal-page .panel,
+.internal-page .controls,
+.internal-page .toolbar,
+.internal-page .action-group,
+.internal-page .button-group,
+.internal-page .format-grid,
+.internal-page .preset-grid,
+.internal-page .result-grid,
+.internal-page .settings-grid,
+.internal-page .stats-grid,
+.internal-page .lang-bar,
+.internal-page .main-tabs {
+  gap: var(--space-control-gap);
+}
+
 .internal-page .main-area {
-  gap: 28px;
+  gap: var(--space-block);
+  margin-top: 4px;
 }
 
 .internal-page .action-btn--primary,
@@ -211,13 +281,107 @@
   color: #fff !important;
 }
 
+.internal-page .section-label,
+.internal-page .result-title,
+.internal-page .preview-label,
+.internal-page .upload-text,
+.internal-page .card__header,
+.internal-page .toolbar-title,
+.internal-page .settings-title,
+.internal-page .group-title {
+  margin-bottom: 12px;
+}
+
+.internal-page .header + *,
+.internal-page .page-header + * {
+  margin-top: 4px;
+}
+
+.internal-page .section-shell {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(101, 118, 151, 0.12);
+  border-radius: 18px;
+}
+
+.internal-page .upload-zone,
+.internal-page .preview-section,
+.internal-page .textarea,
+.internal-page .result-textarea,
+.internal-page .result-placeholder,
+.internal-page .image-preview,
+.internal-page .preview-image,
+.internal-page .qr-preview,
+.internal-page .pdf-preview {
+  padding: 18px;
+}
+
+.internal-page .main-tabs,
+.internal-page .lang-bar,
+.internal-page .toolbar,
+.internal-page .controls,
+.internal-page .settings-panel,
+.internal-page .option-group,
+.internal-page .history-list,
+.internal-page .result-list,
+.internal-page .format-grid,
+.internal-page .preset-grid {
+  margin-bottom: 18px;
+}
+
+.internal-page .action-btn,
+.internal-page .copy-all-btn,
+.internal-page .export-btn,
+.internal-page .generate-btn,
+.internal-page .compress-btn,
+.internal-page .recognize-btn,
+.internal-page .download-btn,
+.internal-page .btn,
+.internal-page button[class*='btn'] {
+  min-height: 42px;
+  padding-inline: 16px;
+}
+
 @media (max-width: 900px) {
   .internal-page {
-    padding: 0 20px 64px;
+    --space-page-x: 20px;
+    --space-page-bottom: 64px;
+    --space-header-top: 48px;
+    --space-header-bottom: 28px;
+    --space-block: 22px;
+    --space-card-padding: 18px;
+    --space-card-padding-lg: 20px;
+    --space-control-gap: 14px;
+    padding: 0 var(--space-page-x) var(--space-page-bottom);
   }
 
   .internal-page .header,
   .internal-page .page-header {
-    padding: 48px 0 28px;
+    padding: var(--space-header-top) 0 var(--space-header-bottom);
+  }
+}
+
+@media (max-width: 640px) {
+  .internal-page {
+    --space-page-x: 16px;
+    --space-page-bottom: 52px;
+    --space-header-top: 34px;
+    --space-header-bottom: 22px;
+    --space-block: 18px;
+    --space-card-padding: 16px;
+    --space-card-padding-lg: 18px;
+    --space-control-gap: 12px;
+  }
+
+  .internal-page .upload-zone,
+  .internal-page .preview-section,
+  .internal-page .textarea,
+  .internal-page .result-textarea,
+  .internal-page .result-placeholder,
+  .internal-page .image-preview,
+  .internal-page .preview-image,
+  .internal-page .qr-preview,
+  .internal-page .pdf-preview {
+    padding: 14px;
   }
 }

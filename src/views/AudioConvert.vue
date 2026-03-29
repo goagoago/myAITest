@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useAudioConvert } from '../composables/useAudioConvert'
 import CustomSelect from '@/components/ui/CustomSelect.vue'
@@ -135,7 +136,7 @@ const resetAll = () => {
 </script>
 
 <template>
-  <div class="audio-convert">
+  <div class="audio-convert internal-page">
     <header class="header">
       <div class="header__content">
         <div class="header__badge">

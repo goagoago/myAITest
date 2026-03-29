@@ -1,5 +1,6 @@
 <script setup>
 import '../styles/internal-page.scss'
+import '../styles/shared-sliders.scss'
 import { ref, computed, watch } from 'vue'
 import { useImageCompress } from '../composables/useImageCompress'
 import {
@@ -327,7 +328,7 @@ const handleCompareMove = (e) => {
           </div>
 
           <!-- 参数面板 -->
-          <div class="options-panel">
+          <div class="options-panel section-shell">
             <!-- 智能压缩 -->
             <div v-if="compressMode === 'smart'" class="option-info">
               <Info :size="16" />
@@ -353,7 +354,7 @@ const handleCompareMove = (e) => {
                 <div class="slider-row">
                   <input
                     type="range"
-                    class="slider"
+                    class="slider shared-range-slider" :style="{ '--range-progress': ((Number(options.size ?? options.count ?? qualityLevel ?? resizeScale ?? targetSizeKB) - Number(($event?.target?.min) || 0)) / 100) + '%' }"
                     v-model.number="qualityLevel"
                     min="1"
                     max="100"
@@ -410,7 +411,7 @@ const handleCompareMove = (e) => {
                 <div class="slider-row">
                   <input
                     type="range"
-                    class="slider"
+                    class="slider shared-range-slider" :style="{ '--range-progress': ((Number(options.size ?? options.count ?? qualityLevel ?? resizeScale ?? targetSizeKB) - Number(($event?.target?.min) || 0)) / 100) + '%' }"
                     v-model.number="resizeScale"
                     min="10"
                     max="100"
@@ -476,7 +477,7 @@ const handleCompareMove = (e) => {
                 <div class="slider-row">
                   <input
                     type="range"
-                    class="slider"
+                    class="slider shared-range-slider" :style="{ '--range-progress': ((Number(options.size ?? options.count ?? qualityLevel ?? resizeScale ?? targetSizeKB) - Number(($event?.target?.min) || 0)) / 100) + '%' }"
                     v-model.number="targetSizeKB"
                     min="10"
                     max="5120"
@@ -566,17 +567,17 @@ const handleCompareMove = (e) => {
           </div>
 
           <!-- 对比/预览 -->
-          <div v-if="compareMode" class="compare-container" @mousemove="handleCompareMove">
-            <div class="compare-image compare-image--original">
+          <div v-if="compareMode" class="compare-container shared-compare-container" :style="{ '--compare-x': comparePosition + '%' }" @mousemove="handleCompareMove">
+            <div class="compare-image compare-image--original shared-compare-image">
               <img :src="originalUrl" alt="原图" />
-              <span class="compare-label compare-label--left">原图</span>
+              <span class="compare-label compare-label--left shared-compare-label shared-compare-label--left">原图</span>
             </div>
-            <div class="compare-image compare-image--result" :style="{ clipPath: `inset(0 ${100 - comparePosition}% 0 0)` }">
+            <div class="compare-image compare-image--result shared-compare-image" :style="{ clipPath: `inset(0 ${100 - comparePosition}% 0 0)` }">
               <img :src="result.url" alt="压缩后" />
-              <span class="compare-label compare-label--right">压缩后</span>
+              <span class="compare-label compare-label--right shared-compare-label shared-compare-label--right">压缩后</span>
             </div>
-            <div class="compare-slider" :style="{ left: comparePosition + '%' }">
-              <div class="compare-handle">
+            <div class="compare-slider shared-compare-slider" :style="{ left: comparePosition + '%', '--compare-x': comparePosition + '%' }">
+              <div class="compare-handle shared-compare-handle">
                 <ArrowLeftRight :size="16" />
               </div>
             </div>
@@ -1302,11 +1303,11 @@ const handleCompareMove = (e) => {
 .compare-container {
   position: relative;
   flex: 1;
-  border-radius: 16px;
+  min-height: 320px;
+  border-radius: 22px;
   overflow: hidden;
   cursor: col-resize;
   user-select: none;
-  min-height: 250px;
 }
 
 .compare-image {

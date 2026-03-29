@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useIdPhoto, PHOTO_PRESETS, BG_COLORS } from '../composables/useIdPhoto'
 import {
@@ -208,7 +209,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="id-photo">
+  <div class="id-photo internal-page">
     <!-- 头部 -->
     <header class="header">
       <div class="header__character">

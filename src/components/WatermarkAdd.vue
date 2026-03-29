@@ -324,18 +324,19 @@ onBeforeUnmount(() => {
    ═══════════════════════════════════════════════════════════ */
 
 .wm-preview-bar {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(252, 254, 255, 0.95), rgba(238, 244, 250, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 24px;
   padding: 24px;
   margin-bottom: 24px;
+  box-shadow: 0 18px 36px rgba(101, 118, 151, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
 .wm-preview-bar--has-img {
   position: sticky;
   top: 80px;
   z-index: 10;
-  background: rgba(9, 9, 11, 0.92);
+  background: linear-gradient(180deg, rgba(252, 254, 255, 0.96), rgba(238, 244, 250, 0.94));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -394,9 +395,12 @@ onBeforeUnmount(() => {
 .wm-preview-img-box {
   flex: 1;
   min-width: 0;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2);
+  background: linear-gradient(180deg, rgba(250, 252, 255, 0.94), rgba(236, 242, 249, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  padding: 14px;
 }
 
 .wm-preview-img {
@@ -467,18 +471,18 @@ onBeforeUnmount(() => {
   justify-content: center;
   gap: 6px;
   padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 10px;
   font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: #22466f;
   cursor: pointer;
   transition: all 0.3s;
   white-space: nowrap;
 }
 
-.wm-btn-ghost:hover { background: rgba(255, 255, 255, 0.1); }
+.wm-btn-ghost:hover { background: rgba(255, 255, 255, 0.96); border-color: rgba(101, 118, 151, 0.24); color: #182235; }
 
 .wm-btn-danger:hover {
   background: rgba(239, 68, 68, 0.15);
@@ -491,10 +495,11 @@ onBeforeUnmount(() => {
    ═══════════════════════════════════════════════════════════ */
 
 .wm-settings {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(252, 254, 255, 0.95), rgba(238, 244, 250, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 24px;
   padding: 24px;
+  box-shadow: 0 18px 36px rgba(101, 118, 151, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
 /* ─── 三种水印层横向排列 ─── */
@@ -506,15 +511,17 @@ onBeforeUnmount(() => {
 }
 
 .wm-layer {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(101, 118, 151, 0.14);
   border-radius: 16px;
-  padding: 14px;
-  transition: border-color 0.3s;
+  padding: 16px;
+  transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
 }
 
 .wm-layer--on {
-  border-color: rgba(16, 185, 129, 0.25);
+  border-color: rgba(16, 185, 129, 0.3);
+  background: linear-gradient(180deg, rgba(248, 253, 251, 0.96), rgba(238, 247, 252, 0.94));
+  box-shadow: 0 14px 28px rgba(16, 185, 129, 0.08);
 }
 
 .wm-layer-header {
@@ -547,7 +554,7 @@ onBeforeUnmount(() => {
 .wm-layer-body {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(101, 118, 151, 0.12);
 }
 
 /* ─── 通用设置横向一行 ─── */
@@ -556,7 +563,7 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr 1.2fr auto;
   gap: 20px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(101, 118, 151, 0.12);
   align-items: start;
 }
 
@@ -585,11 +592,11 @@ onBeforeUnmount(() => {
 .wm-input {
   width: 100%;
   padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 10px;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: #182235;
   transition: all 0.3s;
   font-family: inherit;
 }
@@ -607,11 +614,11 @@ onBeforeUnmount(() => {
 .wm-select {
   width: 100%;
   padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 10px;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: #182235;
   cursor: pointer;
 }
 
@@ -659,16 +666,16 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(101, 118, 151, 0.14);
   border-radius: 8px;
-  color: var(--text-secondary);
+  color: #607089;
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
 }
 
-.wm-icon-btn:hover { background: rgba(255, 255, 255, 0.06); }
+.wm-icon-btn:hover { background: rgba(255, 255, 255, 0.96); border-color: rgba(101, 118, 151, 0.2); color: #182235; }
 
 .wm-icon-btn.active {
   background: rgba(16, 185, 129, 0.12);
@@ -689,8 +696,8 @@ onBeforeUnmount(() => {
   justify-content: center;
   padding: 6px;
   font-size: 1.1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(101, 118, 151, 0.12);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -714,11 +721,11 @@ onBeforeUnmount(() => {
   gap: 6px;
   width: 100%;
   padding: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px dashed rgba(101, 118, 151, 0.18);
   border-radius: 10px;
   font-size: 0.8125rem;
-  color: var(--text-secondary);
+  color: #22466f;
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -755,11 +762,11 @@ onBeforeUnmount(() => {
 .wm-angle-btn {
   flex: 1;
   padding: 4px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(101, 118, 151, 0.12);
   border-radius: 6px;
   font-size: 0.6875rem;
-  color: var(--text-muted);
+  color: #607089;
   cursor: pointer;
   transition: all 0.2s;
   text-align: center;
@@ -777,7 +784,8 @@ onBeforeUnmount(() => {
 .wm-switch {
   width: 34px;
   height: 18px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(201, 212, 228, 0.96);
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 9px;
   position: relative;
   transition: background 0.3s;

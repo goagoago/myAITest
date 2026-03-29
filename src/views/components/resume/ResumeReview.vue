@@ -62,10 +62,11 @@ defineProps({
 
 <style scoped lang="scss">
 .card {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(252, 254, 255, 0.95), rgba(236, 242, 249, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 20px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 34px rgba(101, 118, 151, 0.12);
 }
 
 .review {
@@ -96,9 +97,9 @@ defineProps({
 .review__badge {
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgba(19, 195, 139, 0.14);
-  border: 1px solid rgba(19, 195, 139, 0.3);
-  color: #57ddb3;
+  background: rgba(22, 184, 133, 0.12);
+  border: 1px solid rgba(22, 184, 133, 0.22);
+  color: #0f8f68;
   font-size: 0.75rem;
 }
 
@@ -116,8 +117,8 @@ defineProps({
 .review__dimension {
   padding: 12px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(101, 118, 151, 0.14);
 }
 
 .review__dimension-top {
@@ -191,8 +192,8 @@ defineProps({
 .review__item {
   padding: 12px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(101, 118, 151, 0.14);
 }
 
 .review__item-main {

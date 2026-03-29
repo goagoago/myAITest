@@ -44,12 +44,13 @@ const emit = defineEmits(['review'])
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  border: 1px solid rgba(19, 195, 139, 0.35);
+  border: 1px solid rgba(22, 184, 133, 0.2);
   border-radius: 999px;
-  background: rgba(19, 195, 139, 0.12);
-  color: #57ddb3;
+  background: rgba(255, 255, 255, 0.78);
+  color: #0f8f68;
   font-size: 0.8125rem;
   margin-bottom: 10px;
+  box-shadow: 0 10px 22px rgba(101, 118, 151, 0.1);
 }
 
 .hero__title {
@@ -66,9 +67,9 @@ const emit = defineEmits(['review'])
 
 .hero__score {
   padding: 16px 22px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(252, 254, 255, 0.92), rgba(236, 242, 249, 0.9));
+  border: 1px solid rgba(101, 118, 151, 0.16);
   min-width: 150px;
   text-align: center;
   flex-shrink: 0;
@@ -76,6 +77,7 @@ const emit = defineEmits(['review'])
   flex-direction: column;
   gap: 8px;
   align-items: center;
+  box-shadow: 0 18px 36px rgba(101, 118, 151, 0.12);
 }
 
 .hero__review-btn {

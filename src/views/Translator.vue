@@ -63,7 +63,7 @@ const charCount = computed(() => displayContent.value.length)
         </div>
       </header>
 
-      <div class="lang-bar">
+      <div class="lang-bar section-shell">
         <div class="lang-select-wrap">
           <select v-model="sourceLang" class="lang-select">
             <option v-for="lang in languages" :key="lang.value" :value="lang.value">

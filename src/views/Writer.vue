@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useChat } from '../composables/useChat.js'
 import { marked } from 'marked'
@@ -103,7 +104,7 @@ const charCount = computed(() => displayContent.value.length)
 </script>
 
 <template>
-  <div class="page">
+  <div class="page internal-page">
     <div class="container">
       <header class="page-header">
         <div class="page-header__icon">
@@ -115,7 +116,7 @@ const charCount = computed(() => displayContent.value.length)
         </div>
       </header>
 
-      <div class="modes">
+      <div class="modes section-shell">
         <button
           v-for="m in modes"
           :key="m.value"

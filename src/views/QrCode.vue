@@ -1,5 +1,6 @@
 <script setup>
 import '../styles/internal-page.scss'
+import '../styles/shared-sliders.scss'
 import { watch } from 'vue'
 import { useQrCode } from '../composables/useQrCode'
 import {
@@ -178,7 +179,8 @@ const resetAll = () => {
           <div class="slider-row">
             <input
               type="range"
-              class="slider"
+              class="slider shared-range-slider"
+              :style="{ '--range-progress': `${((options.size - 100) / (800 - 100)) * 100}%` }"
               v-model.number="options.size"
               min="100"
               max="800"
@@ -342,6 +344,10 @@ const resetAll = () => {
 /* 区块标题 */
 .input-section {
   margin-bottom: 24px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(101, 118, 151, 0.14);
+  border-radius: 18px;
 }
 
 .section-label {
@@ -386,6 +392,10 @@ const resetAll = () => {
 
 .color-field {
   flex: 1;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(101, 118, 151, 0.12);
+  border-radius: 14px;
 }
 
 .color-label {
@@ -399,9 +409,9 @@ const resetAll = () => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(101, 118, 151, 0.16);
   border-radius: 12px;
 }
 
@@ -431,7 +441,8 @@ const resetAll = () => {
 .level-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 10px;
+  padding: 4px 0;
 }
 
 .level-btn {
@@ -489,9 +500,10 @@ const resetAll = () => {
 /* 尺寸 */
 .size-presets {
   display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
+  padding: 2px 0;
 }
 
 .preset-chip {
@@ -521,40 +533,69 @@ const resetAll = () => {
 .slider-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(241, 245, 252, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.14);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
 .slider {
   flex: 1;
+  height: 10px;
   -webkit-appearance: none;
   appearance: none;
-  height: 8px;
-  background: linear-gradient(180deg, rgba(210, 220, 234, 0.95), rgba(190, 202, 220, 0.95));
-  border: 1px solid rgba(101, 118, 151, 0.22);
   border-radius: 999px;
-  box-shadow: inset 0 1px 2px rgba(152, 167, 191, 0.32);
+  background: linear-gradient(
+    90deg,
+    rgba(139, 92, 246, 0.92) 0%,
+    rgba(99, 102, 241, 0.88) var(--range-progress, 50%),
+    rgba(215, 223, 237, 0.96) var(--range-progress, 50%),
+    rgba(199, 209, 224, 0.96) 100%
+  );
+  border: 1px solid rgba(113, 121, 168, 0.16);
+  box-shadow: inset 0 1px 2px rgba(121, 132, 168, 0.24), 0 0 0 4px rgba(139, 92, 246, 0.08);
   outline: none;
   cursor: pointer;
 }
 
+.slider::-webkit-slider-runnable-track {
+  height: 10px;
+  background: transparent;
+}
+
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  background: linear-gradient(180deg, #2f5f95, #22466f);
-  border: 2px solid rgba(255, 255, 255, 0.96);
+  width: 22px;
+  height: 22px;
+  margin-top: -7px;
   border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(34, 70, 111, 0.35);
+  border: 2px solid rgba(124, 58, 237, 0.82);
+  background: linear-gradient(180deg, #ffffff, #f5f2ff);
+  box-shadow: 0 4px 12px rgba(91, 66, 185, 0.28), 0 0 0 6px rgba(139, 92, 246, 0.12);
+}
+
+.slider::-moz-range-track {
+  height: 10px;
+  background: rgba(215, 223, 237, 0.96);
+  border: 1px solid rgba(113, 121, 168, 0.16);
+  border-radius: 999px;
+}
+
+.slider::-moz-range-progress {
+  height: 10px;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.92), rgba(99, 102, 241, 0.88));
+  border-radius: 999px;
 }
 
 .slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  background: linear-gradient(180deg, #2f5f95, #22466f);
-  border: 2px solid rgba(255, 255, 255, 0.96);
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  cursor: pointer;
+  border: 2px solid rgba(124, 58, 237, 0.82);
+  background: linear-gradient(180deg, #ffffff, #f5f2ff);
+  box-shadow: 0 4px 12px rgba(91, 66, 185, 0.28), 0 0 0 6px rgba(139, 92, 246, 0.12);
 }
 
 .slider-value {
@@ -574,12 +615,13 @@ const resetAll = () => {
   justify-content: center;
   gap: 10px;
   padding: 24px;
-  border: 2px dashed rgba(255, 255, 255, 0.12);
+  border: 2px dashed rgba(101, 118, 151, 0.18);
   border-radius: 16px;
   color: var(--text-muted);
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.3s;
+  background: rgba(255, 255, 255, 0.58);
 }
 
 .logo-upload:hover {
@@ -592,9 +634,9 @@ const resetAll = () => {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(101, 118, 151, 0.14);
   border-radius: 14px;
 }
 

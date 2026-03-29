@@ -180,7 +180,7 @@ const charCount = computed(() => displayContent.value.length)
             <span>旅行风格</span>
             <span class="label-hint">(可多选)</span>
           </label>
-          <div class="chips">
+          <div class="chips section-shell">
             <button
               v-for="s in styles"
               :key="s.label"
