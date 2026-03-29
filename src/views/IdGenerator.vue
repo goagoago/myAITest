@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { useIdGenerator } from '../composables/useIdGenerator'
 import {
   CreditCard, MapPin, User, Calendar, Hash, Copy, Check, RefreshCw, Sparkles, ChevronDown, Download
@@ -36,7 +37,7 @@ const countPresets = [1, 5, 10, 20, 50, 100]
 </script>
 
 <template>
-  <div class="id-generator">
+  <div class="id-generator internal-page">
     <!-- 头部 -->
     <header class="header">
       <div class="header__content">
@@ -565,28 +566,31 @@ const countPresets = [1, 5, 10, 20, 50, 100]
   flex: 1;
   -webkit-appearance: none;
   appearance: none;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 2px;
+  height: 8px;
+  background: linear-gradient(180deg, rgba(210, 220, 234, 0.95), rgba(190, 202, 220, 0.95));
+  border: 1px solid rgba(101, 118, 151, 0.22);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 2px rgba(152, 167, 191, 0.32);
   outline: none;
   cursor: pointer;
 }
 
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  background: #60a5fa;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(180deg, #2f5f95, #22466f);
+  border: 2px solid rgba(255, 255, 255, 0.96);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 0 6px rgba(96, 165, 250, 0.4);
+  box-shadow: 0 2px 8px rgba(34, 70, 111, 0.35);
 }
 
 .slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: #60a5fa;
-  border: none;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(180deg, #2f5f95, #22466f);
+  border: 2px solid rgba(255, 255, 255, 0.96);
   border-radius: 50%;
   cursor: pointer;
 }
@@ -594,7 +598,7 @@ const countPresets = [1, 5, 10, 20, 50, 100]
 .slider-value {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #60a5fa;
+  color: #22466f;
   min-width: 40px;
   text-align: right;
 }

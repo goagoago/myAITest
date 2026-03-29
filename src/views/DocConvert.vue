@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useDocConvert } from '../composables/useDocConvert'
 import {
@@ -243,7 +244,7 @@ const resetAll = () => {
 </script>
 
 <template>
-  <div class="doc-convert">
+  <div class="doc-convert internal-page">
     <!-- 头部 -->
     <header class="header">
       <div class="header__content">
@@ -251,7 +252,7 @@ const resetAll = () => {
           <FileText :size="14" />
           <span>文档转换</span>
         </div>
-        <h1 class="header__title">
+        <h1 class="header__title header__title--tinted">
           <span>全能文档 </span>
           <span class="gradient-text">格式互转</span>
         </h1>
@@ -410,14 +411,26 @@ const resetAll = () => {
 
 <style scoped lang="scss">
 .doc-convert {
-  max-width: 900px;
+  --page-bg: #fbfcff;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-strong: rgba(255, 255, 255, 0.9);
+  --surface-soft: rgba(246, 249, 255, 0.88);
+  --line: rgba(124, 138, 167, 0.18);
+  --line-strong: rgba(96, 112, 145, 0.28);
+  --text-strong: #0f172a;
+  --text-main: #334155;
+  --text-soft: #64748b;
+  --shadow-soft: 0 18px 44px rgba(148, 163, 184, 0.14);
+  --shadow-card: 0 14px 34px rgba(148, 163, 184, 0.12);
+
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 0 32px 80px;
+  padding: 0 32px 88px;
+  color: var(--text-main);
 }
 
-/* 头部 */
 .header {
-  padding: 60px 0 40px;
+  padding: 88px 0 42px;
   text-align: center;
 }
 
@@ -425,28 +438,37 @@ const resetAll = () => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 50px;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(96, 165, 250, 0.24);
+  border-radius: 999px;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #60a5fa;
+  font-weight: 700;
+  color: #2563eb;
   margin-bottom: 24px;
+  box-shadow: 0 10px 24px rgba(96, 165, 250, 0.08);
 }
 
-.header__badge svg { color: #60a5fa; }
+.header__badge svg { color: #2563eb; }
 
 .header__title {
-  font-size: 3rem;
-  font-weight: 800;
-  line-height: 1.2;
-  color: var(--text-primary);
-  margin-bottom: 16px;
+  font-size: clamp(3rem, 2.4rem + 2.2vw, 5rem);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+  color: var(--text-strong);
+  margin-bottom: 14px;
+}
+
+.header__title--tinted {
+  background: linear-gradient(180deg, #0f172a 0%, #1e3a8a 58%, #312e81 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 46%, #db2777 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -454,85 +476,117 @@ const resetAll = () => {
 
 .header__desc {
   font-size: 1.125rem;
-  color: var(--text-secondary);
+  color: #526277;
 }
 
-/* 分区标签 */
 .section-label {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1d4ed8;
   margin-bottom: 12px;
 }
 
 .section-label__hint {
-  font-size: 0.8125rem;
-  font-weight: 400;
-  color: var(--text-muted);
+  color: #7c8aa0;
 }
 
-/* 源格式选择 */
-.source-grid {
+.convert-path__from,
+.convert-path__to {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: var(--cat-color);
+  text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.upload-text,
+.file-card__name {
+  color: #172554;
+}
+
+.source-card__label,
+.target-card,
+.action-btn {
+  color: #334155;
+}
+
+.success-msg {
+  color: #047857;
+}
+
+.error-msg {
+  color: #b91c1c;
+}
+
+.section-label__hint {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+.source-grid,
+.target-grid {
   display: flex;
-  gap: 10px;
-  margin-bottom: 28px;
   flex-wrap: wrap;
+}
+
+.source-grid {
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.target-grid {
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.source-card,
+.target-card {
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease, color 0.22s ease;
 }
 
 .source-card {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 20px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  cursor: pointer;
-  transition: all 0.3s;
+  padding: 13px 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
   flex: 1;
-  min-width: 100px;
+  min-width: 106px;
   justify-content: center;
+  box-shadow: 0 10px 20px rgba(148, 163, 184, 0.08);
 }
 
-.source-card:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.04);
+.source-card:hover:not(:disabled),
+.target-card:hover:not(:disabled) {
   transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow: 0 14px 28px rgba(148, 163, 184, 0.12);
 }
 
 .source-card--active {
-  border-color: var(--cat-color) !important;
-  background: color-mix(in srgb, var(--cat-color) 10%, transparent) !important;
-  box-shadow: 0 4px 20px -6px var(--cat-color);
+  border-color: color-mix(in srgb, var(--cat-color) 46%, white) !important;
+  background: color-mix(in srgb, var(--cat-color) 12%, white) !important;
+  box-shadow: 0 16px 30px -16px var(--cat-color);
 }
 
-.source-card--active .source-card__icon {
+.source-card--active .source-card__icon,
+.target-card--active .target-card__arrow {
   color: var(--cat-color);
 }
 
 .source-card__icon {
-  color: var(--text-secondary);
+  color: var(--text-soft);
   transition: color 0.3s;
   display: flex;
 }
 
 .source-card__label {
   font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.source-card:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* 目标格式选择 */
-.target-grid {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
+  font-weight: 700;
+  color: var(--text-strong);
 }
 
 .target-card {
@@ -540,85 +594,75 @@ const resetAll = () => {
   align-items: center;
   gap: 6px;
   padding: 10px 18px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  cursor: pointer;
-  transition: all 0.3s;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid var(--line);
   font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: var(--text-main);
 }
 
 .target-card__arrow {
-  opacity: 0.4;
-}
-
-.target-card:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
+  opacity: 0.5;
 }
 
 .target-card--active {
-  border-color: var(--cat-color) !important;
-  background: color-mix(in srgb, var(--cat-color) 12%, transparent) !important;
-  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--cat-color) 42%, white) !important;
+  background: color-mix(in srgb, var(--cat-color) 10%, white) !important;
+  color: var(--text-strong);
 }
 
-.target-card--active .target-card__arrow {
-  opacity: 1;
-  color: var(--cat-color);
-}
-
+.source-card:disabled,
 .target-card:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* 转换路径提示 */
 .convert-path {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 14px 24px;
-  margin-bottom: 24px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  color: var(--text-secondary);
+  padding: 15px 24px;
+  margin-bottom: 28px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--text-soft);
+  box-shadow: 0 10px 24px rgba(148, 163, 184, 0.08);
 }
 
 .convert-path__from,
 .convert-path__to {
   font-size: 1.0625rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--cat-color);
 }
 
-/* 主面板 */
 .main-panel {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(247, 250, 255, 0.88));
+  border: 1px solid rgba(124, 138, 167, 0.16);
+  border-radius: 28px;
   padding: 32px;
   margin-bottom: 40px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(16px);
 }
 
-/* 上传区域 */
 .upload-zone {
-  border: 2px dashed rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
+  border: 2px dashed rgba(124, 138, 167, 0.28);
+  border-radius: 22px;
   padding: 80px 32px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s;
+  background: rgba(255, 255, 255, 0.38);
 }
 
 .upload-zone:hover,
 .upload-zone--drag {
-  border-color: rgba(59, 130, 246, 0.5);
-  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.52);
+  background: rgba(59, 130, 246, 0.06);
 }
 
 .upload-input { display: none; }
@@ -632,6 +676,7 @@ const resetAll = () => {
   border-radius: 24px;
   margin: 0 auto 20px;
   transition: all 0.3s;
+  box-shadow: 0 12px 28px rgba(148, 163, 184, 0.12);
 }
 
 .upload-zone:hover .upload-icon {
@@ -640,27 +685,27 @@ const resetAll = () => {
 
 .upload-text {
   font-size: 1.0625rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--text-strong);
   margin-bottom: 8px;
 }
 
 .upload-hint {
   font-size: 0.8125rem;
-  color: var(--text-muted);
+  color: var(--text-soft);
   margin-top: 4px;
 }
 
-/* 文件信息 */
 .file-card {
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--line);
+  border-radius: 18px;
   margin-bottom: 24px;
+  box-shadow: var(--shadow-card);
 }
 
 .file-card__icon {
@@ -680,8 +725,8 @@ const resetAll = () => {
 
 .file-card__name {
   font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--text-strong);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -689,28 +734,28 @@ const resetAll = () => {
 
 .file-card__size {
   font-size: 0.8125rem;
-  color: var(--text-muted);
+  color: var(--text-soft);
   margin-top: 4px;
 }
 
 .file-card__close {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text-soft);
   cursor: pointer;
   transition: all 0.3s;
   flex-shrink: 0;
 }
 
 .file-card__close:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(254, 242, 242, 0.95);
+  border-color: rgba(239, 68, 68, 0.26);
   color: #ef4444;
 }
 
@@ -719,7 +764,6 @@ const resetAll = () => {
   cursor: not-allowed;
 }
 
-/* 多文件列表 */
 .file-list {
   max-height: 160px;
   overflow-y: auto;
@@ -731,15 +775,15 @@ const resetAll = () => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
   font-size: 0.8125rem;
-  color: var(--text-secondary);
+  color: var(--text-main);
   transition: background 0.2s;
 }
 
 .file-list__item:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .file-list__name {
@@ -750,12 +794,11 @@ const resetAll = () => {
 }
 
 .file-list__size {
-  color: var(--text-muted);
+  color: var(--text-soft);
   font-size: 0.75rem;
   flex-shrink: 0;
 }
 
-/* 转换按钮 */
 .convert-btn {
   display: flex;
   align-items: center;
@@ -763,19 +806,19 @@ const resetAll = () => {
   gap: 10px;
   width: 100%;
   padding: 16px 32px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   border: none;
-  border-radius: 16px;
+  border-radius: 18px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: white;
   cursor: pointer;
   transition: all 0.4s;
+  box-shadow: 0 18px 38px -18px rgba(59, 130, 246, 0.54);
 }
 
 .convert-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 15px 40px -10px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 18px 42px -14px rgba(59, 130, 246, 0.5);
 }
 
 .convert-btn:disabled {
@@ -784,22 +827,20 @@ const resetAll = () => {
   transform: none;
 }
 
-/* 进度条 */
 .progress-bar {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  height: 8px;
+  background: rgba(203, 213, 225, 0.55);
+  border-radius: 999px;
   margin-top: 16px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 999px;
   transition: width 0.3s ease;
 }
 
-/* 成功提示 */
 .success-msg {
   display: flex;
   align-items: center;
@@ -807,15 +848,14 @@ const resetAll = () => {
   gap: 10px;
   margin-top: 20px;
   padding: 16px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: 14px;
+  background: rgba(236, 253, 245, 0.96);
+  border: 1px solid rgba(16, 185, 129, 0.24);
+  border-radius: 16px;
   font-size: 1rem;
-  font-weight: 600;
-  color: #34d399;
+  font-weight: 700;
+  color: #059669;
 }
 
-/* 操作按钮 */
 .result-actions {
   display: flex;
   gap: 12px;
@@ -829,37 +869,35 @@ const resetAll = () => {
   justify-content: center;
   gap: 8px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 14px;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: var(--text-main);
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.96);
+  border-color: var(--line-strong);
+  color: var(--text-strong);
 }
 
-/* 错误提示 */
 .error-msg {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-top: 16px;
   padding: 12px 16px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 12px;
+  background: rgba(254, 242, 242, 0.98);
+  border: 1px solid rgba(239, 68, 68, 0.24);
+  border-radius: 14px;
   font-size: 0.875rem;
-  color: #ef4444;
+  color: #dc2626;
 }
 
-/* 动画 */
 .spin {
   animation: spin 1s linear infinite;
 }
@@ -869,14 +907,17 @@ const resetAll = () => {
   to { transform: rotate(360deg); }
 }
 
-/* 响应式 */
 @media (max-width: 700px) {
   .doc-convert {
     padding: 0 20px 60px;
   }
 
+  .header {
+    padding-top: 74px;
+  }
+
   .header__title {
-    font-size: 2rem;
+    font-size: 2.3rem;
   }
 
   .source-grid {
@@ -905,6 +946,15 @@ const resetAll = () => {
   .target-card {
     padding: 8px 14px;
     font-size: 0.8125rem;
+  }
+
+  .main-panel {
+    padding: 22px;
+    border-radius: 22px;
+  }
+
+  .upload-zone {
+    padding: 56px 20px;
   }
 
   .result-actions {

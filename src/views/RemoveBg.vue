@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { ref, watch } from 'vue'
 import { useRemoveBg } from '../composables/useRemoveBg'
 import {
@@ -105,7 +106,7 @@ const handleReset = () => {
 </script>
 
 <template>
-  <div class="page" @paste="handlePaste">
+  <div class="page internal-page" @paste="handlePaste">
     <!-- 头部 -->
     <header class="header">
       <div class="header__character">

@@ -50,6 +50,9 @@ dependencies:
   tesseract.js:
     specifier: ^7.0.0
     version: 7.0.0
+  three:
+    specifier: ^0.176.0
+    version: 0.176.0
   vue:
     specifier: ^3.5.25
     version: 3.5.28
@@ -4275,6 +4278,10 @@ packages:
     resolution: {integrity: sha512-iOiPUo/BGnZ6+54OsWxZidGCsdU8YbE4PSpdPinp7DeMtUJNJBoJ/ouUSTJjHkh1KntHaltHl/gDs2FC4i5+Nw==}
     dependencies:
       utrie: 1.0.2
+    dev: false
+
+  /three@0.176.0:
+    resolution: {integrity: sha512-PWRKYWQo23ojf9oZSlRGH8K09q7nRSWx6LY/HF/UUrMdYgN9i1e2OwJYHoQjwc6HF/4lvvYLC5YC1X8UJL2ZpA==}
     dev: false
 
   /tinyglobby@0.2.15:

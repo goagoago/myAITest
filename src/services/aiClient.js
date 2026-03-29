@@ -13,8 +13,6 @@ export const buildApiUrl = (path) => {
 
 const AI_ENDPOINTS = {
   chat: buildApiUrl('/api/chat'),
-  image: buildApiUrl('/api/image'),
-  video: buildApiUrl('/api/video'),
 }
 
 function parseErrorMessage(payload, status) {
@@ -82,13 +80,5 @@ export const aiClient = {
   chat: {
     complete: payload => postAiJson(AI_ENDPOINTS.chat, payload),
     stream: payload => postAiStream(AI_ENDPOINTS.chat, payload),
-  },
-  image: {
-    generate: payload => postAiJson(AI_ENDPOINTS.image, payload),
-  },
-  video: {
-    submit: payload => postAiJsonWithStatus(`${AI_ENDPOINTS.video}?action=submit`, payload),
-    submitImageToVideo: payload => postAiJsonWithStatus(`${AI_ENDPOINTS.video}?action=submit&mode=i2v`, payload),
-    status: payload => postAiJsonWithStatus(`${AI_ENDPOINTS.video}?action=status`, payload),
   },
 }

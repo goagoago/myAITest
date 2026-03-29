@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { ref, computed, watch } from 'vue'
 import { useImageCompress } from '../composables/useImageCompress'
 import {
@@ -222,7 +223,7 @@ const handleCompareMove = (e) => {
 </script>
 
 <template>
-  <div class="image-compress" @paste="handlePaste">
+  <div class="image-compress internal-page" @paste="handlePaste">
     <!-- 头部 -->
     <header class="header">
       <div class="header__character">
@@ -980,28 +981,31 @@ const handleCompareMove = (e) => {
   flex: 1;
   -webkit-appearance: none;
   appearance: none;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 2px;
+  height: 8px;
+  background: linear-gradient(180deg, rgba(210, 220, 234, 0.95), rgba(190, 202, 220, 0.95));
+  border: 1px solid rgba(101, 118, 151, 0.22);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 2px rgba(152, 167, 191, 0.32);
   outline: none;
   cursor: pointer;
 }
 
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  background: #4ade80;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(180deg, #2f5f95, #22466f);
+  border: 2px solid rgba(255, 255, 255, 0.96);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
+  box-shadow: 0 2px 8px rgba(34, 70, 111, 0.35);
 }
 
 .slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: #4ade80;
-  border: none;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(180deg, #2f5f95, #22466f);
+  border: 2px solid rgba(255, 255, 255, 0.96);
   border-radius: 50%;
   cursor: pointer;
 }
@@ -1011,7 +1015,7 @@ const handleCompareMove = (e) => {
 .slider-value {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #4ade80;
+  color: #22466f;
   min-width: 56px;
   text-align: right;
 }

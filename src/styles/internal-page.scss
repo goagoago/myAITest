@@ -1,0 +1,223 @@
+.internal-page {
+  --page-shell-max: 1180px;
+  --panel-bg: linear-gradient(180deg, rgba(252, 254, 255, 0.95), rgba(236, 242, 249, 0.92));
+  --panel-border: rgba(101, 118, 151, 0.18);
+  --panel-shadow: 0 20px 44px rgba(101, 118, 151, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  --soft-surface: rgba(255, 255, 255, 0.7);
+  --soft-surface-strong: rgba(255, 255, 255, 0.9);
+  --soft-border: rgba(101, 118, 151, 0.2);
+  --soft-border-strong: rgba(90, 108, 144, 0.28);
+  --text-strong: #182235;
+  --text-main: #344256;
+  --text-soft: #607089;
+  --muted-chip: rgba(235, 241, 249, 0.88);
+  --input-bg: rgba(255, 255, 255, 0.86);
+  --placeholder: #73839a;
+  max-width: var(--page-shell-max);
+  margin: 0 auto;
+  padding: 0 28px 84px;
+  color: var(--text-main);
+}
+
+.internal-page .header,
+.internal-page .page-header {
+  padding: 64px 0 40px;
+  margin-bottom: 0;
+}
+
+.internal-page .header__content,
+.internal-page .page-header {
+  position: relative;
+  z-index: 1;
+}
+
+.internal-page .header__badge,
+.internal-page .page-header__icon,
+.internal-page .hero-badge-like {
+  box-shadow: 0 10px 24px rgba(97, 114, 145, 0.12);
+}
+
+.internal-page .panel,
+.internal-page .card,
+.internal-page .main-panel,
+.internal-page .result-card,
+.internal-page .file-card,
+.internal-page .result-content,
+.internal-page .result-placeholder,
+.internal-page .convert-path,
+.internal-page .stats-bar {
+  background: var(--panel-bg) !important;
+  border: 1px solid var(--panel-border) !important;
+  box-shadow: var(--panel-shadow) !important;
+  backdrop-filter: blur(16px) saturate(115%);
+  -webkit-backdrop-filter: blur(16px) saturate(115%);
+}
+
+.internal-page .upload-zone,
+.internal-page .preview-image,
+.internal-page .image-preview,
+.internal-page .result-image,
+.internal-page .result-preview,
+.internal-page .qr-preview,
+.internal-page .result-richtext,
+.internal-page .result-textarea,
+.internal-page .textarea,
+.internal-page .text-input,
+.internal-page .input,
+.internal-page .neo-input,
+.internal-page .neo-select,
+.internal-page .lang-select,
+.internal-page .color-picker-wrap,
+.internal-page .dim-field,
+.internal-page .logo-upload,
+.internal-page .logo-preview,
+.internal-page .file-list__item,
+.internal-page .option-info,
+.internal-page .pdf-preview,
+.internal-page .preview-btn,
+.internal-page .preview-close,
+.internal-page .reselect-btn,
+.internal-page .action-btn,
+.internal-page .preset-chip,
+.internal-page .preset-btn,
+.internal-page .format-btn,
+.internal-page .tab-btn,
+.internal-page .lang-btn,
+.internal-page .level-btn,
+.internal-page .engine-btn,
+.internal-page .mode-card,
+.internal-page .bg-btn,
+.internal-page .option-btn,
+.internal-page .copy-all-btn,
+.internal-page .export-btn,
+.internal-page .result-item,
+.internal-page .upload-icon,
+.internal-page .placeholder-icon,
+.internal-page .file-size-tag,
+.internal-page .streaming-badge,
+.internal-page .result-format-badge {
+  background: var(--soft-surface) !important;
+  border-color: var(--soft-border) !important;
+  color: var(--text-main);
+}
+
+.internal-page .upload-zone:hover,
+.internal-page .upload-zone--drag,
+.internal-page .mode-card:hover:not(:disabled),
+.internal-page .format-btn:hover:not(:disabled),
+.internal-page .tab-btn:hover:not(:disabled),
+.internal-page .lang-btn:hover,
+.internal-page .level-btn:hover,
+.internal-page .engine-btn:hover,
+.internal-page .preset-chip:hover,
+.internal-page .preset-btn:hover:not(:disabled),
+.internal-page .bg-btn:hover,
+.internal-page .option-btn:hover,
+.internal-page .action-btn:hover,
+.internal-page .copy-all-btn:hover,
+.internal-page .export-btn:hover,
+.internal-page .result-item:hover,
+.internal-page .reselect-btn:hover:not(:disabled),
+.internal-page .preview-close:hover:not(:disabled) {
+  background: var(--soft-surface-strong) !important;
+  border-color: var(--soft-border-strong) !important;
+}
+
+.internal-page .header__title,
+.internal-page .page-header__title,
+.internal-page .section-label,
+.internal-page .preview-label,
+.internal-page .upload-text,
+.internal-page .result-item__id,
+.internal-page .card__header,
+.internal-page .result-card__header,
+.internal-page .result-card__header-left,
+.internal-page .result-card__body :deep(h1),
+.internal-page .result-card__body :deep(h2),
+.internal-page .result-card__body :deep(h3) {
+  color: var(--text-strong) !important;
+}
+
+.internal-page .header__desc,
+.internal-page .page-header__desc,
+.internal-page .upload-hint,
+.internal-page .placeholder-tip,
+.internal-page .placeholder-text,
+.internal-page .file-card__size,
+.internal-page .result-info,
+.internal-page .result-dims,
+.internal-page .result-item__meta,
+.internal-page .progress-stage,
+.internal-page .char-count,
+.internal-page .slider-value,
+.internal-page .color-value,
+.internal-page .custom-color__label,
+.internal-page .dim-label,
+.internal-page .dim-unit,
+.internal-page .option-label,
+.internal-page .mode-card__desc,
+.internal-page .format-btn__desc,
+.internal-page .level-btn__desc,
+.internal-page .engine-btn__desc,
+.internal-page .upload-zone__tip,
+.internal-page .upload-zone__text,
+.internal-page .preview-btn,
+.internal-page .result-placeholder,
+.internal-page .stat-label,
+.internal-page .result-count,
+.internal-page .section-hint {
+  color: var(--text-soft) !important;
+}
+
+.internal-page textarea,
+.internal-page input,
+.internal-page select,
+.internal-page .result-textarea,
+.internal-page .text-input,
+.internal-page .neo-input,
+.internal-page .neo-select,
+.internal-page .lang-select,
+.internal-page .input {
+  color: var(--text-strong) !important;
+  background: var(--input-bg) !important;
+  border: 1px solid var(--soft-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.internal-page textarea::placeholder,
+.internal-page input::placeholder {
+  color: var(--placeholder) !important;
+}
+
+.internal-page .panel--result,
+.internal-page .result-content,
+.internal-page .result-placeholder {
+  min-height: 520px;
+}
+
+.internal-page .main-area {
+  gap: 28px;
+}
+
+.internal-page .action-btn--primary,
+.internal-page .copy-all-btn,
+.internal-page .export-btn,
+.internal-page .generate-btn,
+.internal-page .compress-btn,
+.internal-page .recognize-btn,
+.internal-page .download-btn,
+.internal-page .btn-primary,
+.internal-page .convert-btn {
+  color: #fff !important;
+}
+
+@media (max-width: 900px) {
+  .internal-page {
+    padding: 0 20px 64px;
+  }
+
+  .internal-page .header,
+  .internal-page .page-header {
+    padding: 48px 0 28px;
+  }
+}

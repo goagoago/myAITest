@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { ref } from 'vue'
 import { useOcr } from '../composables/useOcr'
 import {
@@ -127,7 +128,7 @@ const resetAll = () => {
 </script>
 
 <template>
-  <div class="ocr-page" @paste="handlePaste">
+  <div class="ocr-page internal-page" @paste="handlePaste">
     <!-- 头部 -->
     <header class="header">
       <div class="header__content">

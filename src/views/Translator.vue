@@ -1,4 +1,5 @@
 <script setup>
+import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useChat } from '../composables/useChat.js'
 import { marked } from 'marked'
@@ -50,7 +51,7 @@ const charCount = computed(() => displayContent.value.length)
 </script>
 
 <template>
-  <div class="page">
+  <div class="page internal-page">
     <div class="container">
       <header class="page-header">
         <div class="page-header__icon">

@@ -7,8 +7,8 @@ import { useRoute } from 'vue-router'
  */
 const SEO_CONFIG = {
   '/': {
-    title: 'Tools Box - 在线工具箱 | 图片处理·文档转换·AI创作',
-    description: 'Tools Box 是一款在线工具箱，提供证件照制作、图片去水印、图片压缩、文档格式转换、AI图片视频生成、屏幕录制等多种实用工具，无需下载，打开即用。',
+    title: 'Tools Box - 在线工具箱 | 图片处理·文档转换·AI助手',
+    description: 'Tools Box 是一款在线工具箱，提供证件照制作、图片去水印、图片压缩、文档格式转换、屏幕录制与 AI 助手等多种实用工具，无需下载，打开即用。',
     keywords: '在线工具,工具箱,效率工具',
   },
   '/id-photo': {
@@ -35,11 +35,6 @@ const SEO_CONFIG = {
     title: '在线屏幕录制工具 - 浏览器端录屏 | Tools Box',
     description: '在线屏幕录制工具，无需安装软件，浏览器直接录屏，支持全屏、窗口、标签页录制，可录制系统声音和麦克风，录制文件本地保存。',
     keywords: '屏幕录制,在线录屏,浏览器录屏,录屏工具',
-  },
-  '/ai-studio': {
-    title: '在线AI创作工具 - AI图片生成·AI视频生成 | Tools Box',
-    description: '在线AI创作平台，支持文字生成图片、文字生成视频、图片生成视频，输入描述即可生成高质量AI作品。',
-    keywords: 'AI创作,AI绘画,AI生图,AI视频,文生图,文生视频,AI图片生成',
   },
   '/travel': {
     title: 'AI旅行规划助手 - 智能行程方案生成 | Tools Box',

@@ -41,32 +41,32 @@
   --accent: #f59e0b;
   --accent-rgb: 245, 158, 11;
 
-  /* 新拟物底色系统 — 深色层次 */
-  --neo-bg: rgba(26, 26, 46, 0.85);
-  --neo-bg-light: rgba(31, 31, 53, 0.85);
-  --neo-bg-dark: rgba(20, 20, 37, 0.85);
-  --neo-surface: rgba(30, 30, 51, 0.8);
-  --neo-surface-raised: rgba(34, 34, 64, 0.85);
+  /* 新拟物底色系统 — 浅色层次 */
+  --neo-bg: rgba(239, 244, 251, 0.94);
+  --neo-bg-light: rgba(247, 250, 255, 0.98);
+  --neo-bg-dark: rgba(221, 230, 242, 0.98);
+  --neo-surface: rgba(243, 247, 253, 0.94);
+  --neo-surface-raised: rgba(255, 255, 255, 0.98);
 
   /* 新拟物阴影系统 */
   --neo-shadow-up:
-    8px 8px 20px rgba(0, 0, 0, 0.55),
-    -8px -8px 20px rgba(255, 255, 255, 0.03);
+    10px 14px 30px rgba(121, 137, 168, 0.16),
+    -8px -8px 22px rgba(255, 255, 255, 0.75);
   --neo-shadow-up-sm:
-    4px 4px 10px rgba(0, 0, 0, 0.5),
-    -4px -4px 10px rgba(255, 255, 255, 0.025);
+    6px 8px 18px rgba(121, 137, 168, 0.12),
+    -4px -4px 12px rgba(255, 255, 255, 0.72);
   --neo-shadow-up-lg:
-    12px 12px 30px rgba(0, 0, 0, 0.6),
-    -12px -12px 30px rgba(255, 255, 255, 0.035);
+    18px 22px 44px rgba(121, 137, 168, 0.2),
+    -12px -12px 28px rgba(255, 255, 255, 0.82);
   --neo-shadow-down:
-    inset 4px 4px 12px rgba(0, 0, 0, 0.5),
-    inset -4px -4px 12px rgba(255, 255, 255, 0.025);
+    inset 4px 4px 12px rgba(175, 188, 214, 0.34),
+    inset -5px -5px 12px rgba(255, 255, 255, 0.84);
   --neo-shadow-down-sm:
-    inset 2px 2px 6px rgba(0, 0, 0, 0.45),
-    inset -2px -2px 6px rgba(255, 255, 255, 0.02);
+    inset 2px 2px 6px rgba(175, 188, 214, 0.28),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.82);
   --neo-shadow-pressed:
-    inset 3px 3px 8px rgba(0, 0, 0, 0.55),
-    inset -3px -3px 8px rgba(255, 255, 255, 0.02);
+    inset 4px 4px 10px rgba(175, 188, 214, 0.32),
+    inset -3px -3px 9px rgba(255, 255, 255, 0.8);
 
   /* 发光阴影 */
   --neo-glow-primary: 0 0 20px rgba(16, 185, 129, 0.25), 0 0 60px rgba(16, 185, 129, 0.1);
@@ -81,13 +81,13 @@
   --gradient-bg: var(--neo-bg);
 
   /* 文本 */
-  --text-primary: #e8e8f0;
-  --text-secondary: rgba(232, 232, 240, 0.65);
-  --text-muted: rgba(232, 232, 240, 0.35);
+  --text-primary: #182235;
+  --text-secondary: rgba(42, 55, 80, 0.86);
+  --text-muted: rgba(89, 102, 128, 0.88);
 
   /* 边框 */
-  --border: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.12);
+  --border: rgba(101, 118, 151, 0.24);
+  --border-hover: rgba(78, 96, 132, 0.38);
 
   /* 字体 */
   font-family: 'Outfit', 'Noto Sans SC', -apple-system, sans-serif;
@@ -138,9 +138,9 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 10% 90%, rgba(16, 185, 129, 0.04) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 90% 10%, rgba(245, 158, 11, 0.02) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(16, 185, 129, 0.01) 0%, transparent 70%);
+    radial-gradient(ellipse 80% 60% at 10% 90%, rgba(16, 185, 129, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 10%, rgba(79, 70, 229, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 70%);
   pointer-events: none;
   z-index: -1;
 }
@@ -151,7 +151,7 @@ body::after {
   position: fixed;
   inset: 0;
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.012) 1px, transparent 0);
+    radial-gradient(circle at 1px 1px, rgba(99, 115, 154, 0.08) 1px, transparent 0);
   background-size: 32px 32px;
   pointer-events: none;
   z-index: 0;
@@ -212,6 +212,144 @@ select {
   -webkit-overflow-scrolling: touch;
 }
 
+:where(.page, .container, .main, .main-area, .main-panel, .panel, .input-section, .result-section, .card, .upload-zone, .preview-section, .result-content, .lang-bar, .main-tabs, .tabs) {
+  position: relative;
+  z-index: 1;
+}
+
+:where(
+  .page,
+  .container,
+  .main-area,
+  .main-panel,
+  .panel,
+  .input-section,
+  .result-section,
+  .card,
+  .upload-zone,
+  .preview-section,
+  .lang-bar,
+  .main-tabs,
+  .tabs,
+  .translate-grid
+) {
+  backdrop-filter: blur(16px) saturate(115%);
+  -webkit-backdrop-filter: blur(16px) saturate(115%);
+}
+
+:where(
+  .main-area > .panel,
+  .main-panel,
+  .main > .panel,
+  .panel--input,
+  .panel--result,
+  .panel--control,
+  .panel--preview,
+  .input-section,
+  .result-section,
+  .card
+) {
+  background: linear-gradient(180deg, rgba(250, 252, 255, 0.94), rgba(235, 241, 249, 0.92));
+  border: 1px solid rgba(101, 118, 151, 0.22);
+  box-shadow: 0 18px 36px rgba(90, 103, 145, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+:where(.header, .page-header) {
+  position: relative;
+  z-index: 1;
+}
+
+:where(.header__badge, .page-header__icon, .main-tab, .tab, .swap-btn, .lang-select, .action-btn, .source-card, .target-card) {
+  box-shadow: 0 8px 20px rgba(90, 103, 145, 0.1);
+  background: rgba(245, 248, 253, 0.92);
+}
+
+:where(.header__badge, .page-header__icon, .main-tab, .tab, .swap-btn, .lang-select, .action-btn, .source-card, .target-card, .category-head__action) {
+  color: #21304a !important;
+}
+
+:where(.header__badge, .main-tab, .tab, .lang-select, .swap-btn, .action-btn) {
+  border-color: rgba(101, 118, 151, 0.24) !important;
+}
+
+:where(.header__title, .page-header__title) {
+  color: #172235 !important;
+}
+
+:where(.header__desc, .page-header__desc, .upload-hint, .placeholder-tip, .char-count, .file-size) {
+  color: #586680 !important;
+}
+
+:where(.upload-text, .preview-label, .card__header, .input-label, .result-title, .history-title, .dropdown__name, .mobile-menu__link, .nav__link, .logo__text) {
+  color: #182235 !important;
+}
+
+:where(.dropdown__desc, .section-kicker, .dropdown__text, .mobile-menu__group-label, .nav__label, .placeholder-text) {
+  color: #5f6d87 !important;
+}
+
+:where(.upload-zone, .preview-section, .result-image, .result-placeholder, .textarea, .result-area) {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(101, 118, 151, 0.24) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+:where(textarea, input, select) {
+  color: #182235;
+}
+
+:where(textarea::placeholder, input::placeholder) {
+  color: #6f7d95;
+}
+
+:where(input[type='range'], .slider, .neo-slider) {
+  accent-color: #0f766e;
+}
+
+:where(input[type='range'], .slider) {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(210, 220, 234, 0.95), rgba(190, 202, 220, 0.95));
+  border: 1px solid rgba(101, 118, 151, 0.22);
+  box-shadow: inset 0 1px 2px rgba(152, 167, 191, 0.32);
+}
+
+:where(input[type='range'], .slider)::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+:where(input[type='range'], .slider)::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.96);
+  background: linear-gradient(180deg, #2f5f95, #22466f);
+  box-shadow: 0 2px 8px rgba(34, 70, 111, 0.35);
+}
+
+:where(input[type='range'], .slider)::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(210, 220, 234, 0.95), rgba(190, 202, 220, 0.95));
+  border: 1px solid rgba(101, 118, 151, 0.22);
+}
+
+:where(input[type='range'], .slider)::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.96);
+  background: linear-gradient(180deg, #2f5f95, #22466f);
+  box-shadow: 0 2px 8px rgba(34, 70, 111, 0.35);
+}
+
 /* 选中 */
 ::selection {
   background: var(--primary);
@@ -229,21 +367,21 @@ select {
 
 ::-webkit-scrollbar-track {
   background: var(--neo-bg-dark);
-  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.3), inset -2px -2px 4px rgba(255, 255, 255, 0.02);
-  border-radius: 4px;
+  box-shadow: inset 1px 1px 3px rgba(142, 156, 180, 0.28), inset -1px -1px 3px rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--neo-surface-raised);
-  border-radius: 4px;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -1px -1px 3px rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(16, 185, 129, 0.15);
+  background: linear-gradient(180deg, #8ea2c4, #667b9f);
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(97, 114, 145, 0.28);
+  border: 1px solid rgba(78, 96, 132, 0.24);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--neo-bg-light);
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+  background: linear-gradient(180deg, #7f96bc, #556b92);
+  border-color: rgba(78, 96, 132, 0.34);
+  box-shadow: 0 4px 10px rgba(97, 114, 145, 0.3);
 }
 
 /* 链接 */
@@ -276,7 +414,7 @@ a:hover {
   gap: 10px;
   padding: 14px 28px;
   background: var(--neo-surface);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(124, 138, 167, 0.14);
   border-radius: 16px;
   box-shadow: var(--neo-shadow-up);
   font-family: inherit;
@@ -297,7 +435,7 @@ a:hover {
   left: 0;
   right: 0;
   height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, transparent 100%);
   border-radius: 16px 16px 0 0;
   pointer-events: none;
 }
@@ -305,7 +443,7 @@ a:hover {
 .btn-neo:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: var(--neo-shadow-up-lg);
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(99, 115, 154, 0.2);
 }
 
 .btn-neo:active:not(:disabled) {
@@ -329,9 +467,8 @@ a:hover {
   border: none;
   border-radius: 18px;
   box-shadow:
-    6px 6px 18px rgba(0, 0, 0, 0.5),
-    -4px -4px 12px rgba(16, 185, 129, 0.15),
-    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    0 14px 26px rgba(16, 120, 110, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.18);
   font-family: inherit;
   font-size: 1rem;
   font-weight: 700;
@@ -359,17 +496,16 @@ a:hover {
 .btn-neo-primary:hover:not(:disabled) {
   transform: translateY(-3px) scale(1.02);
   box-shadow:
-    8px 8px 24px rgba(0, 0, 0, 0.5),
-    -6px -6px 16px rgba(16, 185, 129, 0.2),
-    0 0 30px rgba(16, 185, 129, 0.3),
+    0 18px 32px rgba(16, 120, 110, 0.28),
+    0 0 22px rgba(16, 185, 129, 0.18),
     inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
 
 .btn-neo-primary:active:not(:disabled) {
   transform: translateY(1px) scale(0.98);
   box-shadow:
-    inset 3px 3px 8px rgba(0, 0, 0, 0.4),
-    inset -2px -2px 6px rgba(255, 255, 255, 0.05);
+    inset 3px 3px 8px rgba(11, 91, 84, 0.28),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.08);
 }
 
 .btn-neo-primary:disabled {
@@ -380,7 +516,7 @@ a:hover {
 /* 新拟物卡片 */
 .card-neo {
   background: var(--neo-surface);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(124, 138, 167, 0.14);
   border-radius: 24px;
   box-shadow: var(--neo-shadow-up);
   position: relative;
@@ -395,13 +531,13 @@ a:hover {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
 }
 
 .card-neo:hover {
   transform: translateY(-4px);
   box-shadow: var(--neo-shadow-up-lg);
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(78, 96, 132, 0.3);
 }
 
 /* 内凹输入框 */
@@ -409,7 +545,7 @@ a:hover {
   width: 100%;
   padding: 16px 20px;
   background: var(--neo-bg-dark);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(101, 118, 151, 0.22);
   border-radius: 14px;
   box-shadow: var(--neo-shadow-down-sm);
   font-family: inherit;
@@ -440,7 +576,8 @@ a:hover {
 .progress-neo {
   height: 8px;
   background: var(--neo-bg-dark);
-  border-radius: 4px;
+  border: 1px solid rgba(101, 118, 151, 0.18);
+  border-radius: 999px;
   box-shadow: var(--neo-shadow-down-sm);
   overflow: hidden;
   position: relative;
@@ -448,11 +585,10 @@ a:hover {
 
 .progress-neo__fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary), #34d399);
-  border-radius: 4px;
+  background: linear-gradient(90deg, #1f9d77, #0f766e);
+  border-radius: 999px;
   box-shadow:
-    0 0 10px rgba(16, 185, 129, 0.4),
-    0 0 20px rgba(16, 185, 129, 0.15);
+    0 2px 8px rgba(16, 118, 110, 0.28);
   transition: width 0.3s ease;
   position: relative;
 }
@@ -475,12 +611,12 @@ a:hover {
   gap: 4px;
   padding: 6px 14px;
   background: var(--neo-surface);
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(101, 118, 151, 0.18);
   border-radius: 10px;
   box-shadow: var(--neo-shadow-up-sm);
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   transition: all 0.25s;
 }
 

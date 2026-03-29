@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useResponsive } from '../composables/useResponsive'
 import {
@@ -10,7 +10,7 @@ import CursorEffect from '../components/CursorEffect.vue'
 import LottieInteractive from '../components/LottieInteractive.vue'
 import toolboxAnim from '../assets/lottie/toolbox.js'
 import PageLoader from '../components/PageLoader.vue'
-import ShaderBackground from '../components/ShaderBackground.vue'
+import SiteSceneBackground from '../components/SiteSceneBackground.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -77,7 +77,6 @@ const navGroups = [
     label: 'AI 助手',
     icon: Bot,
     children: [
-      { path: '/ai-studio', label: 'AI 创作', icon: Sparkles, desc: '图片视频生成' },
       { path: '/travel', label: '旅行规划', icon: Plane, desc: '智能行程方案' },
       { path: '/writer', label: '写作助手', icon: PenTool, desc: '润色续写改写' },
       { path: '/translator', label: '翻译专家', icon: Globe, desc: '多语言翻译' },
@@ -142,7 +141,7 @@ onUnmounted(() => {
 
 <template>
   <div class="layout" :class="{ 'layout--mobile': isMobile, 'layout--desktop': !isMobile }">
-    <ShaderBackground />
+    <SiteSceneBackground />
 
     <!-- 全局加载动画 -->
     <PageLoader v-if="isLoading" />
@@ -261,20 +260,14 @@ onUnmounted(() => {
     <main class="main">
       <router-view v-slot="{ Component }">
         <transition name="page3d" mode="out-in">
-          <component :is="Component" />
+          <div class="page-frame">
+            <component :is="Component" />
+          </div>
         </transition>
       </router-view>
     </main>
 
-    <!-- 页脚 — 新拟物 -->
-    <footer class="footer">
-      <div class="footer__content">
-        <div class="footer__brand">
-          <div class="footer__logo-dot"></div>
-          <span>Tools Box</span>
-        </div>
-      </div>
-    </footer>
+
   </div>
 </template>
 
@@ -297,7 +290,7 @@ onUnmounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 1000;
   padding: 12px 0;
   transition: all 0.4s var(--transition-smooth);
 }
@@ -306,17 +299,36 @@ onUnmounted(() => {
 .main,
 .footer {
   position: relative;
-  z-index: 1;
+}
+
+.navbar {
+  z-index: 1000;
+}
+
+.main,
+.footer {
+  z-index: 2;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  padding-top: clamp(78px, 8vw, 98px);
+}
+
+.page-frame {
+  width: 100%;
+  min-height: calc(100vh - clamp(78px, 8vw, 98px));
 }
 
 .navbar--scrolled {
   padding: 8px 0;
-  background: rgba(26, 26, 46, 0.92);
+  background: rgba(245, 249, 255, 0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    0 1px 0 rgba(255, 255, 255, 0.03);
+    0 12px 32px rgba(121, 137, 168, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .navbar__inner {
@@ -449,6 +461,7 @@ onUnmounted(() => {
 
 .nav__dropdown {
   position: relative;
+  z-index: 1100;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -468,7 +481,7 @@ onUnmounted(() => {
   box-shadow:
     var(--neo-shadow-up-lg),
     0 0 0 1px rgba(255, 255, 255, 0.03);
-  z-index: 200;
+  z-index: 1200;
 }
 
 /* 下拉菜单装饰线 */

@@ -5,7 +5,6 @@ const Travel = () => import('../views/Travel.vue')
 const Writer = () => import('../views/Writer.vue')
 const Translator = () => import('../views/Translator.vue')
 const Mind = () => import('../views/Mind.vue')
-const AIStudio = () => import('../views/AIStudio.vue')
 const WatermarkRemoval = () => import('../views/WatermarkRemoval.vue')
 const DocConvert = () => import('../views/DocConvert.vue')
 const ImageCompress = () => import('../views/ImageCompress.vue')
@@ -45,11 +44,6 @@ const routes = [
     path: '/mind',
     name: 'Mind',
     component: Mind,
-  },
-  {
-    path: '/ai-studio',
-    name: 'AIStudio',
-    component: AIStudio,
   },
   {
     path: '/watermark-removal',
