@@ -177,19 +177,25 @@ const charCount = computed(() => displayContent.value.length)
 .lang-select {
   width: 100%;
   padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 16px;
   font-size: 1rem;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   cursor: pointer;
   outline: none;
   transition: all 0.3s;
+  box-shadow: none !important;
 }
 
 .lang-select:focus {
-  border-color: rgba(9, 132, 227, 0.5);
-  box-shadow: 0 0 0 4px rgba(9, 132, 227, 0.1);
+  border-color: rgba(9, 132, 227, 0.5) !important;
+  box-shadow: 0 0 0 4px rgba(9, 132, 227, 0.1) !important;
+}
+
+.lang-select option {
+  background: #1e1e33 !important;
+  color: #e2e8f0 !important;
 }
 
 .swap-btn {

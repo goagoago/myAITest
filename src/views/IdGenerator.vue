@@ -384,21 +384,22 @@ const countPresets = [1, 5, 10, 20, 50, 100]
 .neo-select {
   width: 100%;
   padding: 12px 36px 12px 14px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 12px;
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   outline: none;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   transition: border-color 0.3s;
   font-family: inherit;
+  box-shadow: none !important;
 }
 
 .neo-select:focus {
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: rgba(59, 130, 246, 0.5) !important;
 }
 
 .neo-select:disabled {
@@ -407,8 +408,8 @@ const countPresets = [1, 5, 10, 20, 50, 100]
 }
 
 .neo-select option {
-  background: #1e1e33;
-  color: var(--text-primary);
+  background: #1e1e33 !important;
+  color: #e2e8f0 !important;
 }
 
 .select-arrow {

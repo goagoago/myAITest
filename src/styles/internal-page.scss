@@ -217,6 +217,11 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
+.internal-page select option {
+  background: #1e1e33 !important;
+  color: #e2e8f0 !important;
+}
+
 .internal-page textarea::placeholder,
 .internal-page input::placeholder {
   color: var(--placeholder) !important;
