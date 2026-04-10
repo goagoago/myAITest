@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://www.2074912.xyz/sitemap.xml
+Sitemap: https://www.xu-it.com/sitemap.xml
 
 # Google
 User-agent: Googlebot

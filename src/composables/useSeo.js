@@ -134,7 +134,7 @@ export function useSeo() {
     () => route.path,
     (path) => {
       const config = SEO_CONFIG[path] || SEO_CONFIG['/']
-      const url = `https://www.2074912.xyz${path === '/' ? '' : path}`
+      const url = `https://www.xu-it.com${path === '/' ? '' : path}`
 
       // Title
       document.title = config.title

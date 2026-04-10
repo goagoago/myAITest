@@ -6,7 +6,7 @@ export const config = {
 const ZHIPU_API_BASE = 'https://open.bigmodel.cn/api/paas/v4'
 
 const ALLOWED_ORIGINS = [
-  'https://www.2074912.xyz',
+  'https://www.xu-it.com',
   'https://2074912.xyz',
 ]
 

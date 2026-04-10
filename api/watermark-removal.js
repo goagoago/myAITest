@@ -6,7 +6,7 @@ export const config = {
 }
 
 const ALLOWED_ORIGINS = [
-  'https://www.2074912.xyz',
+  'https://www.xu-it.com',
   'https://2074912.xyz',
 ]
 

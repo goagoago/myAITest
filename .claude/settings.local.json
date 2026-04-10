@@ -64,7 +64,8 @@
       "Bash(docker info:*)",
       "Bash(docker-compose up:*)",
       "Bash(curl -s http://localhost:3000/health)",
-      "Bash(curl -s http://localhost:8868/health)"
+      "Bash(curl -s http://localhost:8868/health)",
+      "Bash(python3:*)"
     ]
   }
 }
