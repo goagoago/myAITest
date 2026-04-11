@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-**Tools Box** — 免费在线工具箱（中文），部署在 Vercel，域名 `www.2074912.xyz`。
+**Tools Box** — 免费在线工具箱（中文），部署在 www.xu-it.com。
 提供证件照制作、图片去水印/加水印、图片压缩、AI抠图、文档转换、AI图片/视频生成、屏幕录制、二维码生成、OCR文字识别、AI翻译/写作/旅行规划/头脑风暴等工具。
 
 ## 常用命令
@@ -20,8 +20,7 @@ pnpm preview      # 预览构建产物
 ## 环境变量
 
 复制 `.env.example` 为 `.env.local`，填入：
-- `ZHIPU_API_KEY` — 智谱AI API密钥（用于聊天、视频生成）
-- `SILICONFLOW_API_KEY` — 硅基流动API密钥（用于图片生成、去水印）
+- `VITE_API_BASE` — 后端 API 地址（默认为空，本地开发时通过 Vite proxy 代理到 localhost:8080）
 
 **不要**将密钥硬编码或提交到仓库。
 
@@ -29,29 +28,19 @@ pnpm preview      # 预览构建产物
 
 - **前端**：Vue 3（`<script setup>` + Composition API）、Vue Router 4、Vite 7
 - **UI**：纯 CSS（新拟物/neumorphism 暗色主题），Lucide 图标，Lottie 动画；部分页面使用 SCSS（如 `ResumeBuilder.scss`）
-- **后端**：Vercel Serverless/Edge Functions（`api/` 目录），本地开发通过 `vite.config.js` 中的自定义中间件代理 API
+- **后端**：Spring Boot 3.3.5（独立项目 my-aitest-server），前端通过 Vite proxy 或 `VITE_API_BASE` 代理到后端
 - **路径别名**：`@` → `src/`（在 `vite.config.js` 中配置）
 
 ## 架构
 
-### 双层 API 代理模式
+### API 代理模式
 
-每个 AI 功能都有两套 API 实现，确保本地开发和生产环境一致：
+前端所有 API 请求统一走 `/api/*` 路径：
 
-1. **`api/*.js`** — Vercel Functions，生产环境使用。API 密钥从 `process.env` 读取。
-2. **`vite.config.js` 中间件** — 本地开发用的 API 代理中间件（`chatApiMiddleware`、`watermarkRemovalMiddleware`、`videoApiMiddleware`），通过 `loadEnv` 读取本地 `.env.local` 中的密钥。
-3. **`/api/image` 路由** — 使用 Vite 内置 `server.proxy` 代理到硅基流动。
+1. **本地开发** — Vite `server.proxy` 将 `/api` 代理到 `localhost:8080`（Spring Boot 后端）
+2. **生产环境** — 通过 `VITE_API_BASE` 环境变量指定后端地址，`aiClient.js` 的 `buildApiUrl()` 自动拼接
 
-**修改 API 逻辑时需同步更新两处（`api/*.js` 和 `vite.config.js` 中对应的中间件）。**
-
-### Vercel Functions 运行时区分
-
-| 文件 | 运行时 | 原因 |
-|------|--------|------|
-| `api/chat.js` | Edge | 轻量代理，支持流式响应透传 |
-| `api/image.js` | Edge | 轻量代理 |
-| `api/video.js` | Edge | 异步任务提交和状态查询 |
-| `api/watermark-removal.js` | **Node.js** | 需要处理大体积 base64 图片，Edge 不适用；`maxDuration: 60` |
+后端项目路径：`/Users/simonyu/Desktop/我的项目/my-aitest-server`
 
 ### 前端分层
 
@@ -64,6 +53,7 @@ src/
 │   └── ui/             # 基础 UI 组件（CustomSelect 等）
 ├── layouts/            # MainLayout.vue — 全局布局（导航栏、页脚、视频背景、页面转场）
 ├── router/             # Vue Router 配置，所有路由在 index.js 中集中定义
+├── services/           # AI 客户端服务（aiClient.js — API 请求封装、端点配置）
 ├── assets/             # 静态资源（Lottie JSON、背景视频、SVG）
 └── style.css           # 全局样式和 CSS 变量
 ```
@@ -93,12 +83,4 @@ src/
 2. 创建 `src/composables/useNewTool.js`（业务逻辑）
 3. 在 `src/router/index.js` 中添加路由（懒加载）
 4. 在 `src/layouts/MainLayout.vue` 的 `navGroups` 中添加导航项
-5. 如需后端 API：同时创建 `api/new-tool.js`（Vercel Function）和在 `vite.config.js` 中添加对应的开发中间件
-
-## 部署
-
-Vercel 部署，配置在 `vercel.json`：
-- `api/` 目录自动部署为 Serverless Functions
-- SPA fallback：所有非 API/静态资源路由 rewrite 到 `/index.html`
-- 静态资源（`/assets/*`）设置长期不可变缓存
-- `watermark-removal.js` 单独配置 `maxDuration: 60`、`memory: 1024`
+5. 如需后端 API：在后端项目（my-aitest-server）中添加对应的 Controller/Service

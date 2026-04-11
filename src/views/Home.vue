@@ -4,9 +4,13 @@ import {
   Plane, PenTool, Globe, Lightbulb, Sparkles,
   Eraser, FileText, ImageDown, MonitorPlay,
   Image, Wrench, Bot, Camera, QrCode, ScanLine, Scissors, CreditCard, Video, ScrollText,
-  ArrowRight, Zap
+  ArrowRight, Zap, Upload
 } from 'lucide-vue-next'
 import UiverseCard from '../components/UiverseCard.vue'
+import { useBaiduPush } from '../composables/useBaiduPush'
+
+const isDev = import.meta.env.DEV
+const { loading, result, error, pushUrls } = useBaiduPush()
 
 const router = useRouter()
 
@@ -266,6 +270,21 @@ const toolCategories = [
             </template>
           </UiverseCard>
         </div>
+      </div>
+    </section>
+
+    <!-- 本地开发：百度推送按钮 -->
+    <section v-if="isDev" class="baidu-push">
+      <div class="baidu-push__inner">
+        <span class="baidu-push__label">百度收录推送</span>
+        <button class="baidu-push__btn" :disabled="loading" @click="pushUrls()">
+          <Upload :size="14" />
+          {{ loading ? '推送中...' : '一键推送' }}
+        </button>
+        <span v-if="result" class="baidu-push__status baidu-push__status--ok">
+          成功 {{ result.success }} 条，剩余配额 {{ result.remain }}
+        </span>
+        <span v-if="error" class="baidu-push__status baidu-push__status--err">{{ error }}</span>
       </div>
     </section>
   </div>
@@ -605,6 +624,52 @@ const toolCategories = [
     flex-direction: column;
   }
 }
+
+.baidu-push {
+  margin-top: 48px;
+}
+
+.baidu-push__inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  border-radius: 20px;
+  border: 1px dashed var(--home-line-strong);
+  background: rgba(236, 241, 250, 0.5);
+}
+
+.baidu-push__label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--home-text-muted);
+}
+
+.baidu-push__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--home-line-strong);
+  background: rgba(236, 241, 250, 0.9);
+  color: var(--home-text-main);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease;
+
+  &:hover { transform: translateY(-1px); box-shadow: var(--home-shadow-soft); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+}
+
+.baidu-push__status {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.baidu-push__status--ok { color: #10b981; }
+.baidu-push__status--err { color: #ef4444; }
 
 @media (max-width: 640px) {
   .home {

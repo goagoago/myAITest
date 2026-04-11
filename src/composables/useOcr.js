@@ -24,8 +24,7 @@ export function useOcr() {
 
   /**
    * 压缩图片用于 API 上传
-   * Vercel Edge Function body 限制 4.5MB，base64 会比原图大 33%
-   * 所以需要把图片压到 ~2MB 以下
+   * base64 会比原图大 33%，需要把图片压到 ~2MB 以下
    */
   const compressForUpload = (file) => new Promise((resolve, reject) => {
     const img = new Image()
