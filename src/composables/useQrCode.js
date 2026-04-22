@@ -1,10 +1,12 @@
 import { ref, reactive } from 'vue'
 import QRCode from 'qrcode'
+import { useAccountStore } from '../stores/accountStore'
 
 export function useQrCode() {
   const loading = ref(false)
   const error = ref('')
   const qrDataUrl = ref('')
+  const account = useAccountStore()
 
   const options = reactive({
     text: '',
@@ -25,6 +27,13 @@ export function useQrCode() {
       error.value = '请输入文本或链接'
       qrDataUrl.value = ''
       return
+    }
+
+    try {
+      await account.consumeFeature('qr-code')
+    } catch (e) {
+      error.value = e.message || '操作失败，请重试'
+      throw e
     }
 
     loading.value = true

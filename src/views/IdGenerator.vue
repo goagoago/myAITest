@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import '../styles/shared-sliders.scss'
 import { useIdGenerator } from '../composables/useIdGenerator'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import NeoSlider from '../components/ui/NeoSlider.vue'
 import {
   CreditCard, MapPin, User, Calendar, Hash, Copy, Check, RefreshCw, Sparkles, ChevronDown, Download
@@ -210,6 +211,7 @@ const countPresets = [1, 5, 10, 20, 50, 100]
           <button class="generate-btn" @click="generate">
             <Sparkles :size="20" />
             <span>生成</span>
+            <FeatureCostBadge feature-code="id-generator" strong />
           </button>
           <button class="reset-btn" @click="reset">
             <RefreshCw :size="18" />

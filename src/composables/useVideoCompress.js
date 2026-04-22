@@ -1,6 +1,7 @@
 import { ref, reactive } from 'vue'
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { toBlobURL, fetchFile } from '@ffmpeg/util'
+import { useAccountStore } from '../stores/accountStore'
 
 export function useVideoCompress() {
   const loading = ref(false)
@@ -14,6 +15,7 @@ export function useVideoCompress() {
     originalSize: 0,
     compressedSize: 0,
   })
+  const account = useAccountStore()
 
   let ffmpeg = null
 
@@ -59,6 +61,13 @@ export function useVideoCompress() {
    * @param {number} [options.targetSize] - 目标文件大小（字节），传入时忽略 preset
    */
   const compress = async (file, options = {}) => {
+    try {
+      await account.consumeFeature('video-compress')
+    } catch (e) {
+      error.value = e.message || '操作失败，请重试'
+      throw e
+    }
+
     loading.value = true
     error.value = null
     progress.value = 0

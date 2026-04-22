@@ -1,4 +1,5 @@
 import { ref, reactive } from 'vue'
+import { useAccountStore } from '../stores/accountStore'
 
 export function useImageCompress() {
   const loading = ref(false)
@@ -12,6 +13,7 @@ export function useImageCompress() {
     width: 0,
     height: 0,
   })
+  const account = useAccountStore()
 
   /**
    * 加载图片为 HTMLImageElement
@@ -43,6 +45,13 @@ export function useImageCompress() {
    * @param {number} options.targetSizeKB - 目标大小KB (mode=target)
    */
   const compress = async (file, options = {}) => {
+    try {
+      await account.consumeFeature('image-compress')
+    } catch (e) {
+      error.value = e.message || '操作失败，请重试'
+      throw e
+    }
+
     loading.value = true
     error.value = null
     progress.value = 5

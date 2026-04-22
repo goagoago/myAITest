@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useChat } from '../composables/useChat.js'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import { marked } from 'marked'
 import {
   Plane, MapPin, Calendar, DollarSign, Sparkles, Compass,
@@ -24,7 +25,7 @@ const styles = [
   { label: '购物娱乐', icon: ShoppingBag },
 ]
 
-const { loading, error, result, streamingText, sendMessageStream } = useChat()
+const { loading, error, result, streamingText, sendMessageStream } = useChat('travel')
 
 // 加载提示语
 const loadingTips = [
@@ -202,6 +203,7 @@ const charCount = computed(() => displayContent.value.length)
           <template v-else>
             <Sparkles :size="20" />
             <span>生成行程方案</span>
+            <FeatureCostBadge feature-code="travel" strong />
           </template>
         </button>
       </div>

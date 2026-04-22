@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useDocConvert } from '../composables/useDocConvert'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import {
   FileText, Upload, Loader2, AlertCircle, RefreshCw,
   ArrowRightLeft, FileUp, Download, CheckCircle2, X,
@@ -370,6 +371,7 @@ const resetAll = () => {
           <Loader2 v-if="loading" :size="20" class="spin" />
           <ArrowRightLeft v-else :size="20" />
           <span>{{ loading ? '转换中...' : `转换为 ${targetLabel}` }}</span>
+          <FeatureCostBadge v-if="!loading" feature-code="doc-convert" strong />
         </button>
 
         <!-- 进度条 -->

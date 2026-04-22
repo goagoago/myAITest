@@ -1,4 +1,5 @@
 import { ref, onUnmounted } from 'vue'
+import { useAccountStore } from '../stores/accountStore'
 
 export function useScreenRecord() {
   const recording = ref(false)
@@ -13,6 +14,7 @@ export function useScreenRecord() {
   let timerInterval = null
   let stream = null
   let audioStream = null
+  const account = useAccountStore()
 
   /**
    * 开始录制
@@ -21,6 +23,13 @@ export function useScreenRecord() {
    * @param {boolean} options.microphone - 是否录制麦克风
    */
   const startRecording = async (options = {}) => {
+    try {
+      await account.consumeFeature('screen-record')
+    } catch (e) {
+      error.value = e.message || '操作失败，请重试'
+      throw e
+    }
+
     error.value = null
     resultUrl.value = ''
     resultBlob.value = null

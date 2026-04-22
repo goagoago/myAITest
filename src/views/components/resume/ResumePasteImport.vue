@@ -1,4 +1,5 @@
 <script setup>
+import FeatureCostBadge from '../../../components/account/FeatureCostBadge.vue'
 import { ClipboardPaste, ChevronDown, Sparkles, LoaderCircle } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -47,6 +48,7 @@ const toggle = () => emit('update:collapsed', !props.collapsed)
         <button class="btn btn--primary btn--small" @click="emit('format')" :disabled="!rawText.trim() || aiFormatLoading">
           <component :is="aiFormatLoading ? LoaderCircle : Sparkles" :size="14" :class="{ spinning: aiFormatLoading }" />
           <span>{{ aiFormatLoading ? '格式化中...' : '格式化导入' }}</span>
+          <FeatureCostBadge v-if="!aiFormatLoading" feature-code="resume-builder" strong />
         </button>
       </div>
     </div>

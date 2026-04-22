@@ -1,6 +1,8 @@
 import { ref } from 'vue'
 import { createWorker, PSM } from 'tesseract.js'
-import { aiClient, buildApiUrl } from '../services/aiClient'
+import { aiClient } from '../services/aiClient'
+import { requestJson } from '../services/apiClient'
+import { useAccountStore } from '../stores/accountStore'
 
 export function useOcr() {
   const loading = ref(false)
@@ -9,6 +11,7 @@ export function useOcr() {
   const resultText = ref('')
   const resultRichText = ref('')
   const error = ref('')
+  const account = useAccountStore()
 
   let worker = null
 
@@ -91,7 +94,7 @@ export function useOcr() {
               ],
             },
           ],
-        })
+        }, { featureCode: 'ocr' })
 
         progress.value = 80
 
@@ -227,34 +230,25 @@ export function useOcr() {
     const formData = new FormData()
     formData.append('file', file)
 
-    const url = format === 'html'
-      ? buildApiUrl('/api/ocr/recognize?format=html')
-      : buildApiUrl('/api/ocr/recognize')
-
     progressStage.value = 'PaddleOCR 识别中...'
     progress.value = 30
 
-    const res = await fetch(url, {
+    const result = await requestJson(
+      format === 'html' ? '/api/ocr/recognize?format=html' : '/api/ocr/recognize',
+      {
       method: 'POST',
+      auth: true,
+      featureCode: 'ocr',
       body: formData,
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error(err.message || `服务端错误: ${res.status}`)
-    }
+      }
+    )
 
     progress.value = 80
 
-    const json = await res.json()
-    if (json.code !== 200) {
-      throw new Error(json.message || '识别失败')
-    }
-
     progress.value = 100
     return {
-      text: json.data?.text || '',
-      richText: json.data?.richText || '',
+      text: result?.text || '',
+      richText: result?.richText || '',
     }
   }
 
@@ -287,9 +281,13 @@ export function useOcr() {
       } else if (engine === 'vision') {
         text = await recognizeWithVision(file)
       } else {
+        await account.consumeFeature('ocr')
         text = await recognizeWithTesseract(file, lang)
       }
       resultText.value = text
+      if (engine !== 'local') {
+        account.refreshDashboard().catch(() => {})
+      }
     } catch (e) {
       console.error('OCR 识别失败:', e)
       const msgs = {
@@ -297,7 +295,10 @@ export function useOcr() {
         vision: 'AI 识别失败（' + e.message + '），请切换到其他模式重试',
         local: 'OCR 识别失败，请重试或更换图片',
       }
-      error.value = msgs[engine] || e.message
+      error.value = e.status ? e.message : (msgs[engine] || e.message)
+      if (engine !== 'local') {
+        account.refreshDashboard().catch(() => {})
+      }
     } finally {
       if (worker) {
         await worker.terminate()

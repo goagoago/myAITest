@@ -1,11 +1,13 @@
 import { ref } from 'vue'
-import { buildApiUrl } from '../services/aiClient'
+import { requestBlob } from '../services/apiClient'
+import { useAccountStore } from '../stores/accountStore'
 
 export function useWatermarkRemoval() {
   const loading = ref(false)
   const error = ref(null)
   const resultImageUrl = ref('')
   const progress = ref(0)
+  const account = useAccountStore()
 
   /**
    * 调用后端 YOLO+LaMa 去水印服务
@@ -22,19 +24,14 @@ export function useWatermarkRemoval() {
 
       progress.value = 20
 
-      const url = buildApiUrl('/api/watermark/remove')
-      const res = await fetch(url, {
+      const blob = await requestBlob('/api/watermark/remove', {
         method: 'POST',
+        auth: true,
+        featureCode: 'watermark-removal',
         body: formData,
       })
 
       progress.value = 80
-
-      if (!res.ok) {
-        throw new Error(`服务端错误: ${res.status}`)
-      }
-
-      const blob = await res.blob()
       if (!blob.size) {
         throw new Error('未能获取到处理后的图片')
       }
@@ -42,9 +39,11 @@ export function useWatermarkRemoval() {
       const resultUrl = URL.createObjectURL(blob)
       progress.value = 100
       resultImageUrl.value = resultUrl
+      account.refreshDashboard().catch(() => {})
       return resultUrl
     } catch (e) {
       error.value = e.message
+      account.refreshDashboard().catch(() => {})
       throw e
     } finally {
       loading.value = false

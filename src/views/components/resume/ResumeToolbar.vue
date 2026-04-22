@@ -1,4 +1,5 @@
 <script setup>
+import FeatureCostBadge from '../../../components/account/FeatureCostBadge.vue'
 import { Download, RefreshCw, Upload, Copy, Check, LoaderCircle, Zap } from 'lucide-vue-next'
 
 defineProps({
@@ -48,6 +49,7 @@ const emit = defineEmits([
       <button class="btn btn--primary" @click="emit('exportPdf')">
         <Download :size="16" />
         <span>导出 PDF</span>
+        <FeatureCostBadge feature-code="resume-builder" strong />
       </button>
     </div>
   </section>

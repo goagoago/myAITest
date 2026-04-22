@@ -1,16 +1,20 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useResponsive } from '../composables/useResponsive'
 import {
   Home, Plane, PenTool, Globe, Lightbulb, Sparkles, Zap, Eraser, FileText,
-  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera, QrCode, ScanLine, Scissors, CreditCard, Video, ScrollText
+  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera, QrCode, ScanLine, Scissors, CreditCard, Video, ScrollText,
+  UserRound, LogIn, LogOut
 } from 'lucide-vue-next'
 import CursorEffect from '../components/CursorEffect.vue'
 import LottieInteractive from '../components/LottieInteractive.vue'
 import toolboxAnim from '../assets/lottie/toolbox.js'
 import PageLoader from '../components/PageLoader.vue'
 import SiteSceneBackground from '../components/SiteSceneBackground.vue'
+import { AUTH_REQUIRED_EVENT } from '../services/apiClient'
+import { useAccountStore } from '../stores/accountStore'
+import CreditBadge from '../components/account/CreditBadge.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,6 +23,11 @@ const mobileMenuOpen = ref(false)
 const openDropdown = ref(null)
 const isLoading = ref(false)
 const { isMobile } = useResponsive()
+const account = useAccountStore()
+const isLoggedIn = computed(() => account.isLoggedIn.value)
+const accountName = computed(() => account.displayName.value)
+const accountEmail = computed(() => account.profile.value?.username || '')
+const accountBalance = computed(() => account.pointsBalance.value)
 
 // 全局加载逻辑
 let loadingTimer = null
@@ -118,6 +127,41 @@ const navigateTo = (path) => {
   mobileMenuOpen.value = false
 }
 
+const goToAuth = () => {
+  router.push({
+    name: 'AuthCenter',
+    query: { redirect: route.fullPath },
+  })
+  openDropdown.value = null
+  mobileMenuOpen.value = false
+}
+
+const goToAccount = () => {
+  navigateTo('/account')
+}
+
+const handleLogout = () => {
+  account.logout()
+  openDropdown.value = null
+  mobileMenuOpen.value = false
+  if (route.path === '/account') {
+    router.replace({ name: 'AuthCenter' })
+  }
+}
+
+const handleAuthRequired = (event) => {
+  if (route.name === 'AuthCenter') return
+  const redirect = event.detail?.redirect || route.fullPath
+  const featureCode = event.detail?.featureCode
+  router.push({
+    name: 'AuthCenter',
+    query: {
+      redirect,
+      ...(featureCode ? { feature: featureCode } : {}),
+    },
+  })
+}
+
 let ticking = false
 const handleScroll = () => {
   if (!ticking) {
@@ -131,10 +175,12 @@ const handleScroll = () => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true })
+  window.addEventListener(AUTH_REQUIRED_EVENT, handleAuthRequired)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  window.removeEventListener(AUTH_REQUIRED_EVENT, handleAuthRequired)
   clearTimeout(dropdownTimer)
 })
 </script>
@@ -215,6 +261,63 @@ onUnmounted(() => {
           </div>
         </nav>
 
+        <div class="navbar__actions">
+          <div
+            v-if="isLoggedIn"
+            class="nav__dropdown nav__dropdown--account"
+            @mouseenter="showDropdown('account')"
+            @mouseleave="hideDropdown()"
+          >
+            <button
+              class="account-trigger"
+              :class="{ 'account-trigger--active': route.path === '/account' || openDropdown === 'account' }"
+              @click="goToAccount"
+            >
+              <span class="account-trigger__name">{{ accountName }}</span>
+              <div class="account-trigger__avatar">{{ accountName.slice(0, 1) }}</div>
+              <ChevronDown class="nav__chevron" :class="{ 'nav__chevron--open': openDropdown === 'account' }" />
+            </button>
+
+            <Transition name="dropdown">
+              <div v-if="openDropdown === 'account'" class="dropdown dropdown--account">
+                <div class="account-menu__head">
+                  <div class="account-menu__identity">
+                    <div class="account-menu__avatar">{{ accountName.slice(0, 1) }}</div>
+                    <div>
+                      <span>{{ accountName }}</span>
+                      <small>{{ accountEmail || '已登录' }}</small>
+                    </div>
+                  </div>
+                  <CreditBadge :value="accountBalance" small strong />
+                </div>
+                <button class="dropdown__item" @click="goToAccount">
+                  <div class="dropdown__icon">
+                    <UserRound class="dropdown__icon-svg" />
+                  </div>
+                  <div class="dropdown__text">
+                    <span class="dropdown__name">个人中心</span>
+                    <span class="dropdown__desc">资料、安全、兑换</span>
+                  </div>
+                </button>
+                <button class="dropdown__item" @click="handleLogout">
+                  <div class="dropdown__icon">
+                    <LogOut class="dropdown__icon-svg" />
+                  </div>
+                  <div class="dropdown__text">
+                    <span class="dropdown__name">退出登录</span>
+                    <span class="dropdown__desc">退出当前账号</span>
+                  </div>
+                </button>
+              </div>
+            </Transition>
+          </div>
+
+          <button v-else class="auth-cta" @click="goToAuth">
+            <LogIn :size="16" />
+            <span>登录</span>
+          </button>
+        </div>
+
         <!-- 移动端菜单按钮 -->
         <button class="mobile-toggle" @click="mobileMenuOpen = !mobileMenuOpen">
           <component :is="mobileMenuOpen ? X : Menu" class="mobile-toggle__icon" />
@@ -228,6 +331,35 @@ onUnmounted(() => {
     </Transition>
     <Transition name="slide">
       <div v-if="mobileMenuOpen" class="mobile-menu">
+        <div class="mobile-menu__account">
+          <template v-if="isLoggedIn">
+            <div class="mobile-menu__account-card">
+              <div class="mobile-menu__avatar">{{ accountName.slice(0, 1) }}</div>
+              <div>
+                <strong>{{ accountName }}</strong>
+                <CreditBadge :value="accountBalance" small />
+              </div>
+            </div>
+            <button class="mobile-menu__link" @click="goToAccount">
+              <UserRound class="mobile-menu__icon" />
+              <span>个人中心</span>
+            </button>
+            <button class="mobile-menu__link" @click="handleLogout">
+              <LogOut class="mobile-menu__icon" />
+              <span>退出登录</span>
+            </button>
+          </template>
+          <template v-else>
+            <div class="mobile-menu__auth-card">
+              <p>登录后可保存账号数据并进入个人中心。</p>
+              <button class="mobile-menu__auth" @click="goToAuth">
+                <LogIn :size="16" />
+                <span>登录 / 注册</span>
+              </button>
+            </div>
+          </template>
+        </div>
+
         <button
           class="mobile-menu__link"
           :class="{ 'mobile-menu__link--active': isActive('/') }"
@@ -339,6 +471,13 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: clamp(10px, 2vw, 16px);
+}
+
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
 }
 
 /* Logo — 新拟物凸起 */
@@ -464,6 +603,65 @@ onUnmounted(() => {
   z-index: 1100;
 }
 
+.auth-cta,
+.account-trigger {
+  min-height: 46px;
+  border: 1px solid rgba(108, 122, 156, 0.16);
+  border-radius: 16px;
+  background: rgba(252, 254, 255, 0.86);
+  color: #1b3157;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 16px 28px rgba(111, 126, 159, 0.12);
+}
+
+.auth-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-cta {
+  background: linear-gradient(135deg, #0f172a, #2563eb 62%, #10b981);
+  color: #fff;
+}
+
+.account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 0 14px;
+  cursor: pointer;
+}
+
+.account-trigger--active {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 18px 34px rgba(37, 99, 235, 0.18);
+}
+
+.account-trigger__name {
+  max-width: 112px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.account-trigger__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #111827, #2563eb);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
 /* ═══════════════════════════════════════════════════════════
    下拉菜单 — 新拟物3D浮起
    ═══════════════════════════════════════════════════════════ */
@@ -482,6 +680,57 @@ onUnmounted(() => {
     var(--neo-shadow-up-lg),
     0 0 0 1px rgba(255, 255, 255, 0.03);
   z-index: 1200;
+}
+
+.dropdown--account {
+  left: auto;
+  right: 0;
+  transform: none;
+  min-width: 280px;
+}
+
+.dropdown--account.dropdown-enter-from,
+.dropdown--account.dropdown-leave-to {
+  transform: translateY(-10px) scale(0.95);
+}
+
+.account-menu__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px 14px;
+  color: #445674;
+  font-size: 0.86rem;
+}
+
+.account-menu__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.account-menu__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #111827, #2563eb);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.account-menu__identity span {
+  display: block;
+  color: #132039;
+  font-weight: 800;
+}
+
+.account-menu__identity small {
+  color: #64748b;
+  font-size: 0.78rem;
 }
 
 /* 下拉菜单装饰线 */
@@ -641,6 +890,66 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
+.mobile-menu__account {
+  margin-bottom: 16px;
+}
+
+.mobile-menu__account-card,
+.mobile-menu__auth-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(133, 146, 176, 0.14);
+  margin-bottom: 10px;
+}
+
+.mobile-menu__account-card strong,
+.mobile-menu__auth-card p {
+  color: #1a2742;
+}
+
+.mobile-menu__account-card > div {
+  display: grid;
+  gap: 6px;
+}
+
+.mobile-menu__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #111827, #2563eb);
+  color: #fff;
+  font-weight: 800;
+}
+
+.mobile-menu__auth-card {
+  grid-template-columns: 1fr;
+}
+
+.mobile-menu__auth-card p {
+  color: #52637f;
+  line-height: 1.6;
+}
+
+.mobile-menu__auth {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0f172a, #2563eb 62%, #10b981);
+  color: #fff;
+  font-weight: 700;
+}
+
 .mobile-menu__group {
   margin-top: 12px;
 }
@@ -780,6 +1089,10 @@ onUnmounted(() => {
 }
 
 .layout--mobile .nav {
+  display: none;
+}
+
+.layout--mobile .navbar__actions {
   display: none;
 }
 

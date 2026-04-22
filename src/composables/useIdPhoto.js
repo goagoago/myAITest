@@ -1,5 +1,6 @@
 import { ref, computed, watch } from 'vue'
 import { saveAs } from 'file-saver'
+import { useAccountStore } from '../stores/accountStore'
 
 /**
  * 证件照标准尺寸预设 (300 DPI)
@@ -55,6 +56,7 @@ export function useIdPhoto() {
 
   // 输出
   const outputDataUrl = ref(null)
+  const account = useAccountStore()
 
   /* ═══════ 计算属性 ═══════ */
 
@@ -79,6 +81,13 @@ export function useIdPhoto() {
   /* ═══════ 加载图片 + AI 抠图 ═══════ */
 
   const loadImage = async (file) => {
+    try {
+      await account.consumeFeature('id-photo')
+    } catch (e) {
+      processError.value = e.message || '操作失败，请重试'
+      throw e
+    }
+
     sourceFile.value = file
     processError.value = null
     personReady.value = false

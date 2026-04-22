@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import { ref } from 'vue'
 import { useOcr } from '../composables/useOcr'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import {
   ScanLine, Upload, Download, RefreshCw, AlertCircle, Loader2,
   Copy, Check, Image, Sparkles, Cpu
@@ -272,6 +273,7 @@ const resetAll = () => {
           <Loader2 v-if="loading" :size="20" class="spin" />
           <ScanLine v-else :size="20" />
           <span>{{ loading ? '识别中...' : '开始识别' }}</span>
+          <FeatureCostBadge v-if="!loading" feature-code="ocr" strong />
         </button>
 
         <!-- 进度条 -->

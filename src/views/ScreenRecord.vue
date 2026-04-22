@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useScreenRecord } from '../composables/useScreenRecord'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import {
   MonitorPlay, Circle, Pause, Play, Square, Download,
   RefreshCw, AlertCircle, Mic, MicOff, Volume2, VolumeX,
@@ -135,6 +136,7 @@ const resetAll = () => {
           <button class="start-btn" @click="handleStart">
             <Circle :size="22" class="rec-dot" />
             <span>开始录制</span>
+            <FeatureCostBadge feature-code="screen-record" strong />
           </button>
         </template>
 

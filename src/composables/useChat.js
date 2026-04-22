@@ -1,15 +1,17 @@
 import { ref } from 'vue'
 import { aiClient } from '../services/aiClient'
+import { useAccountStore } from '../stores/accountStore'
 
 /**
  * 聊天 composable
  * 通过服务端代理 /api/chat 调用 AI 接口，API Key 不暴露到前端
  */
-export function useChat() {
+export function useChat(featureCode = '') {
   const loading = ref(false)
   const error = ref(null)
   const result = ref('')
   const streamingText = ref('')
+  const account = useAccountStore()
 
   // 流式输出
   const sendMessageStream = async (messages, onChunk) => {
@@ -24,7 +26,7 @@ export function useChat() {
         temperature: 0.7,
         max_tokens: 8192,
         stream: true,
-      })
+      }, { featureCode })
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
@@ -63,6 +65,9 @@ export function useChat() {
       }
 
       result.value = fullText
+      if (featureCode) {
+        account.refreshDashboard().catch(() => {})
+      }
       return fullText
     } catch (e) {
       error.value = e.message
@@ -83,7 +88,7 @@ export function useChat() {
         messages: messages.map(m => ({ role: m.role, content: m.content })),
         temperature: 0.7,
         max_tokens: 8192,
-      })
+      }, { featureCode })
       const responseText = data?.output
         ? data.output
             .flatMap(item => item.content || [])
@@ -92,6 +97,9 @@ export function useChat() {
             .join('')
         : ''
       result.value = responseText || data.choices?.[0]?.message?.content || ''
+      if (featureCode) {
+        account.refreshDashboard().catch(() => {})
+      }
       return result.value
     } catch (e) {
       error.value = e.message

@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useChat } from '../composables/useChat.js'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import { marked } from 'marked'
 import {
   Lightbulb, Sparkles, Scale, BarChart3, ListChecks, HelpCircle,
@@ -56,7 +57,7 @@ const modes = [
 5. 每个问题简要说明为什么这个问题重要` },
 ]
 
-const { loading, error, result, streamingText, sendMessageStream } = useChat()
+const { loading, error, result, streamingText, sendMessageStream } = useChat('mind')
 const currentMode = computed(() => modes.find(m => m.value === mode.value))
 
 // 加载提示语
@@ -149,6 +150,7 @@ const charCount = computed(() => displayContent.value.length)
           <template v-else>
             <component :is="currentMode?.icon" :size="20" />
             <span>开始{{ currentMode?.label }}</span>
+            <FeatureCostBadge feature-code="mind" strong />
           </template>
         </button>
       </div>

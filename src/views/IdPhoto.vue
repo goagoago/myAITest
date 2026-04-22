@@ -1,6 +1,7 @@
 <script setup>
 import '../styles/internal-page.scss'
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import { useIdPhoto, PHOTO_PRESETS, BG_COLORS } from '../composables/useIdPhoto'
 import {
   Camera, Upload, Download, RefreshCw, X, ZoomIn, ZoomOut,
@@ -244,6 +245,7 @@ onUnmounted(() => {
         <div class="upload-icon"><Upload :size="40" /></div>
         <p class="upload-text">点击上传或拖拽照片到此处</p>
         <p class="upload-hint">支持 JPG / PNG 格式，最大 50MB</p>
+        <FeatureCostBadge feature-code="id-photo" strong />
       </div>
 
       <!-- ═══ AI 处理中 ═══ -->

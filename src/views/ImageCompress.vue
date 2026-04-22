@@ -3,6 +3,7 @@ import '../styles/internal-page.scss'
 import '../styles/shared-sliders.scss'
 import { ref, computed, watch } from 'vue'
 import NeoSlider from '../components/ui/NeoSlider.vue'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import { useImageCompress } from '../composables/useImageCompress'
 import {
   ImageDown, Upload, Loader2, AlertCircle, RefreshCw,
@@ -517,6 +518,7 @@ const handleCompareMove = (e) => {
             <Loader2 v-if="loading" :size="20" class="spin" />
             <Zap v-else :size="20" />
             <span>{{ loading ? '压缩中...' : '开始压缩' }}</span>
+            <FeatureCostBadge v-if="!loading" feature-code="image-compress" strong />
           </button>
 
           <!-- 进度条 -->

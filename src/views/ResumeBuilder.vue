@@ -12,8 +12,10 @@ import {
   Table, Image, SquareCode, Palette,
   Sparkles,
 } from 'lucide-vue-next'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import { useResumeBuilder } from '../composables/useResumeBuilder'
-import { buildApiUrl } from '../services/aiClient'
+import { requestBlob } from '../services/apiClient'
+import { useAccountStore } from '../stores/accountStore'
 import ResumeHero from './components/resume/ResumeHero.vue'
 import ResumeReview from './components/resume/ResumeReview.vue'
 import ResumeToolbar from './components/resume/ResumeToolbar.vue'
@@ -31,6 +33,7 @@ const {
   aiReviewLoading, aiReviewError, aiReviewResult, aiReviewResume,
   aiWriteLoading, aiWriteError, aiWriteResumeSection,
 } = useResumeBuilder()
+const account = useAccountStore()
 
 const previewRef = ref(null)
 const copied = ref(false)
@@ -362,12 +365,17 @@ a { color: #0969da; text-decoration: none; }
   formData.append('targetFormat', 'pdf')
 
   try {
-    const res = await fetch(buildApiUrl('/api/doc/convert'), { method: 'POST', body: formData })
-    if (!res.ok) throw new Error(`导出失败: ${res.status}`)
-    const pdfBlob = await res.blob()
+    const pdfBlob = await requestBlob('/api/doc/convert', {
+      method: 'POST',
+      auth: true,
+      featureCode: 'resume-builder',
+      body: formData,
+    })
     saveAs(pdfBlob, 'resume.pdf')
+    account.refreshDashboard().catch(() => {})
   } catch (e) {
     console.error('PDF 导出失败:', e)
+    account.refreshDashboard().catch(() => {})
     alert('PDF 导出失败: ' + e.message)
   }
 }
@@ -442,6 +450,7 @@ a { color: #0969da; text-decoration: none; }
           <button class="btn btn--primary btn--small" @click="handleAiWrite" :disabled="!aiWriteNotes.trim() || aiWriteLoading">
             <component :is="aiWriteLoading ? LoaderCircle : Sparkles" :size="14" :class="{ spinning: aiWriteLoading }" />
             <span>{{ aiWriteLoading ? '生成中...' : '生成并插入' }}</span>
+            <FeatureCostBadge v-if="!aiWriteLoading" feature-code="resume-builder" strong />
           </button>
         </div>
       </div>

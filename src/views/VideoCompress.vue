@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import { ref, computed, watch } from 'vue'
 import { useVideoCompress } from '../composables/useVideoCompress'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import {
   Video, Upload, Loader2, AlertCircle, RefreshCw,
   Download, X, Settings2, Zap, Info,
@@ -356,6 +357,7 @@ const resetAll = () => {
             <Loader2 v-if="loading" :size="20" class="spin" />
             <Zap v-else :size="20" />
             <span>{{ loading ? (phaseText[phase] || '处理中...') : '开始压缩' }}</span>
+            <FeatureCostBadge v-if="!loading" feature-code="video-compress" strong />
           </button>
 
           <!-- 进度条 -->

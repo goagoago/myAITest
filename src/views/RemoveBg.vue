@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import { ref, watch } from 'vue'
 import { useRemoveBg } from '../composables/useRemoveBg'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import {
   Scissors, Upload, Download, RefreshCw, AlertCircle, Loader2,
   Image, Palette, Check, Eye
@@ -153,6 +154,7 @@ const handleReset = () => {
             <Upload :size="32" />
             <p class="upload-zone__text">点击、拖拽或粘贴图片到此区域</p>
             <span class="upload-zone__tip">支持 JPG、PNG、WebP 等格式</span>
+            <FeatureCostBadge feature-code="remove-bg" strong />
           </div>
           <div v-else class="image-preview">
             <img

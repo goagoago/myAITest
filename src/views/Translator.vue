@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useChat } from '../composables/useChat.js'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import { marked } from 'marked'
 import { Globe, ArrowLeftRight, Languages, Loader2, Send, Clock } from 'lucide-vue-next'
 
@@ -21,7 +22,7 @@ const languages = [
   { value: 'ru', label: '俄语', flag: '🇷🇺' },
 ]
 
-const { loading, error, result, streamingText, sendMessageStream } = useChat()
+const { loading, error, result, streamingText, sendMessageStream } = useChat('translator')
 
 const getLangName = (code) => languages.find(l => l.value === code)?.label || code
 const swapLangs = () => { if (sourceLang.value !== 'auto') [sourceLang.value, targetLang.value] = [targetLang.value, sourceLang.value] }
@@ -118,6 +119,7 @@ const charCount = computed(() => displayContent.value.length)
         <template v-else>
           <Globe :size="20" />
           <span>开始翻译</span>
+          <FeatureCostBadge feature-code="translator" strong />
         </template>
       </button>
 

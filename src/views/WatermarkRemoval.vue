@@ -4,6 +4,7 @@ import '../styles/shared-sliders.scss'
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { useWatermarkRemoval } from '../composables/useWatermarkRemoval'
 import WatermarkAdd from '../components/WatermarkAdd.vue'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import {
   Eraser, Sparkles, Upload, Download, RefreshCw, Loader2,
   Image, AlertCircle, Clock, X, ArrowLeftRight, Droplets
@@ -264,6 +265,7 @@ const fileSize = computed(() => {
             <Loader2 v-if="loading" :size="20" class="spin" />
             <Sparkles v-else :size="20" />
             <span>{{ loading ? '处理中...' : '一键去水印' }}</span>
+            <FeatureCostBadge v-if="!loading" feature-code="watermark-removal" strong />
           </button>
 
           <!-- 进度条 -->

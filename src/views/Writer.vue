@@ -2,6 +2,7 @@
 import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useChat } from '../composables/useChat.js'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import { marked } from 'marked'
 import {
   PenTool, Sparkles, Type, AlignLeft, Briefcase, MessageCircle,
@@ -20,7 +21,7 @@ const modes = [
   { value: 'continue', label: '智能续写', icon: ArrowRight },
 ]
 
-const { loading, error, result, streamingText, sendMessageStream } = useChat()
+const { loading, error, result, streamingText, sendMessageStream } = useChat('writer')
 
 // 加载提示语
 const loadingTips = [
@@ -141,6 +142,7 @@ const charCount = computed(() => displayContent.value.length)
             <template v-else>
               <component :is="currentMode?.icon" :size="18" />
               <span>{{ currentMode?.label }}</span>
+              <FeatureCostBadge feature-code="writer" strong />
             </template>
           </button>
         </div>

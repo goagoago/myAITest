@@ -1,8 +1,8 @@
 <script setup>
 import '../styles/internal-page.scss'
 import '../styles/shared-sliders.scss'
-import { watch } from 'vue'
 import NeoSlider from '../components/ui/NeoSlider.vue'
+import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import { useQrCode } from '../composables/useQrCode'
 import {
   QrCode, Upload, Download, RefreshCw, AlertCircle, Loader2,
@@ -41,23 +41,6 @@ const handleLogoSelect = (e) => {
   const file = e.target.files?.[0]
   if (file) setLogo(file)
 }
-
-// 自动生成：文本变化时自动重新生成
-let debounceTimer = null
-watch(() => options.text, () => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    if (options.text.trim()) generate()
-  }, 400)
-})
-
-// 配置变化时自动重新生成
-watch(
-  () => [options.foreground, options.background, options.errorCorrectionLevel, options.size, options.logoUrl],
-  () => {
-    if (options.text.trim()) generate()
-  },
-)
 
 const handleDownload = () => {
   const name = options.text.length > 20
@@ -223,6 +206,7 @@ const resetAll = () => {
           <Loader2 v-if="loading" :size="20" class="spin" />
           <QrCode v-else :size="20" />
           <span>{{ loading ? '生成中...' : '生成二维码' }}</span>
+          <FeatureCostBadge v-if="!loading" feature-code="qr-code" strong />
         </button>
 
         <!-- 错误提示 -->

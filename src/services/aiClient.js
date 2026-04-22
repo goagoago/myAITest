@@ -1,84 +1,31 @@
-const API_BASE = import.meta.env.VITE_API_BASE || ''
-
-const normalizeBase = (base) => {
-  if (!base) return ''
-  return base.endsWith('/') ? base.slice(0, -1) : base
-}
-
-export const buildApiUrl = (path) => {
-  const base = normalizeBase(API_BASE)
-  if (!base) return path
-  return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`
-}
+import { buildApiUrl, requestJson, requestRaw } from './apiClient'
 
 const AI_ENDPOINTS = {
   chat: buildApiUrl('/api/chat'),
 }
 
-function parseErrorMessage(payload, status) {
-  if (typeof payload === 'string') {
-    return payload || `HTTP ${status}`
-  }
-
-  return payload?.error?.message || payload?.detail || payload?.error || `HTTP ${status}`
-}
-
-async function parseResponseBody(response) {
-  const contentType = response.headers.get('content-type') || ''
-  if (contentType.includes('application/json')) {
-    return response.json().catch(() => ({}))
-  }
-  return response.text().catch(() => '')
-}
-
-export async function postAiJsonWithStatus(endpoint, payload) {
-  const response = await fetch(endpoint, {
+export async function postAiJson(endpoint, payload, options = {}) {
+  return requestJson(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    auth: true,
+    featureCode: options.featureCode,
+    json: payload,
   })
-
-  const data = await parseResponseBody(response)
-  return {
-    ok: response.ok,
-    status: response.status,
-    data,
-  }
 }
 
-export async function postAiJson(endpoint, payload) {
-  const { ok, status, data } = await postAiJsonWithStatus(endpoint, payload)
-  if (!ok) {
-    const error = new Error(parseErrorMessage(data, status))
-    error.status = status
-    error.payload = data
-    throw error
-  }
-  return data
-}
-
-export async function postAiStream(endpoint, payload) {
-  const response = await fetch(endpoint, {
+export async function postAiStream(endpoint, payload, options = {}) {
+  return requestRaw(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    auth: true,
+    featureCode: options.featureCode,
+    json: payload,
   })
-
-  if (!response.ok) {
-    const data = await parseResponseBody(response)
-    const error = new Error(parseErrorMessage(data, response.status))
-    error.status = response.status
-    error.payload = data
-    throw error
-  }
-
-  return response
 }
 
 export const aiClient = {
   endpoints: AI_ENDPOINTS,
   chat: {
-    complete: payload => postAiJson(AI_ENDPOINTS.chat, payload),
-    stream: payload => postAiStream(AI_ENDPOINTS.chat, payload),
+    complete: (payload, options = {}) => postAiJson(AI_ENDPOINTS.chat, payload, options),
+    stream: (payload, options = {}) => postAiStream(AI_ENDPOINTS.chat, payload, options),
   },
 }

@@ -1,6 +1,8 @@
 import { computed, ref, watch } from 'vue'
 import { marked } from 'marked'
-import { aiClient, buildApiUrl } from '../services/aiClient'
+import { aiClient } from '../services/aiClient'
+import { requestBlob } from '../services/apiClient'
+import { useAccountStore } from '../stores/accountStore'
 
 /* ── ID generator ──────────────────────────────────── */
 let _id = 0
@@ -488,13 +490,12 @@ async function importPdfFile(file) {
   formData.append('file', file)
   formData.append('targetFormat', 'docx')
 
-  const res = await fetch(buildApiUrl('/api/doc/convert'), {
+  const docxBlob = await requestBlob('/api/doc/convert', {
     method: 'POST',
+    auth: true,
+    featureCode: 'resume-builder',
     body: formData,
   })
-  if (!res.ok) throw new Error(`PDF 转换失败: ${res.status}`)
-
-  const docxBlob = await res.blob()
   const arrayBuffer = await docxBlob.arrayBuffer()
 
   // 2. DOCX → HTML（mammoth 前端解析）
@@ -528,6 +529,7 @@ export function useResumeBuilder() {
   const sections = ref([])
   const importLoading = ref(false)
   const importError = ref('')
+  const account = useAccountStore()
 
   /* 从结构重建 Markdown */
   const markdown = computed(() => {
@@ -659,6 +661,7 @@ export function useResumeBuilder() {
     if (!file) return
     importLoading.value = true
     importError.value = ''
+    const isPdf = file.name.toLowerCase().endsWith('.pdf')
     try {
       const name = file.name.toLowerCase()
       let mdText = ''
@@ -679,6 +682,9 @@ export function useResumeBuilder() {
       importError.value = '导入失败：' + (e.message || '未知错误')
     } finally {
       importLoading.value = false
+      if (isPdf) {
+        account.refreshDashboard().catch(() => {})
+      }
     }
   }
 
@@ -722,12 +728,14 @@ export function useResumeBuilder() {
         ],
         temperature: 0.3,
         max_tokens: 4096,
-      })
+      }, { featureCode: 'resume-builder' })
       const md = extractAiText(data)
       if (!md) throw new Error('AI 未返回有效内容')
+      account.refreshDashboard().catch(() => {})
       return md
     } catch (e) {
       aiFormatError.value = 'AI 格式化失败：' + (e.message || '未知错误')
+      account.refreshDashboard().catch(() => {})
       return ''
     } finally {
       aiFormatLoading.value = false
@@ -788,13 +796,15 @@ export function useResumeBuilder() {
         ],
         temperature: 0.5,
         max_tokens: 800,
-      })
+      }, { featureCode: 'resume-builder' })
 
       const md = extractAiText(data)
       if (!md) throw new Error('AI 未返回有效内容')
+      account.refreshDashboard().catch(() => {})
       return md
     } catch (e) {
       aiWriteError.value = 'AI 写作失败：' + (e.message || '未知错误')
+      account.refreshDashboard().catch(() => {})
       return ''
     } finally {
       aiWriteLoading.value = false
@@ -847,17 +857,19 @@ export function useResumeBuilder() {
         ],
         temperature: 0.2,
         max_tokens: 1200,
-      })
+      }, { featureCode: 'resume-builder' })
       const raw = extractAiText(data)
       const parsed = parseAiJson(raw)
       aiReviewResult.value = normalizeAiReviewResult(parsed, fallback)
       if (!parsed) {
         aiReviewError.value = 'AI 评审结果格式异常，已为你切换为本地智能评审。'
       }
+      account.refreshDashboard().catch(() => {})
       return aiReviewResult.value
     } catch (e) {
       aiReviewError.value = 'AI 评审暂时不可用，已切换为本地智能评审。'
       aiReviewResult.value = normalizeAiReviewResult(null, buildLocalReview(mdText))
+      account.refreshDashboard().catch(() => {})
       return aiReviewResult.value
     } finally {
       aiReviewLoading.value = false

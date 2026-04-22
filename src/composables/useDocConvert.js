@@ -1,12 +1,27 @@
 import { ref } from 'vue'
 import { saveAs } from 'file-saver'
-import { buildApiUrl } from '../services/aiClient'
+import { requestBlob } from '../services/apiClient'
+import { useAccountStore } from '../stores/accountStore'
 
 export function useDocConvert() {
   const loading = ref(false)
   const error = ref(null)
   const progress = ref(0)
   const convertedFileName = ref('')
+  const account = useAccountStore()
+
+  const consumeLocalFeature = async () => {
+    try {
+      await account.consumeFeature('doc-convert')
+    } catch (e) {
+      error.value = e.message || '操作失败，请重试'
+      throw e
+    }
+  }
+
+  const syncAccount = () => {
+    account.refreshDashboard().catch(() => {})
+  }
 
   /**
    * 通用：调用服务端文档转换 API
@@ -16,12 +31,12 @@ export function useDocConvert() {
     formData.append('file', file)
     formData.append('targetFormat', targetFormat)
 
-    const url = buildApiUrl('/api/doc/convert')
-    const res = await fetch(url, { method: 'POST', body: formData })
-
-    if (!res.ok) throw new Error(`服务端转换失败: ${res.status}`)
-
-    return await res.blob()
+    return requestBlob('/api/doc/convert', {
+      method: 'POST',
+      auth: true,
+      featureCode: 'doc-convert',
+      body: formData,
+    })
   }
 
   /**
@@ -46,6 +61,7 @@ export function useDocConvert() {
       throw e
     } finally {
       loading.value = false
+      syncAccount()
     }
   }
 
@@ -89,6 +105,7 @@ export function useDocConvert() {
    * Markdown → Word
    */
   const convertMarkdownToWord = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10
@@ -221,6 +238,7 @@ export function useDocConvert() {
    * 图片 → PDF（支持多张合并）
    */
   const convertImagesToPdf = async (files) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -282,6 +300,7 @@ export function useDocConvert() {
    * PDF → 图片（逐页导出为 PNG）
    */
   const convertPdfToImages = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -335,6 +354,7 @@ export function useDocConvert() {
    * PDF → Excel（提取表格数据）
    */
   const convertPdfToExcel = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -406,6 +426,7 @@ export function useDocConvert() {
    * Word → Markdown
    */
   const convertWordToMarkdown = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -484,6 +505,7 @@ export function useDocConvert() {
    * HTML → Word
    */
   const convertHtmlToWord = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10
@@ -552,6 +574,7 @@ export function useDocConvert() {
    * TXT → PDF
    */
   const convertTxtToPdf = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10
@@ -608,6 +631,7 @@ export function useDocConvert() {
    * Excel → HTML（导出可视化 HTML 表格）
    */
   const convertExcelToHtml = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -663,6 +687,7 @@ export function useDocConvert() {
    * PDF → Markdown
    */
   const convertPdfToMarkdown = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -725,6 +750,7 @@ export function useDocConvert() {
    * PDF → HTML
    */
   const convertPdfToHtml = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -800,6 +826,7 @@ export function useDocConvert() {
    * PDF → TXT
    */
   const convertPdfToTxt = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -861,6 +888,7 @@ export function useDocConvert() {
    * Word → HTML
    */
   const convertWordToHtml = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -912,6 +940,7 @@ export function useDocConvert() {
    * Word → TXT
    */
   const convertWordToTxt = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -943,6 +972,7 @@ export function useDocConvert() {
    * Markdown → HTML
    */
   const convertMarkdownToHtml = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10
@@ -994,6 +1024,7 @@ export function useDocConvert() {
    * HTML → Markdown
    */
   const convertHtmlToMarkdown = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10
@@ -1056,6 +1087,7 @@ export function useDocConvert() {
    * TXT → Word
    */
   const convertTxtToWord = async (file) => {
+    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10

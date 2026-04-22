@@ -1,4 +1,5 @@
 <script setup>
+import FeatureCostBadge from '../../../components/account/FeatureCostBadge.vue'
 import { ScrollText, Sparkles, LoaderCircle } from 'lucide-vue-next'
 
 defineProps({
@@ -25,6 +26,7 @@ const emit = defineEmits(['review'])
       <button class="btn btn--ghost btn--small hero__review-btn" @click="emit('review')" :disabled="aiReviewLoading">
         <component :is="aiReviewLoading ? LoaderCircle : Sparkles" :size="14" :class="{ spinning: aiReviewLoading }" />
         <span>{{ aiReviewLoading ? '评审中...' : 'AI 评审' }}</span>
+        <FeatureCostBadge v-if="!aiReviewLoading" feature-code="resume-builder" strong />
       </button>
     </div>
   </header>
