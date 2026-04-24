@@ -3,12 +3,22 @@ import '../styles/internal-page.scss'
 import { ref, computed } from 'vue'
 import { useDocConvert } from '../composables/useDocConvert'
 import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
+import { useAccountStore } from '../stores/accountStore'
 import {
   FileText, Upload, Loader2, AlertCircle, RefreshCw,
   ArrowRightLeft, FileUp, Download, CheckCircle2, X,
   FileImage, ImagePlus,
   Table, FileSpreadsheet, FileType, FileCode, Images, Type, Presentation
 } from 'lucide-vue-next'
+
+const CHARGED_CONVERSION_KEYS = new Set([
+  'pdf→word',
+  'word→pdf',
+  'excel→pdf',
+  'ppt→pdf',
+  'md→pdf',
+  'html→pdf',
+])
 
 const {
   loading, error, progress, convertedFileName,
@@ -23,6 +33,7 @@ const {
   convertPptToPdf,
   reset,
 } = useDocConvert()
+const account = useAccountStore()
 
 // 按源格式分类
 const categories = [
@@ -134,6 +145,11 @@ const converted = ref(false)
 
 const currentCat = computed(() => categories.find(c => c.id === sourceId.value))
 const convertKey = computed(() => `${sourceId.value}→${targetId.value}`)
+const currentCost = computed(() => (
+  CHARGED_CONVERSION_KEYS.has(convertKey.value)
+    ? account.getFeatureCost('doc-convert')
+    : 0
+))
 const targetLabel = computed(() => {
   const t = currentCat.value?.targets.find(t => t.id === targetId.value)
   return t?.label || ''
@@ -371,7 +387,7 @@ const resetAll = () => {
           <Loader2 v-if="loading" :size="20" class="spin" />
           <ArrowRightLeft v-else :size="20" />
           <span>{{ loading ? '转换中...' : `转换为 ${targetLabel}` }}</span>
-          <FeatureCostBadge v-if="!loading" feature-code="doc-convert" strong />
+          <FeatureCostBadge v-if="!loading" :value="currentCost" strong />
         </button>
 
         <!-- 进度条 -->

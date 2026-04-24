@@ -29,11 +29,11 @@ defineProps({
 <style scoped lang="scss">
 .card {
   width: 100%;
-  max-width: 300px;
+  max-width: var(--tool-card-max-width, 300px);
   min-width: 0;
-  height: 236px;
+  height: var(--tool-card-height, 236px);
   position: relative;
-  border-radius: 24px;
+  border-radius: var(--tool-card-radius, 24px);
   border: 1px solid rgba(70, 85, 130, 0.2);
   background: rgba(232, 237, 248, 0.86);
   box-shadow:
@@ -48,7 +48,7 @@ defineProps({
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 24px;
+  border-radius: inherit;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0.02));
   opacity: 1;
   pointer-events: none;
@@ -71,26 +71,26 @@ defineProps({
   inset: 1px;
   width: calc(100% - 2px);
   min-height: calc(100% - 2px);
-  padding: 22px 20px;
+  padding: var(--tool-card-padding-y, 22px) var(--tool-card-padding-x, 20px);
   background: linear-gradient(180deg, rgba(248, 250, 255, 0.96), rgba(235, 240, 249, 0.92));
-  border-radius: 23px;
+  border-radius: calc(var(--tool-card-radius, 24px) - 1px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: var(--tool-card-gap, 10px);
   transition: all 0.36s ease, background 0.24s ease;
   z-index: 1;
   text-align: center;
 }
 
 .icon-container {
-  width: clamp(52px, 4vw, 62px);
-  height: clamp(52px, 4vw, 62px);
+  width: var(--tool-card-icon-box, clamp(52px, 4vw, 62px));
+  height: var(--tool-card-icon-box, clamp(52px, 4vw, 62px));
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 18px;
+  border-radius: var(--tool-card-icon-radius, 18px);
   color: white;
   background: var(--gradient);
   box-shadow:
@@ -101,7 +101,8 @@ defineProps({
 
 .card-title {
   color: #243047;
-  font-size: clamp(1rem, 0.92rem + 0.2vw, 1.16rem);
+  font-size: var(--tool-card-title-size, clamp(1rem, 0.92rem + 0.2vw, 1.16rem));
+  line-height: var(--tool-card-title-line-height, 1.3);
   font-weight: 700;
   margin: 0;
   transition: all 0.3s ease;
@@ -109,10 +110,10 @@ defineProps({
 
 .card-description {
   color: #66748f;
-  font-size: 0.9rem;
-  line-height: 1.6;
+  font-size: var(--tool-card-desc-size, 0.9rem);
+  line-height: var(--tool-card-desc-line-height, 1.6);
   height: 0;
-  padding: 0 8px;
+  padding: 0 var(--tool-card-desc-pad-x, 8px);
   overflow: hidden;
   opacity: 0;
   margin: 0;
@@ -144,7 +145,7 @@ defineProps({
 }
 
 .card:hover .card-title {
-  font-size: clamp(1.08rem, 1rem + 0.26vw, 1.28rem);
+  font-size: var(--tool-card-title-hover-size, clamp(1.08rem, 1rem + 0.26vw, 1.28rem));
   transform: translateY(-15px);
   background: var(--gradient);
   -webkit-background-clip: text;
@@ -153,7 +154,7 @@ defineProps({
 }
 
 .card:hover .card-description {
-  height: 64px;
+  height: var(--tool-card-desc-expand-height, 64px);
   opacity: 1;
   transform: translateY(-10px);
 }
@@ -190,7 +191,7 @@ defineProps({
   }
 
   .card:hover .card-title {
-    font-size: clamp(1rem, 0.92rem + 0.2vw, 1.16rem);
+    font-size: var(--tool-card-title-size, clamp(1rem, 0.92rem + 0.2vw, 1.16rem));
     background: none;
     -webkit-background-clip: border-box;
     background-clip: border-box;
@@ -201,34 +202,22 @@ defineProps({
     height: 0;
     opacity: 0;
   }
-}
-
-@media (max-width: 768px) {
-  .card {
-    max-width: none;
-    height: 204px;
-    border-radius: 20px;
-  }
 
   .content {
-    border-radius: 19px;
-    padding: 18px 16px;
+    justify-content: flex-start;
   }
 
-  .icon-container {
-    width: 50px;
-    height: 50px;
-    border-radius: 16px;
-  }
-
-  .card-title {
-    font-size: 0.98rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .card {
-    height: 214px;
+  .card-description,
+  .card:hover .card-description {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--tool-card-desc-lines, 2);
+    height: auto;
+    min-height: calc(var(--tool-card-desc-line-height, 1.5) * var(--tool-card-desc-lines, 2) * 1em);
+    padding: 0;
+    overflow: hidden;
+    opacity: 0.92;
+    transform: none;
   }
 }
 </style>

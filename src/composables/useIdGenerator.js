@@ -2,7 +2,6 @@ import { ref, reactive, computed, watch } from 'vue'
 import { areaData, getProvinces, getCities, getDistricts } from '../data/areaCodes.js'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
-import { useAccountStore } from '../stores/accountStore'
 
 // 身份证校验码权重因子（GB 11643-1999）
 const WEIGHTS = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]
@@ -168,7 +167,6 @@ function verifyIdNumber(id) {
 export function useIdGenerator() {
   const results = ref([])
   const copied = ref('')
-  const account = useAccountStore()
 
   const options = reactive({
     provinceCode: '',
@@ -209,7 +207,6 @@ export function useIdGenerator() {
    * 批量生成身份证号
    */
   const generate = async () => {
-    await account.consumeFeature('id-generator')
     const count = Math.min(Math.max(options.count, 1), 200)
     const list = []
     for (let i = 0; i < count; i++) {

@@ -2003,6 +2003,23 @@ const submitStudio = async (preset = '') => {
   --home-shadow-soft: 0 12px 28px rgba(90, 103, 145, 0.1);
   --home-shadow-hover: 0 26px 58px rgba(99, 102, 241, 0.14);
   --home-accent: #4f46e5;
+  --tool-grid-gap: clamp(14px, 1.9vw, 22px);
+  --tool-card-max-width: 300px;
+  --tool-card-height: clamp(194px, 20vw, 236px);
+  --tool-card-radius: clamp(20px, 2.2vw, 24px);
+  --tool-card-padding-y: clamp(18px, 2vw, 22px);
+  --tool-card-padding-x: clamp(16px, 1.8vw, 20px);
+  --tool-card-gap: clamp(8px, 1vw, 10px);
+  --tool-card-icon-box: clamp(48px, 4.5vw, 62px);
+  --tool-card-icon-radius: clamp(15px, 1.8vw, 18px);
+  --tool-card-title-size: clamp(0.96rem, 0.88rem + 0.28vw, 1.12rem);
+  --tool-card-title-hover-size: clamp(1.04rem, 0.96rem + 0.32vw, 1.22rem);
+  --tool-card-title-line-height: 1.32;
+  --tool-card-desc-size: clamp(0.82rem, 0.77rem + 0.18vw, 0.9rem);
+  --tool-card-desc-line-height: 1.58;
+  --tool-card-desc-pad-x: clamp(4px, 0.8vw, 8px);
+  --tool-card-desc-expand-height: 64px;
+  --tool-card-desc-lines: 2;
 
   position: relative;
   isolation: isolate;
@@ -3218,7 +3235,7 @@ const submitStudio = async (preset = '') => {
 .tools__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-  gap: clamp(14px, 2vw, 22px);
+  gap: var(--tool-grid-gap);
 }
 
 .tool-card__icon {
@@ -3334,13 +3351,36 @@ const submitStudio = async (preset = '') => {
 }
 
 @media (max-width: 820px) {
+  .home {
+    --tool-grid-gap: clamp(10px, 2.4vw, 14px);
+    --tool-card-max-width: none;
+    --tool-card-height: clamp(158px, 24vw, 190px);
+    --tool-card-radius: clamp(18px, 3.4vw, 22px);
+    --tool-card-padding-y: clamp(12px, 2.8vw, 16px);
+    --tool-card-padding-x: clamp(10px, 2.6vw, 14px);
+    --tool-card-gap: clamp(6px, 1.6vw, 8px);
+    --tool-card-icon-box: clamp(38px, 5.8vw, 46px);
+    --tool-card-icon-radius: clamp(12px, 2vw, 14px);
+    --tool-card-title-size: clamp(0.82rem, 1.55vw + 0.44rem, 0.94rem);
+    --tool-card-title-hover-size: clamp(0.84rem, 1.6vw + 0.46rem, 0.98rem);
+    --tool-card-desc-size: clamp(0.7rem, 1.1vw + 0.48rem, 0.78rem);
+    --tool-card-desc-line-height: 1.5;
+    --tool-card-desc-expand-height: 48px;
+  }
+
   .tools__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .category-head {
     align-items: flex-start;
     flex-direction: column;
+    padding: clamp(18px, 3.2vw, 22px);
+  }
+
+  .category-head__action {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -3383,7 +3423,21 @@ const submitStudio = async (preset = '') => {
 
 @media (max-width: 640px) {
   .home {
-    padding-inline: 16px;
+    --tool-grid-gap: clamp(10px, 3.1vw, 12px);
+    --tool-card-height: clamp(146px, 40vw, 176px);
+    --tool-card-radius: clamp(17px, 4.2vw, 20px);
+    --tool-card-padding-y: clamp(11px, 3vw, 14px);
+    --tool-card-padding-x: clamp(10px, 2.7vw, 12px);
+    --tool-card-gap: clamp(5px, 1.8vw, 7px);
+    --tool-card-icon-box: clamp(34px, 10vw, 40px);
+    --tool-card-icon-radius: clamp(11px, 3vw, 13px);
+    --tool-card-title-size: clamp(0.76rem, 2.7vw + 0.22rem, 0.88rem);
+    --tool-card-title-hover-size: clamp(0.8rem, 2.9vw + 0.22rem, 0.92rem);
+    --tool-card-desc-size: clamp(0.64rem, 2.3vw + 0.18rem, 0.74rem);
+    --tool-card-desc-line-height: 1.44;
+    --tool-card-desc-lines: 2;
+    --tool-card-desc-expand-height: 42px;
+    padding-inline: clamp(14px, 4vw, 16px);
     padding-bottom: 84px;
   }
 
@@ -3394,12 +3448,43 @@ const submitStudio = async (preset = '') => {
     border-radius: 24px;
   }
 
-  .hero-title {
-    font-size: clamp(2.4rem, 10vw, 4rem);
+  .category-head {
+    gap: 14px;
   }
 
-  .category-head__action {
-    width: 100%;
+  .category-head__main {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .category-head__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+  }
+
+  .category-head__icon-svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .category-head__text h3 {
+    margin-top: 4px;
+    font-size: 1.06rem;
+  }
+
+  .category-head__text p {
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+
+  .tool-card__icon {
+    width: clamp(18px, 5vw, 20px);
+    height: clamp(18px, 5vw, 20px);
+  }
+
+  .hero-title {
+    font-size: clamp(2.4rem, 10vw, 4rem);
   }
 
   .studio__meta,
@@ -3430,6 +3515,33 @@ const submitStudio = async (preset = '') => {
     height: 100vh;
     max-height: 100vh;
     border-radius: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .home {
+    --tool-grid-gap: clamp(8px, 2.8vw, 10px);
+    --tool-card-height: clamp(134px, 39vw, 150px);
+    --tool-card-padding-y: clamp(10px, 2.8vw, 12px);
+    --tool-card-padding-x: clamp(9px, 2.6vw, 11px);
+    --tool-card-icon-box: clamp(32px, 9.6vw, 36px);
+    --tool-card-title-size: clamp(0.72rem, 3vw + 0.12rem, 0.8rem);
+    --tool-card-title-hover-size: clamp(0.74rem, 3vw + 0.16rem, 0.84rem);
+    --tool-card-desc-size: clamp(0.6rem, 2.4vw + 0.14rem, 0.68rem);
+    --tool-card-desc-line-height: 1.38;
+    padding-inline: 14px;
+  }
+
+  .tools {
+    gap: 24px;
+  }
+
+  .tools__category {
+    gap: 14px;
+  }
+
+  .tools__grid {
+    gap: 10px;
   }
 }
 

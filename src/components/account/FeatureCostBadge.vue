@@ -6,7 +6,11 @@ import CreditBadge from './CreditBadge.vue'
 const props = defineProps({
   featureCode: {
     type: String,
-    required: true,
+    default: '',
+  },
+  value: {
+    type: [Number, String],
+    default: undefined,
   },
   small: {
     type: Boolean,
@@ -23,9 +27,14 @@ const props = defineProps({
 })
 
 const account = useAccountStore()
-const value = computed(() => account.getFeatureCost(props.featureCode))
+const resolvedValue = computed(() => (
+  props.value !== undefined && props.value !== null
+    ? props.value
+    : account.getFeatureCost(props.featureCode)
+))
+const displayValue = computed(() => Number(resolvedValue.value) === 0 ? '免费' : resolvedValue.value)
 </script>
 
 <template>
-  <CreditBadge :value="value" :small="small" :muted="muted" :strong="strong" />
+  <CreditBadge :value="displayValue" :small="small" :muted="muted" :strong="strong" />
 </template>

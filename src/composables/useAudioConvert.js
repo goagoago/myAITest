@@ -2,7 +2,6 @@ import { ref } from 'vue'
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { toBlobURL, fetchFile } from '@ffmpeg/util'
 import { saveAs } from 'file-saver'
-import { useAccountStore } from '../stores/accountStore'
 
 export function useAudioConvert() {
   const loading = ref(false)
@@ -10,7 +9,6 @@ export function useAudioConvert() {
   const progress = ref(0)
   const loaded = ref(false)
   const convertedFileName = ref('')
-  const account = useAccountStore()
   let ffmpeg = null
 
   const loadFFmpeg = async () => {
@@ -38,13 +36,6 @@ export function useAudioConvert() {
   }
 
   const convertAudio = async (file, targetFormat, options = {}) => {
-    try {
-      await account.consumeFeature('audio-convert')
-    } catch (e) {
-      error.value = e.message || '操作失败，请重试'
-      throw e
-    }
-
     loading.value = true
     error.value = null
     progress.value = 0

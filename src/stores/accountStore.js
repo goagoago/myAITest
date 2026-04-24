@@ -127,11 +127,6 @@ async function checkIn(month = state.currentMonth) {
   return applyDashboard(dashboard)
 }
 
-async function consumeFeature(featureCode, month = state.currentMonth) {
-  const dashboard = await accountApi.consumePoints(featureCode, month)
-  return applyDashboard(dashboard)
-}
-
 async function refreshFeedbacks() {
   if (!state.token) return []
   const feedbacks = await accountApi.getFeedbacks()
@@ -185,7 +180,6 @@ export function useAccountStore() {
     updateProfile,
     changePassword,
     checkIn,
-    consumeFeature,
     refreshFeedbacks,
     submitFeedback,
     redeemCode,

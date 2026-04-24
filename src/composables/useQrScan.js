@@ -1,5 +1,4 @@
 import { ref } from 'vue'
-import { useAccountStore } from '../stores/accountStore'
 
 export function useQrScan() {
   const loading = ref(false)
@@ -7,8 +6,6 @@ export function useQrScan() {
   const supported = ref(false)
   const supportChecked = ref(false)
   const results = ref([])
-  const account = useAccountStore()
-
   let detector = null
 
   const initDetector = async () => {
@@ -50,13 +47,6 @@ export function useQrScan() {
       error.value = '当前浏览器暂不支持二维码解析，请使用最新版 Chrome 或 Edge'
       results.value = []
       return []
-    }
-
-    try {
-      await account.consumeFeature('qr-scan')
-    } catch (e) {
-      error.value = e.message || '操作失败，请重试'
-      throw e
     }
 
     loading.value = true

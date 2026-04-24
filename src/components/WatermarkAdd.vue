@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
         </div>
         <p class="wm-upload-text">点击上传或拖拽图片到此处</p>
         <p class="wm-upload-hint">支持 JPG、PNG、WebP，最大 20MB &nbsp;|&nbsp; 也可直接 Ctrl+V 粘贴</p>
-        <FeatureCostBadge feature-code="watermark-removal" strong />
+        <FeatureCostBadge :value="0" strong />
       </div>
 
       <!-- 已上传 — 预览 + 操作 -->

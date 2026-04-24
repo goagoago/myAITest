@@ -10,15 +10,6 @@ export function useDocConvert() {
   const convertedFileName = ref('')
   const account = useAccountStore()
 
-  const consumeLocalFeature = async () => {
-    try {
-      await account.consumeFeature('doc-convert')
-    } catch (e) {
-      error.value = e.message || '操作失败，请重试'
-      throw e
-    }
-  }
-
   const syncAccount = () => {
     account.refreshDashboard().catch(() => {})
   }
@@ -105,7 +96,6 @@ export function useDocConvert() {
    * Markdown → Word
    */
   const convertMarkdownToWord = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10
@@ -238,7 +228,6 @@ export function useDocConvert() {
    * 图片 → PDF（支持多张合并）
    */
   const convertImagesToPdf = async (files) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -300,7 +289,6 @@ export function useDocConvert() {
    * PDF → 图片（逐页导出为 PNG）
    */
   const convertPdfToImages = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -354,7 +342,6 @@ export function useDocConvert() {
    * PDF → Excel（提取表格数据）
    */
   const convertPdfToExcel = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -426,7 +413,6 @@ export function useDocConvert() {
    * Word → Markdown
    */
   const convertWordToMarkdown = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -505,7 +491,6 @@ export function useDocConvert() {
    * HTML → Word
    */
   const convertHtmlToWord = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10
@@ -574,7 +559,6 @@ export function useDocConvert() {
    * TXT → PDF
    */
   const convertTxtToPdf = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10
@@ -631,7 +615,6 @@ export function useDocConvert() {
    * Excel → HTML（导出可视化 HTML 表格）
    */
   const convertExcelToHtml = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -687,7 +670,6 @@ export function useDocConvert() {
    * PDF → Markdown
    */
   const convertPdfToMarkdown = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -750,7 +732,6 @@ export function useDocConvert() {
    * PDF → HTML
    */
   const convertPdfToHtml = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -826,7 +807,6 @@ export function useDocConvert() {
    * PDF → TXT
    */
   const convertPdfToTxt = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -888,7 +868,6 @@ export function useDocConvert() {
    * Word → HTML
    */
   const convertWordToHtml = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -940,7 +919,6 @@ export function useDocConvert() {
    * Word → TXT
    */
   const convertWordToTxt = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 5
@@ -972,7 +950,6 @@ export function useDocConvert() {
    * Markdown → HTML
    */
   const convertMarkdownToHtml = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10
@@ -1024,7 +1001,6 @@ export function useDocConvert() {
    * HTML → Markdown
    */
   const convertHtmlToMarkdown = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10
@@ -1087,7 +1063,6 @@ export function useDocConvert() {
    * TXT → Word
    */
   const convertTxtToWord = async (file) => {
-    await consumeLocalFeature()
     loading.value = true
     error.value = null
     progress.value = 10

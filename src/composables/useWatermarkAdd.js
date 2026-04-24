@@ -1,5 +1,4 @@
 import { ref } from 'vue'
-import { useAccountStore } from '../stores/accountStore'
 
 export function useWatermarkAdd() {
   const PREVIEW_MAX_SIDE = 1600
@@ -39,7 +38,6 @@ export function useWatermarkAdd() {
   // 内部 canvas
   let offCanvas = null
   let offCtx = null
-  const account = useAccountStore()
 
   const loadImage = (file) => {
     return new Promise((resolve) => {
@@ -264,7 +262,6 @@ export function useWatermarkAdd() {
 
   const downloadResult = async () => {
     if (!sourceImage.value) return
-    await account.consumeFeature('watermark-removal')
     const url = renderPreview({ fullResolution: true })
     const link = document.createElement('a')
     link.href = url

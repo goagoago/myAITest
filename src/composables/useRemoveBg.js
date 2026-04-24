@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import { normalizeModelError } from '../services/modelError'
-import { useAccountStore } from '../stores/accountStore'
 
 export function useRemoveBg() {
   const sourceImage = ref(null)   // 原图 dataURL
@@ -13,7 +12,6 @@ export function useRemoveBg() {
   const bgMode = ref('transparent') // 'transparent' | 'color' | 'blur'
   const bgColor = ref('#ffffff')
   const composedImage = ref(null)   // 合成后的 dataURL
-  const account = useAccountStore()
 
   /**
    * 加载图片并执行 AI 抠图
@@ -22,13 +20,6 @@ export function useRemoveBg() {
     if (!file || !file.type.startsWith('image/')) {
       error.value = '请上传图片文件'
       return
-    }
-
-    try {
-      await account.consumeFeature('remove-bg')
-    } catch (e) {
-      error.value = e.message || '操作失败，请重试'
-      throw e
     }
 
     error.value = ''

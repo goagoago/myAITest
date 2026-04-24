@@ -1,7 +1,6 @@
 import { ref, reactive } from 'vue'
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { toBlobURL, fetchFile } from '@ffmpeg/util'
-import { useAccountStore } from '../stores/accountStore'
 
 export function useGifTools() {
   const loading = ref(false)
@@ -17,8 +16,6 @@ export function useGifTools() {
     originalSize: 0,
     outputSize: 0,
   })
-  const account = useAccountStore()
-
   let ffmpeg = null
 
   const loadFFmpeg = async () => {
@@ -45,13 +42,6 @@ export function useGifTools() {
   const convert = async (file, options = {}) => {
     if (!file) {
       throw new Error('请先选择文件')
-    }
-
-    try {
-      await account.consumeFeature('gif-tools')
-    } catch (e) {
-      error.value = e.message || '操作失败，请重试'
-      throw e
     }
 
     loading.value = true

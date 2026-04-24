@@ -282,7 +282,6 @@ export function useOcr() {
       } else if (engine === 'vision') {
         text = await recognizeWithVision(file)
       } else {
-        await account.consumeFeature('ocr')
         text = await recognizeWithTesseract(file, lang)
       }
       resultText.value = text

@@ -1,6 +1,5 @@
 import { ref, reactive } from 'vue'
 import * as XLSX from 'xlsx'
-import { useAccountStore } from '../stores/accountStore'
 
 export function useDataConvert() {
   const loading = ref(false)
@@ -15,8 +14,6 @@ export function useDataConvert() {
     rowCount: 0,
     colCount: 0,
   })
-  const account = useAccountStore()
-
   const convert = async ({ sourceType, targetType, file, text, options = {} }) => {
     loading.value = true
     error.value = ''
@@ -31,13 +28,6 @@ export function useDataConvert() {
       const cleanedRows = cleanRows(rows, options)
       if (!cleanedRows.length) {
         throw new Error('清洗后没有可用数据')
-      }
-
-      try {
-        await account.consumeFeature('data-convert')
-      } catch (e) {
-        error.value = e.message || '操作失败，请重试'
-        throw e
       }
 
       const blob = buildOutputBlob(cleanedRows, targetType, options)

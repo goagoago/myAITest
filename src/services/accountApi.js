@@ -55,12 +55,6 @@ export const accountApi = {
     auth: true,
   }),
 
-  consumePoints: (featureCode, month) => requestJson(withMonth('/api/account/points/consume', month), {
-    method: 'POST',
-    auth: true,
-    json: { featureCode },
-  }),
-
   redeemCode: (payload, month) => requestJson(withMonth('/api/account/redeem-code', month), {
     method: 'POST',
     auth: true,
