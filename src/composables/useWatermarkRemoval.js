@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { requestBlob } from '../services/apiClient'
+import { normalizeModelError } from '../services/modelError'
 import { useAccountStore } from '../stores/accountStore'
 
 export function useWatermarkRemoval() {
@@ -42,9 +43,10 @@ export function useWatermarkRemoval() {
       account.refreshDashboard().catch(() => {})
       return resultUrl
     } catch (e) {
-      error.value = e.message
+      const normalized = normalizeModelError(e)
+      error.value = normalized.message
       account.refreshDashboard().catch(() => {})
-      throw e
+      throw normalized
     } finally {
       loading.value = false
     }

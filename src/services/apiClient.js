@@ -77,7 +77,7 @@ const unwrapPayload = (payload, status) => {
 }
 
 const buildRequestInit = (options = {}) => {
-  const { method = 'GET', headers = {}, json, body, auth = false, featureCode } = options
+  const { method = 'GET', headers = {}, json, body, auth = false, featureCode, signal } = options
   const finalHeaders = { ...headers }
 
   if (featureCode) {
@@ -99,7 +99,7 @@ const buildRequestInit = (options = {}) => {
     requestBody = JSON.stringify(json)
   }
 
-  return { method, headers: finalHeaders, body: requestBody }
+  return { method, headers: finalHeaders, body: requestBody, signal }
 }
 
 const handleFailedResponse = async (response, options = {}) => {

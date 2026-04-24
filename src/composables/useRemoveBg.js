@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { normalizeModelError } from '../services/modelError'
 import { useAccountStore } from '../stores/accountStore'
 
 export function useRemoveBg() {
@@ -70,7 +71,7 @@ export function useRemoveBg() {
       composeWithBg()
     } catch (e) {
       console.error('AI 抠图失败:', e)
-      error.value = 'AI 抠图失败，请换一张图片重试'
+      error.value = normalizeModelError(e).message
       progress.value = ''
     } finally {
       loading.value = false

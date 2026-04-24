@@ -3,15 +3,12 @@ import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useResponsive } from '../composables/useResponsive'
 import {
-  Home, Plane, PenTool, Globe, Lightbulb, Sparkles, Zap, Eraser, FileText,
-  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Bot, Menu, X, Camera, QrCode, ScanLine, Scissors, CreditCard, Video, ScrollText,
-  UserRound, LogIn, LogOut
+  Home, Zap, Eraser, FileText,
+  ImageDown, MonitorPlay, ChevronDown, Image, Wrench, Menu, X, Camera, QrCode, ScanLine, Scissors, CreditCard, Video, ScrollText,
+  UserRound, LogIn, LogOut, FileSpreadsheet
 } from 'lucide-vue-next'
-import CursorEffect from '../components/CursorEffect.vue'
-import LottieInteractive from '../components/LottieInteractive.vue'
-import toolboxAnim from '../assets/lottie/toolbox.js'
+import ToolsBoxMark from '../components/brand/ToolsBoxMark.vue'
 import PageLoader from '../components/PageLoader.vue'
-import SiteSceneBackground from '../components/SiteSceneBackground.vue'
 import { AUTH_REQUIRED_EVENT } from '../services/apiClient'
 import { useAccountStore } from '../stores/accountStore'
 import CreditBadge from '../components/account/CreditBadge.vue'
@@ -28,6 +25,8 @@ const isLoggedIn = computed(() => account.isLoggedIn.value)
 const accountName = computed(() => account.displayName.value)
 const accountEmail = computed(() => account.profile.value?.username || '')
 const accountBalance = computed(() => account.pointsBalance.value)
+const flatToolRoutes = new Set(['/qr-scan', '/media/gif', '/data-convert'])
+const isFlatToolRoute = computed(() => flatToolRoutes.has(route.path))
 
 // 全局加载逻辑
 let loadingTimer = null
@@ -67,6 +66,7 @@ const navGroups = [
       { path: '/media/compress', label: '视频压缩', icon: Video, desc: '浏览器端压缩' },
       { path: '/media/record', label: '屏幕录制', icon: MonitorPlay, desc: '浏览器端录屏' },
       { path: '/media/audio-convert', label: '音频转换', icon: FileText, desc: '多种格式互转' },
+      { path: '/media/gif', label: 'GIF 工具', icon: Video, desc: '视频转GIF/动图压缩' },
     ],
   },
   {
@@ -75,21 +75,12 @@ const navGroups = [
     icon: Wrench,
     children: [
       { path: '/doc-convert', label: '文档转换', icon: FileText, desc: '7种格式互转' },
+      { path: '/data-convert', label: '数据转换', icon: FileSpreadsheet, desc: 'Excel/CSV/JSON互转' },
       { path: '/qr-code', label: 'QR码生成', icon: QrCode, desc: '二维码生成美化' },
+      { path: '/qr-scan', label: '二维码解析', icon: ScanLine, desc: '上传图片直接扫码' },
       { path: '/ocr', label: 'OCR识别', icon: ScanLine, desc: '图片文字识别' },
       { path: '/id-generator', label: '身份证号', icon: CreditCard, desc: '随机号码生成' },
       { path: '/resume-builder', label: '简历工坊', icon: ScrollText, desc: 'Markdown编辑与PDF导出' },
-    ],
-  },
-  {
-    id: 'ai',
-    label: 'AI 助手',
-    icon: Bot,
-    children: [
-      { path: '/travel', label: '旅行规划', icon: Plane, desc: '智能行程方案' },
-      { path: '/writer', label: '写作助手', icon: PenTool, desc: '润色续写改写' },
-      { path: '/translator', label: '翻译专家', icon: Globe, desc: '多语言翻译' },
-      { path: '/mind', label: '头脑风暴', icon: Lightbulb, desc: '创意思维拓展' },
     ],
   },
 ]
@@ -186,30 +177,29 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="layout" :class="{ 'layout--mobile': isMobile, 'layout--desktop': !isMobile }">
-    <SiteSceneBackground />
-
+  <div
+    class="layout"
+    :class="{
+      'layout--mobile': isMobile,
+      'layout--desktop': !isMobile,
+      'layout--flat-tools': isFlatToolRoute,
+    }"
+  >
     <!-- 全局加载动画 -->
     <PageLoader v-if="isLoading" />
-
-    <!-- 自定义光标 -->
-    <CursorEffect />
 
     <!-- 顶部导航 — 新拟物凸起 -->
     <header class="navbar" :class="{ 'navbar--scrolled': scrolled }">
       <div class="navbar__inner">
-        <!-- Logo — Lottie动画 -->
+        <!-- Logo -->
         <router-link to="/" class="logo">
           <div class="logo__icon-wrap">
-            <LottieInteractive
-              :animation-data="toolboxAnim"
-              trigger="hover"
-              :loop="false"
-              width="100%"
-              height="100%"
-            />
+            <ToolsBoxMark />
           </div>
-          <span class="logo__text">Tools Box</span>
+          <span class="logo__text">
+            <span>Tools</span>
+            <span class="logo__text-accent">Box</span>
+          </span>
         </router-link>
 
         <!-- 桌面端导航 — 新拟物分段器 -->
@@ -240,7 +230,10 @@ onUnmounted(() => {
             </button>
 
             <Transition name="dropdown">
-              <div v-if="openDropdown === group.id" class="dropdown">
+              <div
+                v-if="openDropdown === group.id"
+                :class="['dropdown', { 'dropdown--wide': group.children.length > 3 }]"
+              >
                 <button
                   v-for="item in group.children"
                   :key="item.path"
@@ -413,9 +406,9 @@ onUnmounted(() => {
   background: transparent;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   导航栏 — 新拟物凸起
-   ═══════════════════════════════════════════════════════════ */
+.layout--flat-tools {
+  background: #f6f7f9;
+}
 
 .navbar {
   position: fixed;
@@ -423,8 +416,10 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   z-index: 1000;
-  padding: 12px 0;
-  transition: all 0.4s var(--transition-smooth);
+  padding: 10px 0;
+  background: rgba(249, 250, 251, 0.94);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  transition: padding 0.24s ease, background-color 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
 }
 
 .navbar,
@@ -448,19 +443,27 @@ onUnmounted(() => {
   padding-top: clamp(78px, 8vw, 98px);
 }
 
+.layout--flat-tools .main {
+  padding-top: 18px;
+}
+
 .page-frame {
   width: 100%;
   min-height: calc(100vh - clamp(78px, 8vw, 98px));
 }
 
+.layout--flat-tools .page-frame {
+  min-height: calc(100vh - 18px);
+}
+
+.layout--flat-tools .navbar {
+  background: rgba(249, 250, 251, 0.98);
+}
+
 .navbar--scrolled {
   padding: 8px 0;
-  background: rgba(245, 249, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow:
-    0 12px 32px rgba(121, 137, 168, 0.16),
-    0 1px 0 rgba(255, 255, 255, 0.65);
+  background: rgba(249, 250, 251, 0.98);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
 }
 
 .navbar__inner {
@@ -480,7 +483,6 @@ onUnmounted(() => {
   margin-left: auto;
 }
 
-/* Logo — 新拟物凸起 */
 .logo {
   display: flex;
   align-items: center;
@@ -495,83 +497,77 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--neo-surface-raised);
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.96);
   border-radius: 14px;
-  box-shadow:
-    4px 4px 12px rgba(0, 0, 0, 0.5),
-    -3px -3px 10px rgba(255, 255, 255, 0.03),
-    inset 0 1px 1px rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(16, 185, 129, 0.15);
-  transition: all 0.35s var(--transition-bounce);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
 }
 
 .logo:hover .logo__icon-wrap {
-  transform: scale(1.08) rotate(-5deg);
-  box-shadow:
-    6px 6px 18px rgba(0, 0, 0, 0.5),
-    -4px -4px 12px rgba(255, 255, 255, 0.04),
-    0 0 20px rgba(16, 185, 129, 0.2);
-  border-color: rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  border-color: rgba(100, 116, 139, 0.22);
 }
 
 .logo__text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
   font-size: var(--text-xl);
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.03em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   桌面端导航 — 新拟物分段器
-   ═══════════════════════════════════════════════════════════ */
+.logo__text-accent {
+  color: #2563eb;
+}
 
 .nav {
   display: flex;
-  gap: clamp(2px, 0.4vw, 4px);
-  padding: clamp(4px, 0.5vw, 6px);
-  background: var(--neo-surface);
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  gap: 6px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 16px;
-  box-shadow:
-    var(--neo-shadow-up-sm),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
 .nav__link {
   display: flex;
   align-items: center;
   gap: clamp(5px, 0.8vw, 8px);
-  padding: clamp(8px, 0.9vw, 10px) clamp(10px, 1.6vw, 16px);
+  padding: 10px 14px;
   border-radius: 12px;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #5b677a;
   transition: all 0.25s var(--transition-smooth);
   text-decoration: none;
   position: relative;
-  background: none;
-  border: none;
-  cursor: none;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
   white-space: nowrap;
 }
 
 .nav__link:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: var(--neo-shadow-up-sm);
+  color: #111827;
+  background: rgba(241, 245, 249, 0.96);
+  border-color: rgba(148, 163, 184, 0.18);
 }
 
 .nav__link--active {
-  color: var(--primary);
-  background: var(--neo-bg-dark);
-  box-shadow: var(--neo-shadow-down-sm);
+  color: #111827;
+  background: rgba(226, 232, 240, 0.95);
+  border-color: rgba(148, 163, 184, 0.26);
 }
 
 .nav__link--active .nav__icon {
-  color: var(--primary);
-  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4));
+  color: #111827;
 }
 
 .nav__icon {
@@ -606,11 +602,11 @@ onUnmounted(() => {
 .auth-cta,
 .account-trigger {
   min-height: 46px;
-  border: 1px solid rgba(108, 122, 156, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 16px;
-  background: rgba(252, 254, 255, 0.86);
-  color: #1b3157;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 16px 28px rgba(111, 126, 159, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  color: #111827;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
 .auth-cta {
@@ -621,10 +617,7 @@ onUnmounted(() => {
   padding: 0 16px;
   font-weight: 800;
   cursor: pointer;
-}
-
-.auth-cta {
-  background: linear-gradient(135deg, #0f172a, #2563eb 62%, #10b981);
+  background: #111827;
   color: #fff;
 }
 
@@ -637,7 +630,8 @@ onUnmounted(() => {
 }
 
 .account-trigger--active {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 18px 34px rgba(37, 99, 235, 0.18);
+  border-color: rgba(100, 116, 139, 0.28);
+  background: rgba(248, 250, 252, 0.98);
 }
 
 .account-trigger__name {
@@ -656,30 +650,31 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #111827, #2563eb);
+  background: #111827;
   color: #fff;
   font-size: 0.92rem;
   font-weight: 800;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   下拉菜单 — 新拟物3D浮起
-   ═══════════════════════════════════════════════════════════ */
-
 .dropdown {
   position: absolute;
-  top: calc(100% + 14px);
+  top: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
   min-width: clamp(210px, 18vw, 260px);
   padding: 8px;
-  background: var(--neo-surface);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
-  box-shadow:
-    var(--neo-shadow-up-lg),
-    0 0 0 1px rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
   z-index: 1200;
+}
+
+.dropdown--wide {
+  min-width: min(520px, calc(100vw - 48px));
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .dropdown--account {
@@ -700,7 +695,7 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 10px;
   padding: 10px 12px 14px;
-  color: #445674;
+  color: #64748b;
   font-size: 0.86rem;
 }
 
@@ -716,7 +711,7 @@ onUnmounted(() => {
   border-radius: 13px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #111827, #2563eb);
+  background: #111827;
   color: #fff;
   font-size: 0.92rem;
   font-weight: 800;
@@ -733,15 +728,8 @@ onUnmounted(() => {
   font-size: 0.78rem;
 }
 
-/* 下拉菜单装饰线 */
 .dropdown::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 20px;
-  right: 20px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
+  content: none;
 }
 
 .dropdown__item {
@@ -753,19 +741,23 @@ onUnmounted(() => {
   border-radius: 12px;
   background: none;
   border: none;
-  cursor: none;
+  cursor: pointer;
   transition: all 0.25s;
   text-align: left;
 }
 
+.dropdown--wide .dropdown__item {
+  align-items: flex-start;
+  min-height: 76px;
+  margin-bottom: 0;
+}
+
 .dropdown__item:hover {
-  background: var(--neo-bg-dark);
-  box-shadow: var(--neo-shadow-down-sm);
+  background: rgba(241, 245, 249, 0.96);
 }
 
 .dropdown__item--active {
-  background: var(--neo-bg-dark);
-  box-shadow: var(--neo-shadow-down-sm);
+  background: rgba(226, 232, 240, 0.92);
 }
 
 .dropdown__icon {
@@ -774,12 +766,12 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--neo-surface-raised);
+  background: rgba(241, 245, 249, 0.96);
   border-radius: 11px;
   color: var(--text-secondary);
   flex-shrink: 0;
   transition: all 0.25s;
-  box-shadow: var(--neo-shadow-up-sm);
+  box-shadow: none;
 }
 
 .dropdown__icon-svg {
@@ -788,22 +780,20 @@ onUnmounted(() => {
 }
 
 .dropdown__item:hover .dropdown__icon {
-  background: linear-gradient(145deg, #12c98e, #0ea572);
-  color: white;
-  box-shadow:
-    var(--neo-shadow-up-sm),
-    0 0 12px rgba(16, 185, 129, 0.3);
+  background: rgba(219, 234, 254, 0.96);
+  color: #2563eb;
 }
 
 .dropdown__item--active .dropdown__icon {
-  background: linear-gradient(145deg, #12c98e, #0ea572);
-  color: white;
+  background: rgba(219, 234, 254, 0.96);
+  color: #2563eb;
 }
 
 .dropdown__text {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .dropdown__name {
@@ -815,14 +805,15 @@ onUnmounted(() => {
 .dropdown__desc {
   font-size: var(--text-xs);
   color: var(--text-muted);
+  line-height: 1.45;
 }
 
 /* 下拉菜单动画 */
 .dropdown-enter-active {
-  transition: opacity 0.25s, transform 0.3s var(--transition-bounce);
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
 .dropdown-leave-active {
-  transition: opacity 0.15s, transform 0.15s;
+  transition: opacity 0.14s ease, transform 0.14s ease;
 }
 .dropdown-enter-from {
   opacity: 0;
@@ -843,13 +834,13 @@ onUnmounted(() => {
   justify-content: center;
   width: var(--touch-target);
   height: var(--touch-target);
-  background: var(--neo-surface);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 14px;
-  box-shadow: var(--neo-shadow-up-sm);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
   color: var(--text-secondary);
-  cursor: none;
-  transition: all 0.3s;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .mobile-toggle__icon {
@@ -858,20 +849,18 @@ onUnmounted(() => {
 }
 
 .mobile-toggle:hover {
-  box-shadow: var(--neo-shadow-up);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
   color: var(--text-primary);
 }
 
 .mobile-toggle:active {
-  box-shadow: var(--neo-shadow-pressed);
   transform: scale(0.95);
 }
 
 .mobile-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.28);
   z-index: 150;
 }
 
@@ -882,9 +871,9 @@ onUnmounted(() => {
   width: min(88vw, 320px);
   height: 100vh;
   height: 100dvh;
-  background: var(--neo-bg);
-  border-left: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.98);
+  border-left: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: -12px 0 28px rgba(15, 23, 42, 0.08);
   z-index: 200;
   padding: max(76px, calc(env(safe-area-inset-top) + 56px)) 20px max(20px, env(safe-area-inset-bottom)) 20px;
   overflow-y: auto;
@@ -901,8 +890,8 @@ onUnmounted(() => {
   gap: 12px;
   padding: 14px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(133, 146, 176, 0.14);
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.16);
   margin-bottom: 10px;
 }
 
@@ -923,7 +912,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #111827, #2563eb);
+  background: #111827;
   color: #fff;
   font-weight: 800;
 }
@@ -945,7 +934,7 @@ onUnmounted(() => {
   min-height: 44px;
   border: none;
   border-radius: 14px;
-  background: linear-gradient(135deg, #0f172a, #2563eb 62%, #10b981);
+  background: #111827;
   color: #fff;
   font-weight: 700;
 }
@@ -980,7 +969,7 @@ onUnmounted(() => {
   border-radius: 14px;
   background: none;
   border: none;
-  cursor: none;
+  cursor: pointer;
   font-size: var(--text-md);
   font-weight: 500;
   color: var(--text-secondary);
@@ -996,14 +985,12 @@ onUnmounted(() => {
 }
 
 .mobile-menu__link:hover {
-  background: var(--neo-surface);
-  box-shadow: var(--neo-shadow-up-sm);
+  background: rgba(241, 245, 249, 0.96);
   color: var(--text-primary);
 }
 
 .mobile-menu__link--active {
-  background: var(--neo-bg-dark);
-  box-shadow: var(--neo-shadow-down-sm);
+  background: rgba(226, 232, 240, 0.92);
   color: var(--primary);
 }
 
@@ -1018,10 +1005,10 @@ onUnmounted(() => {
 }
 
 .slide-enter-active {
-  transition: transform 0.35s var(--transition-bounce);
+  transition: transform 0.22s ease;
 }
 .slide-leave-active {
-  transition: transform 0.25s;
+  transition: transform 0.18s ease;
 }
 .slide-enter-from,
 .slide-leave-to {
@@ -1055,7 +1042,7 @@ onUnmounted(() => {
   align-items: center;
   gap: clamp(12px, 1.8vw, 16px);
   padding: clamp(20px, 3vw, 28px) 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .footer__brand {
@@ -1065,27 +1052,22 @@ onUnmounted(() => {
   font-size: var(--text-lg);
   font-weight: 700;
   color: var(--text-primary);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .footer__logo-dot {
   width: clamp(8px, 0.8vw, 10px);
   height: clamp(8px, 0.8vw, 10px);
-  background: linear-gradient(145deg, #12c98e, #0ea572);
+  background: #2563eb;
   border-radius: 50%;
-  box-shadow:
-    2px 2px 5px rgba(0, 0, 0, 0.3),
-    -1px -1px 3px rgba(16, 185, 129, 0.15),
-    0 0 10px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.06);
 }
 
-/* 页面切换 3D 动画 */
 .page3d-enter-active {
-  animation: page3DIn 0.45s var(--transition-smooth);
+  animation: page3DIn 0.28s var(--transition-smooth);
 }
 
 .page3d-leave-active {
-  animation: page3DOut 0.25s ease;
+  animation: page3DOut 0.18s ease;
 }
 
 .layout--mobile .nav {
@@ -1107,5 +1089,22 @@ onUnmounted(() => {
 .layout--mobile .mobile-menu {
   width: min(100vw, 360px);
   border-left: none;
+}
+
+@media (max-width: 980px) {
+  .dropdown--wide {
+    min-width: min(420px, calc(100vw - 40px));
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout--flat-tools .main {
+    padding-top: 12px;
+  }
+
+  .layout--flat-tools .page-frame {
+    min-height: calc(100vh - 12px);
+  }
 }
 </style>

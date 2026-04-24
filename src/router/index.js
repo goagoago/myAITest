@@ -15,12 +15,15 @@ const MediaTools = () => import('../views/MediaTools.vue')
 const VideoCompress = () => import('../views/VideoCompress.vue')
 const ScreenRecord = () => import('../views/ScreenRecord.vue')
 const AudioConvert = () => import('../views/AudioConvert.vue')
+const GifTools = () => import('../views/GifTools.vue')
 const IdPhoto = () => import('../views/IdPhoto.vue')
 const QrCode = () => import('../views/QrCode.vue')
+const QrScan = () => import('../views/QrScan.vue')
 const OcrRecognition = () => import('../views/OcrRecognition.vue')
 const RemoveBg = () => import('../views/RemoveBg.vue')
 const IdGenerator = () => import('../views/IdGenerator.vue')
 const ResumeBuilder = () => import('../views/ResumeBuilder.vue')
+const DataConvert = () => import('../views/DataConvert.vue')
 
 const routes = [
   {
@@ -105,7 +108,19 @@ const routes = [
         component: AudioConvert,
         meta: { featureCode: 'audio-convert' },
       },
+      {
+        path: 'gif',
+        name: 'GifTools',
+        component: GifTools,
+        meta: { featureCode: 'gif-tools' },
+      },
     ]
+  },
+  {
+    path: '/data-convert',
+    name: 'DataConvert',
+    component: DataConvert,
+    meta: { featureCode: 'data-convert' },
   },
   {
     path: '/id-photo',
@@ -118,6 +133,12 @@ const routes = [
     name: 'QrCode',
     component: QrCode,
     meta: { featureCode: 'qr-code' },
+  },
+  {
+    path: '/qr-scan',
+    name: 'QrScan',
+    component: QrScan,
+    meta: { featureCode: 'qr-scan' },
   },
   {
     path: '/ocr',

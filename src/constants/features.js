@@ -6,8 +6,11 @@ export const FEATURE_CATALOG = [
   { code: 'video-compress', name: '视频压缩', category: '音视频工具', description: '浏览器端压缩视频并导出', cost: 2 },
   { code: 'screen-record', name: '屏幕录制', category: '音视频工具', description: '录制屏幕、系统声音与麦克风', cost: 1 },
   { code: 'audio-convert', name: '音频转换', category: '音视频工具', description: '浏览器端转换音频格式', cost: 1 },
+  { code: 'gif-tools', name: 'GIF 工具', category: '音视频工具', description: '视频转 GIF、GIF 压缩与 GIF 转 MP4', cost: 1 },
   { code: 'doc-convert', name: '文档转换', category: '文档与效率', description: '服务端完成文档格式互转', cost: 2 },
+  { code: 'data-convert', name: '数据转换', category: '文档与效率', description: 'Excel、CSV、JSON 互转与清洗', cost: 1 },
   { code: 'qr-code', name: '二维码生成', category: '文档与效率', description: '生成并美化二维码', cost: 1 },
+  { code: 'qr-scan', name: '二维码解析', category: '文档与效率', description: '解析图片中的二维码内容', cost: 1 },
   { code: 'ocr', name: 'OCR 识别', category: '文档与效率', description: '识别图片或 PDF 文字', cost: 2 },
   { code: 'id-generator', name: '身份证号生成', category: '文档与效率', description: '按规则批量生成测试身份证号', cost: 1 },
   { code: 'resume-builder', name: 'AI 简历工坊', category: '文档与效率', description: 'AI 简历整理、润色和评审', cost: 3 },
@@ -15,6 +18,8 @@ export const FEATURE_CATALOG = [
   { code: 'writer', name: '写作助手', category: 'AI 助手', description: '润色、扩写和续写文本', cost: 3 },
   { code: 'translator', name: '翻译专家', category: 'AI 助手', description: '多语言翻译与表达优化', cost: 3 },
   { code: 'mind', name: '头脑风暴', category: 'AI 助手', description: '创意发散与问题拆解', cost: 3 },
+  { code: 'ai-chat', name: 'AI 聊天', category: 'AI 助手', description: '首页通用对话、问答和方案整理', cost: 3 },
+  { code: 'ai-image', name: 'AI 生图', category: 'AI 助手', description: '输入提示词生成图片和视觉草图', cost: 5 },
 ]
 
 export const FEATURE_MAP = FEATURE_CATALOG.reduce((acc, item) => {

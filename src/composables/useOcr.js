@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { createWorker, PSM } from 'tesseract.js'
 import { aiClient } from '../services/aiClient'
+import { normalizeModelError } from '../services/modelError'
 import { requestJson } from '../services/apiClient'
 import { useAccountStore } from '../stores/accountStore'
 
@@ -290,12 +291,7 @@ export function useOcr() {
       }
     } catch (e) {
       console.error('OCR 识别失败:', e)
-      const msgs = {
-        paddle: 'PaddleOCR 识别失败（' + e.message + '），请检查后端服务是否启动',
-        vision: 'AI 识别失败（' + e.message + '），请切换到其他模式重试',
-        local: 'OCR 识别失败，请重试或更换图片',
-      }
-      error.value = e.status ? e.message : (msgs[engine] || e.message)
+      error.value = normalizeModelError(e).message
       if (engine !== 'local') {
         account.refreshDashboard().catch(() => {})
       }

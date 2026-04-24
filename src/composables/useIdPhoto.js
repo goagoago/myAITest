@@ -1,5 +1,6 @@
 import { ref, computed, watch } from 'vue'
 import { saveAs } from 'file-saver'
+import { normalizeModelError } from '../services/modelError'
 import { useAccountStore } from '../stores/accountStore'
 
 /**
@@ -136,7 +137,7 @@ export function useIdPhoto() {
       renderOutput()
     } catch (e) {
       console.error('AI 抠图失败:', e)
-      processError.value = 'AI 人像识别失败，请换一张照片重试'
+      processError.value = normalizeModelError(e).message
       processProgress.value = ''
     } finally {
       processing.value = false

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   UserRoundPlus, LogIn, Sparkles, RefreshCw, MailCheck
@@ -38,10 +38,14 @@ const registerForm = ref({
   confirmPassword: '',
 })
 
-const redirectTarget = computed(() => {
-  const redirect = route.query.redirect
-  return typeof redirect === 'string' && redirect ? redirect : '/'
-})
+const normalizeRedirect = (redirect) => {
+  if (typeof redirect !== 'string' || !redirect.trim()) return '/'
+  if (!redirect.startsWith('/')) return '/'
+  if (redirect === '/auth' || redirect.startsWith('/auth?')) return '/'
+  return redirect
+}
+
+const redirectTarget = computed(() => normalizeRedirect(route.query.redirect))
 
 watch(() => route.query.mode, (mode) => {
   activeTab.value = mode === 'register' ? 'register' : 'login'
@@ -55,9 +59,20 @@ watch(activeTab, (tab) => {
   verifyAnswer.value = ''
 })
 
-watch(() => account.isLoggedIn.value, (loggedIn) => {
+const navigateAfterAuth = async () => {
+  const target = redirectTarget.value
+  try {
+    await router.replace(target)
+  } catch {
+    if (target !== '/') {
+      await router.replace('/')
+    }
+  }
+}
+
+watch(() => account.isLoggedIn.value, async (loggedIn) => {
   if (loggedIn) {
-    router.replace(redirectTarget.value)
+    await navigateAfterAuth()
   }
 }, { immediate: true })
 
@@ -119,7 +134,8 @@ const submitLogin = async () => {
       email: loginForm.value.email,
       password: loginForm.value.password,
     })
-    router.replace(redirectTarget.value)
+    await nextTick()
+    await navigateAfterAuth()
   } catch (error) {
     formError.value = error.message
   } finally {
@@ -163,7 +179,8 @@ const submitRegister = async () => {
       emailCode: registerForm.value.emailCode,
       password: registerForm.value.password,
     })
-    router.replace(redirectTarget.value)
+    await nextTick()
+    await navigateAfterAuth()
   } catch (error) {
     formError.value = error.message
   } finally {

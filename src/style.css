@@ -1,6 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   NEUMORPHIC 3D THEME — 新拟物3D主题
-   深色基底 + 柔和阴影凸凹 + 翡翠绿/琥珀金双色
+   Utility UI Theme — restrained and product-like
    ═══════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap');
@@ -18,14 +17,14 @@
   --card-radius: 24px;
   --touch-target: clamp(40px, 5vw, 46px);
 
-  --text-xs: clamp(0.7rem, 0.62rem + 0.32vw, 0.88rem);
-  --text-sm: clamp(0.82rem, 0.72rem + 0.38vw, 1rem);
-  --text-md: clamp(0.95rem, 0.82rem + 0.48vw, 1.16rem);
-  --text-lg: clamp(1.1rem, 0.94rem + 0.72vw, 1.46rem);
-  --text-xl: clamp(1.34rem, 1.08rem + 1.1vw, 2rem);
+  --text-xs: clamp(0.68rem, 0.6rem + 0.28vw, 0.84rem);
+  --text-sm: clamp(0.78rem, 0.7rem + 0.34vw, 0.96rem);
+  --text-md: clamp(0.9rem, 0.8rem + 0.42vw, 1.08rem);
+  --text-lg: clamp(1.04rem, 0.9rem + 0.62vw, 1.36rem);
+  --text-xl: clamp(1.26rem, 1.04rem + 0.96vw, 1.86rem);
   --text-hero: clamp(2rem, 1.2rem + 4.8vw, 5.4rem);
 
-  --text-title: clamp(1.5rem, 1rem + 2vw, 3rem);
+  --text-title: clamp(1.42rem, 0.98rem + 1.8vw, 2.8rem);
 
   --icon-xs: clamp(14px, 12px + 0.3vw, 16px);
   --icon-sm: clamp(16px, 14px + 0.35vw, 18px);
@@ -35,59 +34,45 @@
   --icon-fluid: clamp(14px, 9px + 1.6vw, 30px);
 
   /* 主色 */
-  --primary: #10b981;
-  --primary-rgb: 16, 185, 129;
-  --primary-light: rgba(16, 185, 129, 0.15);
-  --accent: #f59e0b;
-  --accent-rgb: 245, 158, 11;
+  --primary: #2563eb;
+  --primary-rgb: 37, 99, 235;
+  --primary-light: rgba(37, 99, 235, 0.12);
+  --accent: #0f766e;
+  --accent-rgb: 15, 118, 110;
 
-  /* 新拟物底色系统 — 浅色层次 */
-  --neo-bg: rgba(239, 244, 251, 0.94);
-  --neo-bg-light: rgba(247, 250, 255, 0.98);
-  --neo-bg-dark: rgba(221, 230, 242, 0.98);
-  --neo-surface: rgba(243, 247, 253, 0.94);
-  --neo-surface-raised: rgba(255, 255, 255, 0.98);
+  /* 共享浅色面板 */
+  --neo-bg: #f5f6f8;
+  --neo-bg-light: #ffffff;
+  --neo-bg-dark: #eef1f4;
+  --neo-surface: rgba(255, 255, 255, 0.98);
+  --neo-surface-raised: #ffffff;
 
-  /* 新拟物阴影系统 */
-  --neo-shadow-up:
-    10px 14px 30px rgba(121, 137, 168, 0.16),
-    -8px -8px 22px rgba(255, 255, 255, 0.75);
-  --neo-shadow-up-sm:
-    6px 8px 18px rgba(121, 137, 168, 0.12),
-    -4px -4px 12px rgba(255, 255, 255, 0.72);
-  --neo-shadow-up-lg:
-    18px 22px 44px rgba(121, 137, 168, 0.2),
-    -12px -12px 28px rgba(255, 255, 255, 0.82);
-  --neo-shadow-down:
-    inset 4px 4px 12px rgba(175, 188, 214, 0.34),
-    inset -5px -5px 12px rgba(255, 255, 255, 0.84);
-  --neo-shadow-down-sm:
-    inset 2px 2px 6px rgba(175, 188, 214, 0.28),
-    inset -2px -2px 6px rgba(255, 255, 255, 0.82);
-  --neo-shadow-pressed:
-    inset 4px 4px 10px rgba(175, 188, 214, 0.32),
-    inset -3px -3px 9px rgba(255, 255, 255, 0.8);
+  --neo-shadow-up: 0 10px 24px rgba(15, 23, 42, 0.06);
+  --neo-shadow-up-sm: 0 4px 12px rgba(15, 23, 42, 0.05);
+  --neo-shadow-up-lg: 0 16px 32px rgba(15, 23, 42, 0.08);
+  --neo-shadow-down: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --neo-shadow-down-sm: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  --neo-shadow-pressed: inset 0 1px 3px rgba(148, 163, 184, 0.12);
 
-  /* 发光阴影 */
-  --neo-glow-primary: 0 0 20px rgba(16, 185, 129, 0.25), 0 0 60px rgba(16, 185, 129, 0.1);
-  --neo-glow-accent: 0 0 20px rgba(245, 158, 11, 0.25), 0 0 60px rgba(245, 158, 11, 0.1);
+  --neo-glow-primary: 0 0 0 transparent;
+  --neo-glow-accent: 0 0 0 transparent;
 
   /* 渐变 */
-  --gradient-1: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --gradient-2: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  --gradient-3: linear-gradient(135deg, #10b981 0%, #f59e0b 100%);
-  --gradient-4: linear-gradient(135deg, #34d399 0%, #6ee7b7 100%);
-  --gradient-5: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  --gradient-1: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  --gradient-2: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  --gradient-3: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
+  --gradient-4: linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%);
+  --gradient-5: linear-gradient(135deg, #34d399 0%, #2dd4bf 100%);
   --gradient-bg: var(--neo-bg);
 
   /* 文本 */
-  --text-primary: #182235;
-  --text-secondary: rgba(42, 55, 80, 0.86);
-  --text-muted: rgba(89, 102, 128, 0.88);
+  --text-primary: #111827;
+  --text-secondary: rgba(31, 41, 55, 0.84);
+  --text-muted: rgba(100, 116, 139, 0.9);
 
   /* 边框 */
-  --border: rgba(101, 118, 151, 0.24);
-  --border-hover: rgba(78, 96, 132, 0.38);
+  --border: rgba(148, 163, 184, 0.26);
+  --border-hover: rgba(100, 116, 139, 0.36);
 
   /* 字体 */
   font-family: 'Outfit', 'Noto Sans SC', -apple-system, sans-serif;
@@ -96,10 +81,10 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* 3D 变量 */
+  /* 交互节奏 */
   --perspective: 1200px;
   --tilt-max: 8deg;
-  --transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-bounce: cubic-bezier(0.2, 0.8, 0.2, 1);
   --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -113,48 +98,26 @@
 html {
   scroll-behavior: smooth;
   overflow-x: clip;
-  font-size: clamp(11px, 1.2vw + 7px, 22px);
+  font-size: clamp(8.8px, 0.88vw + 5.5px, 18px);
 }
 
 body {
   min-height: 100vh;
   min-height: 100dvh;
-  background: transparent;
+  background: #f6f7f9;
   color: var(--text-primary);
   overflow-x: hidden;
   position: relative;
-  cursor: none; /* 隐藏默认光标，用自定义光标 */
+  cursor: auto;
   font-size: var(--text-md);
 }
 
-/* 移动端恢复默认光标 */
-@media (pointer: coarse) {
-  body { cursor: auto; }
-}
-
-/* 深色纹理背景 — 微妙噪声感 */
 body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 10% 90%, rgba(16, 185, 129, 0.05) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 90% 10%, rgba(79, 70, 229, 0.04) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: -1;
+  content: none;
 }
 
-/* 细密网格纹理 — 增强拟物质感 */
 body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(99, 115, 154, 0.08) 1px, transparent 0);
-  background-size: 32px 32px;
-  pointer-events: none;
-  z-index: 0;
+  content: none;
 }
 
 #app {
@@ -233,8 +196,8 @@ select {
   .tabs,
   .translate-grid
 ) {
-  backdrop-filter: blur(16px) saturate(115%);
-  -webkit-backdrop-filter: blur(16px) saturate(115%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 :where(
@@ -249,9 +212,9 @@ select {
   .result-section,
   .card
 ) {
-  background: linear-gradient(180deg, rgba(250, 252, 255, 0.94), rgba(235, 241, 249, 0.92));
-  border: 1px solid rgba(101, 118, 151, 0.22);
-  box-shadow: 0 18px 36px rgba(90, 103, 145, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 
 :where(.header, .page-header) {
@@ -260,8 +223,8 @@ select {
 }
 
 :where(.header__badge, .page-header__icon, .main-tab, .tab, .swap-btn, .lang-select, .action-btn, .source-card, .target-card) {
-  box-shadow: 0 8px 20px rgba(90, 103, 145, 0.1);
-  background: rgba(245, 248, 253, 0.92);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  background: rgba(255, 255, 255, 0.94);
 }
 
 :where(.header__badge, .page-header__icon, .main-tab, .tab, .swap-btn, .lang-select, .action-btn, .source-card, .target-card, .category-head__action) {
@@ -289,9 +252,9 @@ select {
 }
 
 :where(.upload-zone, .preview-section, .result-image, .result-placeholder, .textarea, .result-area) {
-  background: rgba(255, 255, 255, 0.82) !important;
-  border-color: rgba(101, 118, 151, 0.24) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  box-shadow: none;
 }
 
 :where(textarea, input, select) {
@@ -311,9 +274,9 @@ select {
   appearance: none;
   height: 8px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(210, 220, 234, 0.95), rgba(190, 202, 220, 0.95));
+  background: rgba(226, 232, 240, 0.92);
   border: 1px solid rgba(101, 118, 151, 0.22);
-  box-shadow: inset 0 1px 2px rgba(152, 167, 191, 0.32);
+  box-shadow: none;
 }
 
 :where(input[type='range'], .slider)::-webkit-slider-runnable-track {
@@ -330,14 +293,14 @@ select {
   margin-top: -6px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.96);
-  background: linear-gradient(180deg, #2f5f95, #22466f);
-  box-shadow: 0 2px 8px rgba(34, 70, 111, 0.35);
+  background: #111827;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
 }
 
 :where(input[type='range'], .slider)::-moz-range-track {
   height: 8px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(210, 220, 234, 0.95), rgba(190, 202, 220, 0.95));
+  background: rgba(226, 232, 240, 0.92);
   border: 1px solid rgba(101, 118, 151, 0.22);
 }
 
@@ -346,8 +309,8 @@ select {
   height: 18px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.96);
-  background: linear-gradient(180deg, #2f5f95, #22466f);
-  box-shadow: 0 2px 8px rgba(34, 70, 111, 0.35);
+  background: #111827;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
 }
 
 /* 选中 */
@@ -356,9 +319,7 @@ select {
   color: white;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   新拟物滚动条
-   ═══════════════════════════════════════════════════════════ */
+/* 滚动条 */
 
 ::-webkit-scrollbar {
   width: 8px;
@@ -366,22 +327,18 @@ select {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--neo-bg-dark);
-  box-shadow: inset 1px 1px 3px rgba(142, 156, 180, 0.28), inset -1px -1px 3px rgba(255, 255, 255, 0.8);
+  background: rgba(226, 232, 240, 0.6);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #8ea2c4, #667b9f);
+  background: rgba(148, 163, 184, 0.9);
   border-radius: 999px;
-  box-shadow: 0 2px 6px rgba(97, 114, 145, 0.28);
-  border: 1px solid rgba(78, 96, 132, 0.24);
+  border: 1px solid rgba(100, 116, 139, 0.14);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #7f96bc, #556b92);
-  border-color: rgba(78, 96, 132, 0.34);
-  box-shadow: 0 4px 10px rgba(97, 114, 145, 0.3);
+  background: rgba(100, 116, 139, 0.92);
 }
 
 /* 链接 */
@@ -403,7 +360,7 @@ a:hover {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   全局新拟物组件类
+   共享组件基类
    ═══════════════════════════════════════════════════════════ */
 
 /* 凸起按钮 */
@@ -412,43 +369,34 @@ a:hover {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 14px 28px;
-  background: var(--neo-surface);
-  border: 1px solid rgba(124, 138, 167, 0.14);
-  border-radius: 16px;
-  box-shadow: var(--neo-shadow-up);
+  padding: 13px 24px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
   font-family: inherit;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
-  cursor: none;
-  transition: all 0.25s var(--transition-smooth);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   position: relative;
-  overflow: hidden;
   user-select: none;
 }
 
 .btn-neo::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, transparent 100%);
-  border-radius: 16px 16px 0 0;
-  pointer-events: none;
+  content: none;
 }
 
 .btn-neo:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--neo-shadow-up-lg);
-  border-color: rgba(99, 115, 154, 0.2);
+  background: #f8fafc;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  border-color: rgba(100, 116, 139, 0.26);
 }
 
 .btn-neo:active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: var(--neo-shadow-pressed);
+  background: #f1f5f9;
+  box-shadow: none;
 }
 
 .btn-neo:disabled {
@@ -462,50 +410,34 @@ a:hover {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 16px 32px;
-  background: linear-gradient(145deg, #12c98e, #0ea572);
+  padding: 14px 28px;
+  background: #111827;
   border: none;
-  border-radius: 18px;
-  box-shadow:
-    0 14px 26px rgba(16, 120, 110, 0.22),
-    inset 0 1px 1px rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.98rem;
   font-weight: 700;
   color: white;
-  cursor: none;
-  transition: all 0.3s var(--transition-smooth);
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   position: relative;
-  overflow: hidden;
   user-select: none;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .btn-neo-primary::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 45%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
-  border-radius: 18px 18px 0 0;
-  pointer-events: none;
+  content: none;
 }
 
 .btn-neo-primary:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow:
-    0 18px 32px rgba(16, 120, 110, 0.28),
-    0 0 22px rgba(16, 185, 129, 0.18),
-    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  background: #0f172a;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
 }
 
 .btn-neo-primary:active:not(:disabled) {
-  transform: translateY(1px) scale(0.98);
-  box-shadow:
-    inset 3px 3px 8px rgba(11, 91, 84, 0.28),
-    inset -2px -2px 6px rgba(255, 255, 255, 0.08);
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
 }
 
 .btn-neo-primary:disabled {
@@ -515,44 +447,38 @@ a:hover {
 
 /* 新拟物卡片 */
 .card-neo {
-  background: var(--neo-surface);
-  border: 1px solid rgba(124, 138, 167, 0.14);
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 24px;
-  box-shadow: var(--neo-shadow-up);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   position: relative;
   overflow: hidden;
-  transition: all 0.35s var(--transition-smooth);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .card-neo::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  content: none;
 }
 
 .card-neo:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--neo-shadow-up-lg);
-  border-color: rgba(78, 96, 132, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+  border-color: rgba(100, 116, 139, 0.22);
 }
 
 /* 内凹输入框 */
 .input-neo {
   width: 100%;
   padding: 16px 20px;
-  background: var(--neo-bg-dark);
+  background: #ffffff;
   border: 1px solid rgba(101, 118, 151, 0.22);
   border-radius: 14px;
-  box-shadow: var(--neo-shadow-down-sm);
+  box-shadow: none;
   font-family: inherit;
   font-size: 1rem;
   color: var(--text-primary);
   outline: none;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .input-neo::placeholder {
@@ -560,11 +486,8 @@ a:hover {
 }
 
 .input-neo:focus {
-  border-color: rgba(16, 185, 129, 0.4);
-  box-shadow:
-    var(--neo-shadow-down-sm),
-    0 0 0 3px rgba(16, 185, 129, 0.1),
-    0 0 20px rgba(16, 185, 129, 0.05);
+  border-color: rgba(37, 99, 235, 0.34);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
 .input-neo:disabled {
@@ -575,33 +498,24 @@ a:hover {
 /* 新拟物进度条 */
 .progress-neo {
   height: 8px;
-  background: var(--neo-bg-dark);
+  background: rgba(226, 232, 240, 0.92);
   border: 1px solid rgba(101, 118, 151, 0.18);
   border-radius: 999px;
-  box-shadow: var(--neo-shadow-down-sm);
+  box-shadow: none;
   overflow: hidden;
   position: relative;
 }
 
 .progress-neo__fill {
   height: 100%;
-  background: linear-gradient(90deg, #1f9d77, #0f766e);
+  background: #111827;
   border-radius: 999px;
-  box-shadow:
-    0 2px 8px rgba(16, 118, 110, 0.28);
   transition: width 0.3s ease;
   position: relative;
 }
 
 .progress-neo__fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
-  border-radius: 4px 4px 0 0;
+  content: none;
 }
 
 /* 新拟物标签 */
@@ -610,26 +524,18 @@ a:hover {
   align-items: center;
   gap: 4px;
   padding: 6px 14px;
-  background: var(--neo-surface);
+  background: #ffffff;
   border: 1px solid rgba(101, 118, 151, 0.18);
   border-radius: 10px;
-  box-shadow: var(--neo-shadow-up-sm);
+  box-shadow: none;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-secondary);
-  transition: all 0.25s;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .tag-neo::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
-  border-radius: 10px 10px 0 0;
-  pointer-events: none;
+  content: none;
 }
 
 /* 新拟物开关 */
@@ -637,9 +543,9 @@ a:hover {
   position: relative;
   width: 48px;
   height: 26px;
-  background: var(--neo-bg-dark);
+  background: rgba(226, 232, 240, 0.9);
   border-radius: 13px;
-  box-shadow: var(--neo-shadow-down-sm);
+  box-shadow: none;
   cursor: pointer;
   transition: all 0.3s;
   border: none;
@@ -653,55 +559,43 @@ a:hover {
   left: 3px;
   width: 20px;
   height: 20px;
-  background: linear-gradient(145deg, #e0e0e8, #c8c8d0);
+  background: #ffffff;
   border-radius: 50%;
-  box-shadow:
-    2px 2px 5px rgba(0, 0, 0, 0.3),
-    -1px -1px 3px rgba(255, 255, 255, 0.05),
-    inset 0 1px 1px rgba(255, 255, 255, 0.3);
-  transition: all 0.3s var(--transition-bounce);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+  transition: all 0.2s ease;
 }
 
 .switch-neo.active {
-  background: rgba(16, 185, 129, 0.2);
-  box-shadow:
-    var(--neo-shadow-down-sm),
-    0 0 12px rgba(16, 185, 129, 0.15);
+  background: rgba(37, 99, 235, 0.2);
 }
 
 .switch-neo.active::after {
   left: 25px;
-  background: linear-gradient(145deg, #12c98e, #0ea572);
-  box-shadow:
-    2px 2px 5px rgba(0, 0, 0, 0.3),
-    -1px -1px 3px rgba(16, 185, 129, 0.2),
-    0 0 10px rgba(16, 185, 129, 0.3),
-    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  background: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.24);
 }
 
 /* 新拟物上传区域 */
 .upload-neo {
-  border: 2px dashed rgba(255, 255, 255, 0.08);
+  border: 1px dashed rgba(148, 163, 184, 0.42);
   border-radius: 24px;
   padding: 60px 32px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.4s var(--transition-smooth);
-  background: var(--neo-bg-dark);
-  box-shadow: var(--neo-shadow-down);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: none;
   position: relative;
 }
 
 .upload-neo:hover,
 .upload-neo--active {
-  border-color: rgba(16, 185, 129, 0.4);
-  box-shadow:
-    var(--neo-shadow-down),
-    0 0 30px rgba(16, 185, 129, 0.08);
+  border-color: rgba(37, 99, 235, 0.34);
+  background: #ffffff;
 }
 
 .upload-neo--active {
-  background: rgba(16, 185, 129, 0.03);
+  background: rgba(248, 250, 252, 0.96);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -786,22 +680,22 @@ a:hover {
 @keyframes page3DIn {
   from {
     opacity: 0;
-    transform: perspective(var(--perspective)) rotateX(4deg) translateY(40px) scale(0.97);
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
-    transform: perspective(var(--perspective)) rotateX(0deg) translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 @keyframes page3DOut {
   from {
     opacity: 1;
-    transform: perspective(var(--perspective)) rotateX(0deg) translateY(0) scale(1);
+    transform: translateY(0);
   }
   to {
     opacity: 0;
-    transform: perspective(var(--perspective)) rotateX(-3deg) translateY(-20px) scale(0.98);
+    transform: translateY(-12px);
   }
 }
 
@@ -810,20 +704,12 @@ a:hover {
    ═══════════════════════════════════════════════════════════ */
 
 .gradient-text {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 40%, #f59e0b 100%);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradient-shift 6s ease infinite;
+  color: #111827;
+  -webkit-text-fill-color: currentColor;
 }
 
-/* 3D文字凸起效果 */
 .text-3d {
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04),
-    0 2px 4px rgba(0, 0, 0, 0.5),
-    0 4px 8px rgba(0, 0, 0, 0.3);
+  text-shadow: none;
 }
 
 .hover-lift {
@@ -831,8 +717,8 @@ a:hover {
 }
 
 .hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--neo-shadow-up-lg);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
 }
 
 .spin {

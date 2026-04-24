@@ -71,7 +71,18 @@
       "Bash(curl -s -X POST http://localhost:8080/api/baidu/push -H 'Content-Type: application/json' -d '[\"https://www.xu-it.com/\",\"https://www.xu-it.com/id-photo\",\"https://www.xu-it.com/watermark-removal\",\"https://www.xu-it.com/image-compress\",\"https://www.xu-it.com/remove-bg\",\"https://www.xu-it.com/doc-convert\",\"https://www.xu-it.com/qr-code\",\"https://www.xu-it.com/ocr\",\"https://www.xu-it.com/id-generator\",\"https://www.xu-it.com/resume-builder\",\"https://www.xu-it.com/media/record\",\"https://www.xu-it.com/media/compress\",\"https://www.xu-it.com/media/audio-convert\",\"https://www.xu-it.com/travel\",\"https://www.xu-it.com/writer\",\"https://www.xu-it.com/translator\",\"https://www.xu-it.com/mind\"]')",
       "Bash(curl:*)",
       "Bash(./mvnw spring-boot:run -Dspring-boot.run.jvmArguments=\"-Dfile.encoding=UTF-8\")",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Read(//Users/simonyu/Desktop/我的项目/my-aitest-server/src/main/java/com/**)",
+      "Read(//Users/simonyu/Desktop/我的项目/my-aitest-server/src/main/java/**)",
+      "Bash(最多上传\" \"/Users/simonyu/Desktop/我的项目/myAITest/src/views/Home.vue\")",
+      "Bash(grep -n \"studioError.value = `最多上传\" \"/Users/simonyu/Desktop/我的项目/myAITest/src/views/Home.vue\")",
+      "Bash(sed -i '' '846s/currentMode === .chat./true/' Home.vue)",
+      "Bash(sed -i '' '872s/currentMode === .image. ? .输入生图提示词. : .输入你的问题./输入你的问题/' Home.vue)",
+      "Bash(sed -i '' '878s/currentMode === .chat./true/' Home.vue)",
+      "Bash(sed -i '' '891s/currentMode === .chat. ? .支持图片和文本附件. : .切到聊天模式可上传附件./支持图片和文本附件/' Home.vue)",
+      "Bash(sed -i '' '898s/currentMode === .chat. && pendingAttachments.length\\)/true/' Home.vue)",
+      "Bash(sed -i '' '876s/:placeholder=\"输入你的问题\"/:placeholder=\"输入你的问题\"/' Home.vue)",
+      "Bash(sed -i '' '891s/{{ 支持图片和文本附件 }}/{{ 支持图片和文本附件 }}/' Home.vue)"
     ]
   }
 }

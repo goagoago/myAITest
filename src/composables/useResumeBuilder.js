@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { marked } from 'marked'
 import { aiClient } from '../services/aiClient'
+import { normalizeModelError } from '../services/modelError'
 import { requestBlob } from '../services/apiClient'
 import { useAccountStore } from '../stores/accountStore'
 
@@ -734,7 +735,7 @@ export function useResumeBuilder() {
       account.refreshDashboard().catch(() => {})
       return md
     } catch (e) {
-      aiFormatError.value = 'AI 格式化失败：' + (e.message || '未知错误')
+      aiFormatError.value = normalizeModelError(e).message
       account.refreshDashboard().catch(() => {})
       return ''
     } finally {
@@ -803,7 +804,7 @@ export function useResumeBuilder() {
       account.refreshDashboard().catch(() => {})
       return md
     } catch (e) {
-      aiWriteError.value = 'AI 写作失败：' + (e.message || '未知错误')
+      aiWriteError.value = normalizeModelError(e).message
       account.refreshDashboard().catch(() => {})
       return ''
     } finally {
@@ -862,12 +863,12 @@ export function useResumeBuilder() {
       const parsed = parseAiJson(raw)
       aiReviewResult.value = normalizeAiReviewResult(parsed, fallback)
       if (!parsed) {
-        aiReviewError.value = 'AI 评审结果格式异常，已为你切换为本地智能评审。'
+        aiReviewError.value = normalizeModelError(new Error('invalid ai review response')).message
       }
       account.refreshDashboard().catch(() => {})
       return aiReviewResult.value
     } catch (e) {
-      aiReviewError.value = 'AI 评审暂时不可用，已切换为本地智能评审。'
+      aiReviewError.value = normalizeModelError(e).message
       aiReviewResult.value = normalizeAiReviewResult(null, buildLocalReview(mdText))
       account.refreshDashboard().catch(() => {})
       return aiReviewResult.value

@@ -5,7 +5,7 @@ import { useOcr } from '../composables/useOcr'
 import FeatureCostBadge from '../components/account/FeatureCostBadge.vue'
 import {
   ScanLine, Upload, Download, RefreshCw, AlertCircle, Loader2,
-  Copy, Check, Image, Sparkles, Cpu
+  Copy, Check, Image
 } from 'lucide-vue-next'
 
 const {
@@ -19,20 +19,10 @@ const {
   reset,
 } = useOcr()
 
-const selectedLang = ref('chi_sim+eng')
 const imagePreview = ref('')
 const selectedFile = ref(null)
 const copied = ref(false)
-const engine = ref('paddle') // 'paddle' PaddleOCR | 'vision' AI识别 | 'local' 离线识别
 const outputFormat = ref('text') // 'text' 纯文本 | 'html' 富文本
-
-const langOptions = [
-  { value: 'chi_sim+eng', label: '中英混合' },
-  { value: 'chi_sim', label: '简体中文' },
-  { value: 'eng', label: '英文' },
-  { value: 'jpn', label: '日文' },
-  { value: 'kor', label: '韩文' },
-]
 
 // 文件选择
 const handleFileSelect = (e) => {
@@ -40,21 +30,14 @@ const handleFileSelect = (e) => {
   if (file) setFile(file)
 }
 
-const acceptTypes = () => engine.value === 'paddle'
-  ? 'image/*,.pdf'
-  : 'image/*'
+const acceptTypes = () => 'image/*,.pdf'
 
 const setFile = (file) => {
   const isImage = file.type.startsWith('image/')
   const isPdf = file.type === 'application/pdf' || file.name?.endsWith('.pdf')
 
-  if (engine.value === 'paddle') {
-    if (!isImage && !isPdf) {
-      error.value = '请上传图片或 PDF 文件'
-      return
-    }
-  } else if (!isImage) {
-    error.value = '请上传图片文件'
+  if (!isImage && !isPdf) {
+    error.value = '请上传图片或 PDF 文件'
     return
   }
 
@@ -91,7 +74,7 @@ const handlePaste = (e) => {
 // 开始识别
 const startRecognize = () => {
   if (!selectedFile.value) return
-  recognize(selectedFile.value, selectedLang.value, engine.value, outputFormat.value)
+  recognize(selectedFile.value, 'chi_sim+eng', 'paddle', outputFormat.value)
 }
 
 // 复制结果
@@ -142,7 +125,7 @@ const resetAll = () => {
           <span class="gradient-text">一键提取</span>
         </h1>
         <p class="header__desc">
-          AI 智能识别中英文等多语言，支持图片、PDF、手写体、印刷体、截图等场景
+          支持图片和 PDF 文本提取，适合截图、扫描件和文档内容快速转文字
         </p>
       </div>
     </header>
@@ -155,7 +138,7 @@ const resetAll = () => {
         <div class="input-section">
           <h3 class="section-label">
             <Image :size="16" />
-            <span>上传图片</span>
+            <span>上传文件</span>
           </h3>
           <div
             v-if="!imagePreview"
@@ -173,7 +156,7 @@ const resetAll = () => {
             />
             <Upload :size="32" />
             <p class="upload-zone__text">点击、拖拽或粘贴文件到此区域</p>
-            <span class="upload-zone__tip">{{ engine === 'paddle' ? '支持 JPG、PNG、BMP、WebP、PDF 等格式' : '支持 JPG、PNG、BMP、WebP 等格式' }}</span>
+            <span class="upload-zone__tip">支持 JPG、PNG、BMP、WebP、PDF 等格式</span>
           </div>
           <div v-else class="image-preview">
             <div v-if="imagePreview === 'pdf'" class="pdf-preview">
@@ -189,65 +172,8 @@ const resetAll = () => {
           </div>
         </div>
 
-        <!-- 识别引擎切换 -->
+        <!-- 输出格式 -->
         <div class="input-section">
-          <h3 class="section-label">
-            <ScanLine :size="16" />
-            <span>识别引擎</span>
-          </h3>
-          <div class="engine-group">
-            <button
-              :class="['engine-btn', { 'engine-btn--active': engine === 'paddle' }]"
-              @click="engine = 'paddle'"
-            >
-              <Sparkles :size="18" />
-              <div class="engine-btn__text">
-                <span class="engine-btn__title">PaddleOCR 识别</span>
-                <span class="engine-btn__desc">高精度，支持图片和 PDF</span>
-              </div>
-              <span v-if="engine === 'paddle'" class="engine-btn__badge">推荐</span>
-            </button>
-            <button
-              :class="['engine-btn', { 'engine-btn--active': engine === 'vision' }]"
-              @click="engine = 'vision'"
-            >
-              <Sparkles :size="18" />
-              <div class="engine-btn__text">
-                <span class="engine-btn__title">AI 智能识别</span>
-                <span class="engine-btn__desc">支持手写体，仅图片</span>
-              </div>
-            </button>
-            <button
-              :class="['engine-btn', { 'engine-btn--active': engine === 'local' }]"
-              @click="engine = 'local'"
-            >
-              <Cpu :size="18" />
-              <div class="engine-btn__text">
-                <span class="engine-btn__title">本地离线识别</span>
-                <span class="engine-btn__desc">无需联网，印刷体可用</span>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- 语言选择（仅离线模式） -->
-        <div v-if="engine === 'local'" class="input-section">
-          <h3 class="section-label">
-            <ScanLine :size="16" />
-            <span>识别语言</span>
-          </h3>
-          <div class="lang-group">
-            <button
-              v-for="lang in langOptions"
-              :key="lang.value"
-              :class="['lang-btn', { 'lang-btn--active': selectedLang === lang.value }]"
-              @click="selectedLang = lang.value"
-            >{{ lang.label }}</button>
-          </div>
-        </div>
-
-        <!-- 输出格式（仅 PaddleOCR + PDF 时有意义） -->
-        <div v-if="engine === 'paddle'" class="input-section">
           <h3 class="section-label">
             <ScanLine :size="16" />
             <span>输出格式</span>
@@ -504,75 +430,7 @@ const resetAll = () => {
   color: var(--text-primary);
 }
 
-/* 引擎切换 */
-.engine-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.engine-btn {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  cursor: pointer;
-  transition: all 0.3s;
-  text-align: left;
-  color: var(--text-secondary);
-  position: relative;
-}
-
-.engine-btn svg {
-  flex-shrink: 0;
-}
-
-.engine-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.engine-btn--active {
-  background: rgba(6, 182, 212, 0.08);
-  border-color: rgba(6, 182, 212, 0.35);
-}
-
-.engine-btn--active svg {
-  color: #67e8f9;
-}
-
-.engine-btn__text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.engine-btn__title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.engine-btn__desc {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.engine-btn__badge {
-  margin-left: auto;
-  padding: 3px 10px;
-  background: linear-gradient(135deg, #06b6d4, #8b5cf6);
-  border-radius: 20px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: white;
-}
-
-/* 语言选择 */
+/* 选项选择 */
 .lang-group {
   display: flex;
   gap: 8px;
