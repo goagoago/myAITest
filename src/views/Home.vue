@@ -283,6 +283,11 @@ const toolCategories = [
 
 const createSessionId = (mode = 'chat') => `session-${mode}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 const historyKey = computed(() => `toolsbox-home-studio:${account.profile.value?.id || 'guest'}`)
+const getSessionMode = (sessionId) => studioMessages.value.find(item => item.sessionId === sessionId)?.mode || ''
+const resolveLatestSessionId = (messages, mode = studioMode.value) => {
+  const latestInMode = [...messages].reverse().find(item => (item.mode === 'image' ? 'image' : 'chat') === mode)
+  return latestInMode?.sessionId || createSessionId(mode)
+}
 const visibleStudioMessages = computed(() => (
   currentSessionId.value
     ? studioMessages.value.filter(item => item.sessionId === currentSessionId.value)
@@ -345,9 +350,8 @@ const isAbortError = (error) => (
   || error?.isAbort === true
 )
 const findMessageById = (id) => studioMessages.value.find(item => item.id === id)
-const resolveLatestSessionId = (messages) => messages.at(-1)?.sessionId || createSessionId(studioMode.value)
 const ensureCurrentSessionId = (mode = studioMode.value) => {
-  if (!currentSessionId.value) {
+  if (!currentSessionId.value || getSessionMode(currentSessionId.value) && getSessionMode(currentSessionId.value) !== mode) {
     currentSessionId.value = createSessionId(mode)
   }
   return currentSessionId.value
@@ -689,7 +693,13 @@ const loadMessages = () => {
     const parsed = raw ? JSON.parse(raw) : []
     const sanitized = sanitizeMessages(parsed)
     applyMessages(sanitized)
-    currentSessionId.value = resolveLatestSessionId(sanitized)
+    const latestMessage = sanitized.at(-1)
+    if (latestMessage) {
+      studioMode.value = latestMessage.mode === 'image' ? 'image' : 'chat'
+      currentSessionId.value = latestMessage.sessionId
+    } else {
+      currentSessionId.value = createSessionId(studioMode.value)
+    }
   } catch {
     applyMessages([])
     currentSessionId.value = createSessionId(studioMode.value)
@@ -788,7 +798,7 @@ const deleteTurn = (turnId) => {
   const nextMessages = sanitizeMessages(studioMessages.value.filter(item => item.turnId !== turnId))
   applyMessages(nextMessages)
   if (!nextMessages.some(item => item.sessionId === currentSessionId.value)) {
-    currentSessionId.value = nextMessages.length ? resolveLatestSessionId(nextMessages) : createSessionId(studioMode.value)
+    currentSessionId.value = resolveLatestSessionId(nextMessages, studioMode.value)
   }
   syncTimeline()
 }
@@ -805,7 +815,13 @@ const setStudioMode = (mode) => {
   if (studioBusy.value) return
   if (!studioModes.some(item => item.value === mode)) return
   if (mode === studioMode.value) return
-  startNewConversation({ mode, scroll: false })
+  clearEditingState()
+  studioMode.value = mode
+  currentSessionId.value = resolveLatestSessionId(studioMessages.value, mode)
+  composerInput.value = ''
+  pendingAttachments.value = []
+  studioError.value = ''
+  selectedHistoryTurnId.value = ''
 }
 
 const resetStudio = () => {
@@ -1549,6 +1565,35 @@ const submitStudio = async (preset = '') => {
       >
         <div class="studio__workspace">
           <div class="studio__main">
+            <div class="studio__nav" aria-label="聊天控制栏">
+              <div class="studio__mode-tabs" role="tablist" aria-label="AI 模式">
+                <button
+                  v-for="mode in studioModes"
+                  :key="mode.value"
+                  type="button"
+                  class="studio__choice"
+                  :class="{ 'studio__choice--active': studioMode === mode.value }"
+                  :disabled="studioBusy"
+                  @click="setStudioMode(mode.value)"
+                >
+                  <component :is="mode.value === 'image' ? ImagePlus : BotMessageSquare" :size="14" />
+                  <span>{{ mode.label }}</span>
+                </button>
+              </div>
+
+              <div class="studio__utility-actions">
+                <button class="studio__ghost" type="button" @click="startNewConversation({ mode: studioMode })">
+                  <SquarePen :size="14" />
+                  <span>新建</span>
+                </button>
+                <button class="studio__ghost" type="button" @click="historyPanelOpen = !historyPanelOpen">
+                  <History :size="14" />
+                  <span>{{ historyTurnsCount ? `历史 ${historyTurnsCount}` : '历史' }}</span>
+                </button>
+                <FeatureCostBadge :feature-code="studioFeatureCode" strong />
+              </div>
+            </div>
+
             <div v-if="showSuggestions" class="studio__chips">
               <button
                 v-for="item in activeSuggestions"
@@ -1561,7 +1606,7 @@ const submitStudio = async (preset = '') => {
               </button>
             </div>
 
-            <div ref="studioTimeline" class="studio__messages">
+            <div v-if="hasMessages" ref="studioTimeline" class="studio__messages">
               <TransitionGroup tag="div" name="message-fade" class="studio__message-list">
                 <article
                   v-for="message in visibleStudioMessages"
@@ -1808,41 +1853,6 @@ const submitStudio = async (preset = '') => {
                   </button>
                 </div>
               </div>
-
-              <div class="studio__dock">
-                <div class="studio__dock-row studio__dock-row--modes">
-                  <div class="studio__choice-row studio__modes">
-                    <button
-                      v-for="mode in studioModes"
-                      :key="mode.value"
-                      type="button"
-                      class="studio__choice"
-                      :class="{ 'studio__choice--active': studioMode === mode.value }"
-                      :disabled="studioBusy"
-                      @click="setStudioMode(mode.value)"
-                    >
-                      <component :is="mode.value === 'image' ? ImagePlus : BotMessageSquare" :size="15" />
-                      <span>{{ mode.label }}</span>
-                    </button>
-                  </div>
-
-                  <div class="studio__meta">
-                    <span v-if="hasMessages" class="studio__count">{{ studioCountLabel }}</span>
-                    <FeatureCostBadge :feature-code="studioFeatureCode" strong />
-                  </div>
-                </div>
-
-                <div class="studio__dock-row studio__dock-row--actions">
-                  <button class="studio__ghost" type="button" @click="startNewConversation({ mode: studioMode })">
-                    <SquarePen :size="14" />
-                    <span>新对话</span>
-                  </button>
-                  <button class="studio__ghost" type="button" @click="historyPanelOpen = !historyPanelOpen">
-                    <History :size="14" />
-                    <span>{{ historyTurnsCount ? `历史 ${historyTurnsCount}` : '历史记录' }}</span>
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -2003,6 +2013,16 @@ const submitStudio = async (preset = '') => {
   --home-shadow-soft: 0 12px 28px rgba(90, 103, 145, 0.1);
   --home-shadow-hover: 0 26px 58px rgba(99, 102, 241, 0.14);
   --home-accent: #4f46e5;
+  --studio-ink: #172033;
+  --studio-muted: #667085;
+  --studio-soft: #f6f8fb;
+  --studio-border: rgba(15, 23, 42, 0.09);
+  --studio-border-strong: rgba(15, 23, 42, 0.14);
+  --studio-focus: rgba(37, 99, 235, 0.16);
+  --studio-radius: 24px;
+  --studio-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --studio-control-h: 30px;
+  --studio-control-h-sm: 26px;
   --tool-grid-gap: clamp(14px, 1.9vw, 22px);
   --tool-card-max-width: 300px;
   --tool-card-height: clamp(194px, 20vw, 236px);
@@ -2045,19 +2065,19 @@ const submitStudio = async (preset = '') => {
 }
 
 .hero-bg-orb--one {
-  top: 16px;
-  left: 0;
-  width: 260px;
-  height: 260px;
-  background: rgba(59, 130, 246, 0.1);
+  top: 12px;
+  left: -24px;
+  width: 280px;
+  height: 280px;
+  background: rgba(148, 163, 184, 0.13);
 }
 
 .hero-bg-orb--two {
-  top: 80px;
-  right: 4%;
-  width: 320px;
-  height: 320px;
-  background: rgba(168, 85, 247, 0.08);
+  top: 86px;
+  right: 2%;
+  width: 340px;
+  height: 340px;
+  background: rgba(203, 213, 225, 0.13);
   animation-delay: -3s;
 }
 
@@ -2129,24 +2149,23 @@ const submitStudio = async (preset = '') => {
   line-height: 1.7;
 }
 
-.studio__count,
 .studio__ghost {
-  min-height: 30px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(255, 255, 255, 0.88);
-  color: #64748b;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--studio-muted);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  gap: 5px;
+  font-size: 0.66rem;
+  font-weight: 680;
+  transition: border-color 0.18s var(--studio-ease), background 0.18s var(--studio-ease), color 0.18s var(--studio-ease), transform 0.18s var(--studio-ease);
 }
 
 .studio__ghost {
-  color: #0f172a;
+  color: #667085;
 }
 
 .studio__shell {
@@ -2154,31 +2173,21 @@ const submitStudio = async (preset = '') => {
   z-index: 2;
   width: 100%;
   margin: 0 auto;
-  padding: 18px;
-  border-radius: 24px;
-  background: rgba(255, 252, 245, 0.82);
-  border: 1px solid rgba(26, 35, 52, 0.08);
-  backdrop-filter: blur(14px) saturate(112%);
-  box-shadow: var(--home-shadow-soft);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  padding: 0;
+  border-radius: 22px;
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  box-shadow: none;
+  transition: border-color 0.2s var(--studio-ease), box-shadow 0.2s var(--studio-ease), background 0.2s var(--studio-ease);
 }
 
 .studio__shell--dragging {
-  border-color: rgba(37, 99, 235, 0.24);
+  border-color: rgba(37, 99, 235, 0.28);
   background: #fff;
-  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.07);
+  box-shadow: 0 20px 52px rgba(37, 99, 235, 0.1);
 }
 
-.studio__meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.studio__modes,
-.studio__choice-row,
 .studio__chips,
 .message__meta,
 .message__attachments,
@@ -2196,43 +2205,45 @@ const submitStudio = async (preset = '') => {
 
 .studio__main {
   min-width: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
 }
 
 .studio__chips {
   flex-wrap: wrap;
   gap: 7px;
+  margin-top: 12px;
 }
 
 .studio__chip {
-  min-height: 30px;
-  padding: 0 11px;
-  border-radius: 999px;
-  border: 1px solid var(--home-line);
-  background: var(--home-surface-muted);
-  color: #4b5563;
-  font-size: 0.68rem;
-  font-weight: 700;
-}
-
-.studio__choice-row {
-  flex-wrap: wrap;
-  gap: 6px;
+  min-height: var(--studio-control-h);
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--studio-border);
+  background: rgba(255, 255, 255, 0.68);
+  color: #344054;
+  font-size: 0.66rem;
+  font-weight: 680;
+  box-shadow: none;
+  transition: transform 0.18s var(--studio-ease), border-color 0.18s var(--studio-ease), background 0.18s var(--studio-ease), box-shadow 0.18s var(--studio-ease);
 }
 
 .studio__choice {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
   min-height: 32px;
-  padding: 0 12px;
+  padding: 0 11px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  background: rgba(255, 255, 255, 0.9);
-  color: #64748b;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #667085;
   font-size: 0.68rem;
   font-weight: 700;
-  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.18s var(--studio-ease), background 0.18s var(--studio-ease), color 0.18s var(--studio-ease), transform 0.18s var(--studio-ease), box-shadow 0.18s var(--studio-ease);
 }
 
 .studio__choice:disabled {
@@ -2241,37 +2252,42 @@ const submitStudio = async (preset = '') => {
 }
 
 .studio__choice--active {
-  background: linear-gradient(135deg, #111827, #1f2937);
-  color: #fff;
-  border-color: rgba(17, 24, 39, 0.36);
-  box-shadow: 0 10px 18px rgba(17, 24, 39, 0.14);
+  background: #ffffff;
+  color: #101828;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }
 
 .studio__messages {
-  margin-top: 16px;
+  margin-top: 14px;
   min-height: 0;
   max-height: 520px;
   overflow: auto;
-  padding-right: 4px;
+  padding: 10px 8px 10px 2px;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.72), rgba(255, 255, 255, 0.18));
+  border: 1px solid rgba(15, 23, 42, 0.045);
+  scrollbar-color: rgba(148, 163, 184, 0.34) transparent;
 }
 
 .studio__message-list {
   display: grid;
-  gap: 18px;
+  gap: 16px;
 }
 
 .message {
   position: relative;
   display: flex;
   align-items: flex-end;
-  gap: 10px;
-  max-width: min(92%, 760px);
+  gap: 11px;
+  max-width: min(90%, 740px);
 }
 
 .message--assistant {
   justify-self: start;
   align-items: flex-start;
-  max-width: min(100%, 780px);
+  max-width: min(96%, 780px);
 }
 
 .message--user {
@@ -2283,16 +2299,18 @@ const submitStudio = async (preset = '') => {
 }
 
 .message__avatar {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
-  background: #111827;
+  background: linear-gradient(135deg, #111827, #334155);
   color: #fff;
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   font-weight: 800;
+  letter-spacing: -0.01em;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset;
 }
 
 .message__body {
@@ -2302,31 +2320,31 @@ const submitStudio = async (preset = '') => {
 
 .message__surface {
   width: 100%;
-  padding: 14px 16px;
+  padding: 13px 15px;
   border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: #fff;
-  color: #20293c;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  border: 1px solid var(--studio-border);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--studio-ink);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.045);
+  transition: transform 0.2s var(--studio-ease), box-shadow 0.2s var(--studio-ease), border-color 0.2s var(--studio-ease), background 0.2s var(--studio-ease);
 }
 
 .message--assistant .message__surface {
-  padding: 10px 0 0 14px;
+  padding: 0 0 0 14px;
   border: none;
-  border-left: 2px solid rgba(226, 232, 240, 0.95);
+  border-left: 2px solid rgba(203, 213, 225, 0.78);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  color: #111827;
+  color: var(--studio-ink);
 }
 
 .message--user .message__surface {
-  border-top-right-radius: 8px;
-  background: #111827;
-  border-color: rgba(17, 24, 39, 0.14);
+  border-top-right-radius: 7px;
+  background: #101828;
+  border-color: rgba(16, 24, 40, 0.22);
   color: #fff;
-  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.1);
+  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.12);
 }
 
 .message--pending .message__surface {
@@ -2347,13 +2365,13 @@ const submitStudio = async (preset = '') => {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-bottom: 10px;
-  padding: 6px 10px;
+  margin-bottom: 9px;
+  padding: 5px 9px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.04);
-  color: #64748b;
-  font-size: 0.68rem;
-  font-weight: 700;
+  background: #f2f4f7;
+  color: #475467;
+  font-size: 0.66rem;
+  font-weight: 720;
 }
 
 .message__status-dot {
@@ -2365,11 +2383,12 @@ const submitStudio = async (preset = '') => {
 }
 
 .message__content {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
+  letter-spacing: -0.005em;
 }
 
 .message--assistant .message__content {
-  color: #1f2937;
+  color: #202939;
 }
 
 .message__tools {
@@ -2385,23 +2404,23 @@ const submitStudio = async (preset = '') => {
 }
 
 .message__tool {
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  background: rgba(255, 255, 255, 0.9);
+  min-height: var(--studio-control-h-sm);
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--studio-border);
+  background: rgba(255, 255, 255, 0.76);
   color: #475569;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.66rem;
-  font-weight: 700;
-  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  gap: 5px;
+  font-size: 0.63rem;
+  font-weight: 660;
+  transition: border-color 0.18s var(--studio-ease), background 0.18s var(--studio-ease), color 0.18s var(--studio-ease), transform 0.18s var(--studio-ease);
 }
 
 .message__tool--icon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   justify-content: center;
   gap: 0;
@@ -2414,8 +2433,8 @@ const submitStudio = async (preset = '') => {
 }
 
 .message__tool--strong {
-  background: linear-gradient(135deg, #111827, #1f2937);
-  border-color: rgba(17, 24, 39, 0.22);
+  background: #101828;
+  border-color: rgba(16, 24, 40, 0.18);
   color: #fff;
 }
 
@@ -2448,13 +2467,17 @@ const submitStudio = async (preset = '') => {
 }
 
 .message__content :deep(p + p) {
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .message__content :deep(ul),
 .message__content :deep(ol) {
-  margin: 8px 0 0;
-  padding-left: 18px;
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
+.message__content :deep(li + li) {
+  margin-top: 4px;
 }
 
 .message__attachments,
@@ -2469,17 +2492,17 @@ const submitStudio = async (preset = '') => {
 
 .message__attachment,
 .studio__pending-item {
-  min-height: 40px;
-  padding: 7px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  background: rgba(248, 250, 252, 0.96);
+  min-height: 42px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--studio-border);
+  background: rgba(248, 250, 252, 0.92);
   align-items: center;
   gap: 8px;
   color: #20293c;
   font-size: 0.72rem;
   font-weight: 600;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s var(--studio-ease), background 0.15s var(--studio-ease), transform 0.15s var(--studio-ease);
 }
 
 .message__attachment:hover,
@@ -2788,21 +2811,21 @@ const submitStudio = async (preset = '') => {
 }
 
 .studio__history-clear {
-  min-height: 32px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid var(--home-line);
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 9px;
+  border: 1px solid var(--studio-border);
   background: #fff;
   color: #111827;
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.64rem;
+  font-weight: 680;
 }
 
 .studio__history-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  border: 1px solid var(--home-line);
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  border: 1px solid var(--studio-border);
   background: #fff;
   color: #111827;
   display: inline-flex;
@@ -2914,12 +2937,12 @@ const submitStudio = async (preset = '') => {
 }
 
 .studio__history-delete {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   margin-top: 6px;
-  border-radius: 999px;
-  border: none;
-  background: rgba(15, 23, 42, 0.05);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
   color: #6b7280;
   display: inline-flex;
   align-items: center;
@@ -2931,32 +2954,43 @@ const submitStudio = async (preset = '') => {
 }
 
 .studio__pending-remove {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(17, 24, 39, 0.08);
+  background: rgba(255, 255, 255, 0.74);
   color: #20293c;
 }
 
 .studio__composer {
-  margin-top: 16px;
+  margin-top: 14px;
   position: relative;
-  padding: 16px;
-  border-radius: 22px;
-  background: linear-gradient(180deg, #ffffff, #fbfcfd);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  padding: 12px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: border-color 0.18s var(--studio-ease), box-shadow 0.18s var(--studio-ease), transform 0.18s var(--studio-ease);
+}
+
+.studio__composer:focus-within {
+  border-color: rgba(37, 99, 235, 0.26);
+  box-shadow:
+    0 0 0 3px var(--studio-focus),
+    0 12px 34px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
 .studio__placeholder-flow {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  right: 16px;
+  top: 13px;
+  left: 13px;
+  right: 13px;
   min-height: 96px;
   pointer-events: none;
   color: #94a3b8;
@@ -2983,9 +3017,9 @@ const submitStudio = async (preset = '') => {
   resize: none;
   border: none;
   background: transparent;
-  color: #20293c;
-  line-height: 1.72;
-  font-size: 0.86rem;
+  color: var(--studio-ink);
+  line-height: 1.68;
+  font-size: 0.9rem;
   outline: none;
 }
 
@@ -2997,7 +3031,9 @@ const submitStudio = async (preset = '') => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(15, 23, 42, 0.055);
 }
 
 .studio__footer-actions {
@@ -3014,86 +3050,7 @@ const submitStudio = async (preset = '') => {
   flex-wrap: wrap;
 }
 
-.studio__upload {
-  min-height: 30px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(255, 255, 255, 0.92);
-  color: #20293c;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
-}
-
-.studio__hint {
-  color: #9ca3af;
-  font-size: 0.66rem;
-}
-
-.studio__busy-indicator {
-  min-height: 30px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.05);
-  color: #475569;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.66rem;
-  font-weight: 700;
-}
-
-.studio__submit {
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: none;
-  background: #111827;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.7rem;
-  font-weight: 800;
-}
-
-.studio__stop {
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  background:
-    radial-gradient(circle at top left, rgba(251, 191, 36, 0.18), transparent 32%),
-    linear-gradient(135deg, #fff7ed, #ffffff 55%, #f8fafc);
-  color: #111827;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
-}
-
-.studio__submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.studio__dock {
-  display: grid;
-  gap: 10px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(148, 163, 184, 0.14);
-}
-
-.studio__dock-row {
+.studio__nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3101,15 +3058,94 @@ const submitStudio = async (preset = '') => {
   flex-wrap: wrap;
 }
 
-.studio__dock-row--modes {
-  padding: 6px 8px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.94), rgba(255, 255, 255, 0.96));
-  border: 1px solid rgba(148, 163, 184, 0.12);
+.studio__upload {
+  min-height: var(--studio-control-h);
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--studio-border);
+  background: var(--studio-soft);
+  color: #344054;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.66rem;
+  font-weight: 680;
+  cursor: pointer;
+  transition: border-color 0.18s var(--studio-ease), background 0.18s var(--studio-ease), transform 0.18s var(--studio-ease), color 0.18s var(--studio-ease);
 }
 
-.studio__dock-row--actions {
-  justify-content: flex-start;
+.studio__hint {
+  color: #7b8797;
+  font-size: 0.67rem;
+}
+
+.studio__busy-indicator {
+  min-height: var(--studio-control-h);
+  padding: 0 10px;
+  border-radius: 10px;
+  background: #f2f4f7;
+  color: #475467;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.64rem;
+  font-weight: 680;
+}
+
+.studio__submit {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(16, 24, 40, 0.2);
+  background: #101828;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.67rem;
+  font-weight: 740;
+  box-shadow: 0 4px 10px rgba(16, 24, 40, 0.12);
+  transition: transform 0.18s var(--studio-ease), box-shadow 0.18s var(--studio-ease), opacity 0.18s var(--studio-ease);
+}
+
+.studio__stop {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(180, 83, 9, 0.16);
+  background: #fffbeb;
+  color: #92400e;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.67rem;
+  font-weight: 720;
+  box-shadow: none;
+}
+
+.studio__submit:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.studio__mode-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(242, 244, 247, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.studio__utility-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
 .studio__ghost:hover,
@@ -3117,6 +3153,31 @@ const submitStudio = async (preset = '') => {
 .studio__upload:hover,
 .message__tool--icon:hover {
   transform: translateY(-1px);
+}
+
+.studio__chip:hover,
+.studio__ghost:hover,
+.studio__upload:hover,
+.message__tool:hover {
+  border-color: rgba(15, 23, 42, 0.16);
+  background: #fff;
+}
+
+.studio__submit:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(16, 24, 40, 0.14);
+}
+
+.studio__chip:focus-visible,
+.studio__ghost:focus-visible,
+.studio__choice:focus-visible,
+.studio__upload:focus-visible,
+.studio__submit:focus-visible,
+.studio__stop:focus-visible,
+.message__tool:focus-visible,
+.studio__pending-remove:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--studio-focus);
 }
 
 .studio__error {
@@ -3212,24 +3273,26 @@ const submitStudio = async (preset = '') => {
 }
 
 .category-head__action {
-  min-height: 46px;
-  padding: 0 16px;
-  border-radius: 14px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
   border: 1px solid var(--home-line-strong);
-  background: rgba(236, 241, 250, 0.9);
+  background: rgba(255, 255, 255, 0.68);
   color: var(--home-text-main);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.84rem;
-  font-weight: 700;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 680;
   cursor: pointer;
-  transition: transform .2s ease, box-shadow .2s ease;
+  transition: transform .18s var(--studio-ease), border-color .18s var(--studio-ease), background .18s var(--studio-ease), box-shadow .18s var(--studio-ease);
 }
 
 .category-head__action:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--home-shadow-soft);
+  transform: translateY(-1px);
+  background: #fff;
+  border-color: rgba(15, 23, 42, 0.16);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
 }
 
 .tools__grid {
@@ -3267,13 +3330,14 @@ const submitStudio = async (preset = '') => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  min-height: 32px;
+  padding: 0 12px;
   border-radius: 10px;
   border: 1px solid var(--home-line-strong);
   background: #ffffff;
   color: var(--home-text-main);
-  font-size: 0.84rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 680;
   cursor: pointer;
   transition: border-color .2s ease, background .2s ease;
 }
@@ -3379,7 +3443,7 @@ const submitStudio = async (preset = '') => {
   }
 
   .category-head__action {
-    width: 100%;
+    width: auto;
     justify-content: center;
   }
 }
@@ -3390,18 +3454,23 @@ const submitStudio = async (preset = '') => {
     align-items: flex-start;
   }
 
-  .studio__footer-actions,
-  .studio__dock-row {
+  .studio__footer-actions {
     width: 100%;
   }
 
-  .studio__submit {
-    width: 100%;
-    justify-content: center;
+  .studio__nav {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 
+  .studio__utility-actions {
+    justify-content: flex-start;
+  }
+
+  .studio__submit,
   .studio__stop {
-    width: 100%;
+    width: auto;
     justify-content: center;
   }
 
@@ -3411,6 +3480,10 @@ const submitStudio = async (preset = '') => {
   }
 
   .message {
+    max-width: 100%;
+  }
+
+  .message--assistant {
     max-width: 100%;
   }
 
@@ -3442,10 +3515,35 @@ const submitStudio = async (preset = '') => {
   }
 
   .category-head,
-  .studio__shell,
   .studio__composer {
-    padding: 20px;
+    padding: 18px;
     border-radius: 24px;
+  }
+
+  .studio__messages {
+    max-height: 440px;
+    padding: 8px 6px;
+  }
+
+  .studio__chip {
+    min-height: 28px;
+    padding-inline: 9px;
+  }
+
+  .studio__choice,
+  .studio__ghost,
+  .studio__upload,
+  .studio__submit,
+  .studio__stop {
+    min-height: 30px;
+  }
+
+  .message__content {
+    font-size: 0.86rem;
+  }
+
+  .message--assistant .message__surface {
+    padding-left: 12px;
   }
 
   .category-head {
@@ -3487,13 +3585,8 @@ const submitStudio = async (preset = '') => {
     font-size: clamp(2.4rem, 10vw, 4rem);
   }
 
-  .studio__meta,
   .studio__footer-left {
     width: 100%;
-  }
-
-  .studio__meta {
-    justify-content: flex-start;
   }
 
   .studio__history-copy {
