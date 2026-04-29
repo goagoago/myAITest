@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { aiClient } from '../services/aiClient'
+import { buildApiUrl } from '../services/apiClient'
 import { normalizeModelError } from '../services/modelError'
 import { useAccountStore } from '../stores/accountStore'
 
@@ -17,21 +18,68 @@ const createAbortError = () => {
   return error
 }
 
-const toImageUrl = (item) => {
-  if (item?.url) return item.url
-  if (item?.b64_json) return `data:image/png;base64,${item.b64_json}`
+const FORCE_HTTPS_HOSTS = new Set(['www.xu-it.com', 'xu-it.com'])
+
+const toDataUrl = (item) => {
+  const raw = item?.b64_json || item?.base64 || item?.b64
+  return raw ? `data:image/png;base64,${raw}` : ''
+}
+
+const resolveRawUrl = (item) => {
+  if (typeof item?.url === 'string' && item.url) return item.url
+  if (typeof item?.image_url === 'string' && item.image_url) return item.image_url
+  if (typeof item?.imageUrl === 'string' && item.imageUrl) return item.imageUrl
+  if (typeof item?.output_url === 'string' && item.output_url) return item.output_url
+  if (typeof item?.image_url?.url === 'string' && item.image_url.url) return item.image_url.url
   return ''
+}
+
+const normalizeRemoteUrl = (value) => {
+  if (!value) return ''
+  const resolved = /^(?:https?:)?\/\//.test(value)
+    ? value
+    : buildApiUrl(value)
+  try {
+    const base = typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+    const parsed = new URL(resolved, base)
+    if (parsed.protocol === 'http:' && (
+      FORCE_HTTPS_HOSTS.has(parsed.hostname)
+      || (typeof window !== 'undefined' && window.location.protocol === 'https:')
+    )) {
+      parsed.protocol = 'https:'
+    }
+    return parsed.toString()
+  } catch {
+    return resolved
+  }
+}
+
+const toImageAsset = (item) => {
+  const dataUrl = toDataUrl(item)
+  const remoteUrl = normalizeRemoteUrl(resolveRawUrl(item))
+  const displayUrl = dataUrl || remoteUrl || ''
+
+  return {
+    url: remoteUrl || displayUrl,
+    displayUrl,
+    downloadUrl: dataUrl || remoteUrl || displayUrl,
+  }
 }
 
 const normalizeImages = (payload) => {
   const data = Array.isArray(payload?.data) ? payload.data : []
   return data
-    .map((item, index) => ({
-      id: `${payload?.created || Date.now()}-${index}`,
-      url: toImageUrl(item),
-      revisedPrompt: item?.revised_prompt || '',
-    }))
-    .filter(item => item.url)
+    .map((item, index) => {
+      const asset = toImageAsset(item)
+      return {
+        id: `${payload?.created || Date.now()}-${index}`,
+        url: asset.url,
+        displayUrl: asset.displayUrl,
+        downloadUrl: asset.downloadUrl,
+        revisedPrompt: item?.revised_prompt || '',
+      }
+    })
+    .filter(item => item.displayUrl)
 }
 
 export function useAiImage(featureCode = 'ai-image') {
@@ -107,6 +155,9 @@ export function useAiImage(featureCode = 'ai-image') {
       images.value = normalizeImages(data)
       if (!images.value.length) {
         throw normalizeModelError(new Error('empty image response'))
+      }
+      if (data?.billingToken) {
+        await aiClient.images.confirm(data.billingToken, { featureCode, signal: controller.signal })
       }
       stopProgress()
       emitProgress(100, '图片已生成', options.onProgress)

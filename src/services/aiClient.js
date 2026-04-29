@@ -11,6 +11,7 @@ export async function postAiJson(endpoint, payload, options = {}) {
     auth: true,
     featureCode: options.featureCode,
     json: payload,
+    signal: options.signal,
   })
 }
 
@@ -20,6 +21,7 @@ export async function postAiStream(endpoint, payload, options = {}) {
     auth: true,
     featureCode: options.featureCode,
     json: payload,
+    signal: options.signal,
   })
 }
 
@@ -31,5 +33,6 @@ export const aiClient = {
   },
   images: {
     generate: (payload, options = {}) => postAiJson(AI_ENDPOINTS.images, payload, options),
+    confirm: (token, options = {}) => postAiJson(buildApiUrl('/api/images/generations/confirm'), { token }, options),
   },
 }

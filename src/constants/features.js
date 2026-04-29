@@ -27,7 +27,7 @@ export const FEATURE_MAP = FEATURE_CATALOG.reduce((acc, item) => {
   return acc
 }, {})
 
-export const DAILY_CHECK_IN_REWARD = 3
+export const DAILY_CHECK_IN_REWARD = 10
 export const MONTHLY_CHECK_IN_REWARD = 10
 
 export const currentMonthKey = (date = new Date()) => {

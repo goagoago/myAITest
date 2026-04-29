@@ -7,9 +7,21 @@ import { useRoute } from 'vue-router'
  */
 const SEO_CONFIG = {
   '/': {
-    title: 'Tools Box - 在线工具箱 | AI聊天·AI生图·图片处理·文档转换',
-    description: 'Tools Box 提供 AI 聊天、AI 生图、文件上传理解、证件照制作、图片去水印、图片压缩、文档转换、OCR、二维码等在线工具，打开即用。',
-    keywords: '在线工具,AI聊天,AI生图,图片处理,文档转换,OCR,二维码,在线工具箱',
+    title: 'Tools Box - 在线工具箱 | AI聊天·AI生图·文件理解·图片处理',
+    description: 'Tools Box 提供 AI 聊天、AI 生图、文件上传理解、参考图生图、证件照制作、图片去水印、图片压缩、文档转换、OCR、二维码等在线工具，打开即用。',
+    keywords: '在线工具,AI聊天,AI生图,文件理解,参考图生图,图片处理,文档转换,OCR,二维码,在线工具箱',
+  },
+  '/auth': {
+    title: '登录与注册 - Tools Box',
+    description: '登录 Tools Box 账户，使用签到、兑换码和个人工具记录等功能。',
+    keywords: 'Tools Box 登录,Tools Box 注册,账户登录',
+    robots: 'noindex, nofollow',
+  },
+  '/account': {
+    title: '账户中心 - Tools Box',
+    description: '查看账户信息、签到记录、兑换码和最近工具使用情况。',
+    keywords: '账户中心,签到记录,积分账户',
+    robots: 'noindex, nofollow',
   },
   '/id-photo': {
     title: '在线证件照制作 - 一寸二寸证件照·智能换背景色 | Tools Box',
@@ -32,9 +44,9 @@ const SEO_CONFIG = {
     keywords: '文档转换,PDF转Word,PDF转Excel,Word转PDF,格式互转,在线转换,Markdown转PDF,HTML转Word',
   },
   '/data-convert': {
-    title: 'Excel/CSV/JSON 在线转换与清洗 - 表格数据互转 | Tools Box',
+    title: 'Excel/CSV/JSON 在线转换与清洗 - 表格数据互转去重 | Tools Box',
     description: '在线 Excel、CSV、JSON 转换工具，支持表格数据互转、空行清理、去首尾空格和按整行去重，浏览器端完成处理，无需上传服务器。',
-    keywords: 'Excel转JSON,CSV转Excel,JSON转CSV,在线数据转换,表格清洗,CSV清洗,JSON格式转换',
+    keywords: 'Excel转JSON,CSV转Excel,JSON转CSV,在线数据转换,表格清洗,CSV清洗,JSON格式转换,Excel去重,CSV去重',
   },
   '/media/record': {
     title: '在线屏幕录制工具 - 浏览器端录屏 | Tools Box',
@@ -67,9 +79,9 @@ const SEO_CONFIG = {
     keywords: '二维码生成器,QR码生成,在线二维码,二维码美化,二维码Logo,自定义二维码',
   },
   '/qr-scan': {
-    title: '在线二维码解析 - 图片扫码识别二维码内容 | Tools Box',
-    description: '在线二维码解析工具，上传截图、海报或聊天图片即可识别二维码内容，支持复制文本和打开链接，浏览器端本地处理。',
-    keywords: '二维码解析,图片扫码,二维码识别,在线扫码,二维码内容识别,图片识别二维码',
+    title: '在线二维码解析 - 图片扫码识别链接/文本 | Tools Box',
+    description: '在线二维码解析工具，上传截图、海报、微信群码或聊天图片即可识别二维码内容，支持复制文本和打开链接，浏览器端本地处理。',
+    keywords: '二维码解析,图片扫码,二维码识别,在线扫码,二维码内容识别,图片识别二维码,微信群二维码识别,海报扫码',
   },
   '/ocr': {
     title: '在线OCR文字识别 - 图片转文字·中英文识别 | Tools Box',
@@ -102,9 +114,9 @@ const SEO_CONFIG = {
     keywords: '音频转换,格式转换,MP3转换,WAV转换,FLAC转换,M4A转换,OGG转换,AAC转换',
   },
   '/media/gif': {
-    title: '在线视频转 GIF / GIF 压缩 / GIF 转 MP4 | Tools Box',
+    title: '在线视频转 GIF / GIF 压缩 / GIF 转 MP4 - 免费浏览器端 | Tools Box',
     description: '在线 GIF 工具，支持视频转 GIF、GIF 压缩和 GIF 转 MP4，支持调节帧率、宽度和截取片段，浏览器端处理更安全。',
-    keywords: '视频转GIF,GIF压缩,GIF转MP4,在线GIF工具,动图压缩,GIF转换器',
+    keywords: '视频转GIF,GIF压缩,GIF转MP4,在线GIF工具,动图压缩,GIF转换器,视频转动图,免费GIF工具',
   },
 }
 
@@ -160,7 +172,7 @@ export function useSeo() {
       updateMeta('description', config.description)
       updateMeta('keywords', config.keywords)
       updateMeta('author', 'Tools Box')
-      updateMeta('robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')
+      updateMeta('robots', config.robots || 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')
 
       // Canonical
       updateCanonical(url)
