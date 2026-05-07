@@ -238,7 +238,8 @@ const charCount = computed(() => displayContent.value.length)
 .mode--active {
   background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
   border-color: transparent;
-  color: white;
+  color: #182235;
+  font-weight: 700;
 }
 
 .card {

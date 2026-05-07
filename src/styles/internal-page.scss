@@ -283,7 +283,27 @@
 .internal-page .download-btn,
 .internal-page .btn-primary,
 .internal-page .convert-btn {
-  color: #fff !important;
+  color: #0b1020 !important;
+  text-shadow: none;
+}
+
+.internal-page .main-tab.active,
+.internal-page .tab.active,
+.internal-page .preset-chip:hover,
+.internal-page .preset-chip--active,
+.internal-page .option-btn:hover,
+.internal-page .option-btn--active,
+.internal-page .lang-btn:hover,
+.internal-page .lang-btn--active,
+.internal-page .action-btn--primary,
+.internal-page .copy-all-btn,
+.internal-page .export-btn {
+  color: #0b1020 !important;
+}
+
+.internal-page .main-tab.active svg,
+.internal-page .tab.active svg {
+  color: #0b1020 !important;
 }
 
 .internal-page .section-label,

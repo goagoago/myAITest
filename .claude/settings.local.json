@@ -82,7 +82,9 @@
       "Bash(sed -i '' '891s/currentMode === .chat. ? .支持图片和文本附件. : .切到聊天模式可上传附件./支持图片和文本附件/' Home.vue)",
       "Bash(sed -i '' '898s/currentMode === .chat. && pendingAttachments.length\\)/true/' Home.vue)",
       "Bash(sed -i '' '876s/:placeholder=\"输入你的问题\"/:placeholder=\"输入你的问题\"/' Home.vue)",
-      "Bash(sed -i '' '891s/{{ 支持图片和文本附件 }}/{{ 支持图片和文本附件 }}/' Home.vue)"
+      "Bash(sed -i '' '891s/{{ 支持图片和文本附件 }}/{{ 支持图片和文本附件 }}/' Home.vue)",
+      "Bash(python *)",
+      "Bash(pip3 install *)"
     ]
   }
 }

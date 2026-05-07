@@ -663,7 +663,7 @@ const resetAll = () => {
   border-radius: 16px;
   font-size: 1rem;
   font-weight: 600;
-  color: white;
+  color: #050814 !important;
   cursor: pointer;
   transition: all 0.4s;
 }

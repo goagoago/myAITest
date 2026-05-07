@@ -1,5 +1,5 @@
 <script setup>
-import { Upload } from 'lucide-vue-next'
+import { Upload, X } from 'lucide-vue-next'
 import SiteSceneBackground from '../components/SiteSceneBackground.vue'
 import HomeToolCategories from './components/home/HomeToolCategories.vue'
 import HomeStudioComposer from './components/home/HomeStudioComposer.vue'
@@ -15,7 +15,7 @@ const {
   pushError,
   pushUrls,
   studioSection,
-  studioTimeline,
+  setStudioTimeline,
   composerInput,
   studioMode,
   pendingAttachments,
@@ -74,6 +74,8 @@ const {
   composerFocused,
   editingDraft,
   highlightedTurnId,
+  isStudioFullscreen,
+  toggleStudioFullscreen,
 } = useHomeStudio()
 </script>
 
@@ -85,89 +87,108 @@ const {
       <div class="hero-bg-orb hero-bg-orb--one"></div>
       <div class="hero-bg-orb hero-bg-orb--two"></div>
 
-      <div
-        class="studio__shell"
-        :class="[
-          `studio__shell--${studioMode}`,
-          { 'studio__shell--dragging': dragActive },
-        ]"
-        @dragenter="onDragEnter"
-        @dragover="onDragOver"
-        @dragleave="onDragLeave"
-        @drop="onDrop"
-      >
-        <div class="studio__workspace">
-          <div class="studio__main">
-            <HomeStudioHeader
-              :studio-modes="studioModes"
-              :studio-mode="studioMode"
-              :studio-busy="studioBusy"
-              :history-turns-count="historyTurnsCount"
-              :studio-feature-code="studioFeatureCode"
-              @set-mode="setStudioMode"
-              @new-conversation="startNewConversation({ mode: studioMode })"
-              @toggle-history="historyPanelOpen = !historyPanelOpen"
-            />
+      <Teleport to="body" :disabled="!isStudioFullscreen">
+        <div
+          class="studio__shell"
+          :class="[
+            `studio__shell--${studioMode}`,
+            {
+              'studio__shell--dragging': dragActive,
+              'studio__shell--fullscreen': isStudioFullscreen,
+            },
+          ]"
+          @dragenter="onDragEnter"
+          @dragover="onDragOver"
+          @dragleave="onDragLeave"
+          @drop="onDrop"
+        >
+          <button
+            v-if="isStudioFullscreen"
+            type="button"
+            class="studio__fullscreen-close"
+            title="退出全屏 (Esc)"
+            aria-label="退出全屏"
+            @click="toggleStudioFullscreen"
+          >
+            <X :size="18" :stroke-width="2.4" />
+            <span class="studio__fullscreen-close-kbd">Esc</span>
+          </button>
 
-            <div v-if="showSuggestions" class="studio__chips">
-              <button
-                v-for="item in activeSuggestions"
-                :key="item"
-                type="button"
-                class="studio__chip"
-                @click="submitStudio(item)"
-              >
-                {{ item }}
-              </button>
+          <div class="studio__workspace">
+            <div class="studio__main">
+              <HomeStudioHeader
+                :studio-modes="studioModes"
+                :studio-mode="studioMode"
+                :studio-busy="studioBusy"
+                :history-turns-count="historyTurnsCount"
+                :studio-feature-code="studioFeatureCode"
+                :is-fullscreen="isStudioFullscreen"
+                @set-mode="setStudioMode"
+                @new-conversation="startNewConversation({ mode: studioMode })"
+                @toggle-history="historyPanelOpen = !historyPanelOpen"
+                @toggle-fullscreen="toggleStudioFullscreen"
+              />
+
+              <div v-if="showSuggestions" class="studio__chips">
+                <button
+                  v-for="item in activeSuggestions"
+                  :key="item"
+                  type="button"
+                  class="studio__chip"
+                  @click="submitStudio(item)"
+                >
+                  {{ item }}
+                </button>
+              </div>
+
+              <HomeStudioMessages
+                v-if="hasMessages"
+                v-model:editing-draft="editingDraft"
+                :timeline-ref="setStudioTimeline"
+                :messages="visibleStudioMessages"
+                :copied-message-id="copiedMessageId"
+                :highlighted-turn-id="highlightedTurnId"
+                :render-markdown="renderMarkdown"
+                :resolve-attachment-icon="resolveAttachmentIcon"
+                :format-file-size="formatFileSize"
+                :can-edit-message="canEditMessage"
+                :is-editing-message="isEditingMessage"
+                :is-pending-assistant-message="isPendingAssistantMessage"
+                :show-image-progress="showImageProgress"
+                @copy="copyAssistantMessage"
+                @download-image="downloadStudioImage"
+                @start-edit="startEditingMessage"
+                @clear-edit="clearEditingState"
+                @save-edit="saveEditedMessage"
+              />
+
+              <HomeStudioComposer
+                v-model="composerInput"
+                v-model:focused="composerFocused"
+                :pending-attachments="pendingAttachments"
+                :studio-mode="studioMode"
+                :show-placeholder-flow="showPlaceholderFlow"
+                :placeholder-flow-text="placeholderFlowText"
+                :composer-placeholder="composerPlaceholder"
+                :attachment-accept="attachmentAccept"
+                :attachment-hint="attachmentHint"
+                :studio-busy="studioBusy"
+                :composer-busy-label="composerBusyLabel"
+                :can-interrupt="canInterrupt"
+                :can-submit="canSubmit"
+                :composer-action-label="composerActionLabel"
+                :file-input-ref="fileInput"
+                :resolve-attachment-icon="resolveAttachmentIcon"
+                :format-file-size="formatFileSize"
+                @handle-files="handleFiles"
+                @remove-attachment="removeAttachment"
+                @interrupt="interruptStudio"
+                @submit="submitStudio()"
+              />
             </div>
-
-            <HomeStudioMessages
-              v-if="hasMessages"
-              v-model:editing-draft="editingDraft"
-              :timeline-ref="studioTimeline"
-              :messages="visibleStudioMessages"
-              :copied-message-id="copiedMessageId"
-              :highlighted-turn-id="highlightedTurnId"
-              :render-markdown="renderMarkdown"
-              :resolve-attachment-icon="resolveAttachmentIcon"
-              :format-file-size="formatFileSize"
-              :can-edit-message="canEditMessage"
-              :is-editing-message="isEditingMessage"
-              :is-pending-assistant-message="isPendingAssistantMessage"
-              :show-image-progress="showImageProgress"
-              @copy="copyAssistantMessage"
-              @download-image="downloadStudioImage"
-              @start-edit="startEditingMessage"
-              @clear-edit="clearEditingState"
-              @save-edit="saveEditedMessage"
-            />
-
-            <HomeStudioComposer
-              v-model="composerInput"
-              v-model:focused="composerFocused"
-              :pending-attachments="pendingAttachments"
-              :studio-mode="studioMode"
-              :show-placeholder-flow="showPlaceholderFlow"
-              :placeholder-flow-text="placeholderFlowText"
-              :composer-placeholder="composerPlaceholder"
-              :attachment-accept="attachmentAccept"
-              :attachment-hint="attachmentHint"
-              :studio-busy="studioBusy"
-              :composer-busy-label="composerBusyLabel"
-              :can-interrupt="canInterrupt"
-              :can-submit="canSubmit"
-              :composer-action-label="composerActionLabel"
-              :file-input-ref="fileInput"
-              :resolve-attachment-icon="resolveAttachmentIcon"
-              :format-file-size="formatFileSize"
-              @handle-files="handleFiles"
-              @remove-attachment="removeAttachment"
-              @interrupt="interruptStudio"
-              @submit="submitStudio()"
-            />
           </div>
         </div>
-      </div>
+      </Teleport>
 
       <HomeStudioHistoryDrawer
         :open="historyPanelOpen"

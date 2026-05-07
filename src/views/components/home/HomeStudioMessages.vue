@@ -1,5 +1,6 @@
 <script setup>
-import { Check, Copy, Download, PencilLine } from 'lucide-vue-next'
+import { Check, Copy, Download, PencilLine, Sparkles } from 'lucide-vue-next'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   timelineRef: {
@@ -69,10 +70,87 @@ const triggerMessageEdit = (message) => {
 const updateEditingDraft = (event) => {
   emit('update:editingDraft', event.target.value)
 }
+
+let scrollFrame = 0
+const timelineEl = ref(null)
+
+const assignTimelineEl = (el) => {
+  timelineEl.value = el
+
+  const externalRef = props.timelineRef
+  if (!externalRef) return
+  if (typeof externalRef === 'function') {
+    externalRef(el)
+    return
+  }
+  if (typeof externalRef === 'object' && 'value' in externalRef) {
+    externalRef.value = el
+  }
+}
+
+// 解析父组件传入的 timelineRef，可能是 ref 对象或 callback ref
+const resolveTimelineEl = () => {
+  if (timelineEl.value) return timelineEl.value
+  const t = props.timelineRef
+  if (!t) return null
+  if (typeof t === 'object' && 'value' in t) return t.value
+  return null
+}
+
+const cancelQueuedScroll = () => {
+  if (typeof window === 'undefined' || !scrollFrame) return
+  window.cancelAnimationFrame(scrollFrame)
+  scrollFrame = 0
+}
+
+const syncToLatestMessage = (passes = 4) => {
+  const run = (remaining) => {
+    const el = resolveTimelineEl()
+    if (el && el.scrollHeight > 0) {
+      el.scrollTop = el.scrollHeight
+    }
+    if (remaining <= 1 || typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+      scrollFrame = 0
+      return
+    }
+    scrollFrame = window.requestAnimationFrame(() => run(remaining - 1))
+  }
+
+  cancelQueuedScroll()
+  nextTick(() => {
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      scrollFrame = window.requestAnimationFrame(() => run(passes))
+      return
+    }
+    run(1)
+  })
+}
+
+// 子组件兜底：挂载完成后立即对齐到最新消息（解决 v-if + Teleport 引发的 race）
+onMounted(() => {
+  syncToLatestMessage()
+})
+
+onBeforeUnmount(() => {
+  cancelQueuedScroll()
+})
+
+// 消息条数 / 当前会话最后一条消息变化后，再兜底滚到底部。
+watch(
+  () => [
+    props.messages.length,
+    props.messages.at(-1)?.id || '',
+    props.messages.at(-1)?.sessionId || '',
+  ].join(':'),
+  () => {
+    syncToLatestMessage()
+  },
+  { flush: 'post' },
+)
 </script>
 
 <template>
-  <div :ref="timelineRef" class="studio__messages">
+  <div :ref="assignTimelineEl" class="studio__messages">
     <TransitionGroup tag="div" name="message-fade" class="studio__message-list">
       <article
         v-for="message in messages"
@@ -87,7 +165,9 @@ const updateEditingDraft = (event) => {
           },
         ]"
       >
-        <div v-if="message.role === 'assistant'" class="message__avatar">AI</div>
+        <div v-if="message.role === 'assistant'" class="message__avatar">
+          <Sparkles :size="15" stroke-width="2" />
+        </div>
 
         <div class="message__body">
           <div

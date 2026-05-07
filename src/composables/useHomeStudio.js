@@ -1,4 +1,4 @@
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { marked } from 'marked'
 import { File, FileImage, FileText, FileSpreadsheet, MonitorPlay, Music, Presentation, Archive } from 'lucide-vue-next'
 import { useBaiduPush } from './useBaiduPush'
@@ -80,6 +80,9 @@ export function useHomeStudio() {
 
   const studioSection = ref(null)
   const studioTimeline = ref(null)
+  const setStudioTimeline = (el) => {
+    studioTimeline.value = el
+  }
   const composerInput = ref('')
   const studioMode = ref('chat')
   const pendingAttachments = ref([])
@@ -88,6 +91,7 @@ export function useHomeStudio() {
   const attachmentLoading = ref(false)
   const dragActive = ref(false)
   const historyPanelOpen = ref(false)
+  const isStudioFullscreen = ref(false)
   const selectedHistoryTurnId = ref('')
   const highlightedTurnId = ref('')
   const typingPlaybackActive = ref(false)
@@ -117,13 +121,17 @@ export function useHomeStudio() {
   const createSessionId = (mode = 'chat') => `session-${mode}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const historyKey = computed(() => `toolsbox-home-studio:${account.profile.value?.id || 'guest'}`)
   const getSessionMode = (sessionId) => studioMessages.value.find(item => item.sessionId === sessionId)?.mode || ''
+  const sortMessagesByCreatedAt = (messages = []) => [...messages]
+    .sort((a, b) => (Number(a?.createdAt) || 0) - (Number(b?.createdAt) || 0))
   const resolveLatestSessionId = (messages, mode = studioMode.value) => {
-    const latestInMode = [...messages].reverse().find(item => (item.mode === 'image' ? 'image' : 'chat') === mode)
+    const latestInMode = sortMessagesByCreatedAt(messages)
+      .reverse()
+      .find(item => (item.mode === 'image' ? 'image' : 'chat') === mode)
     return latestInMode?.sessionId || createSessionId(mode)
   }
   const visibleStudioMessages = computed(() => (
     currentSessionId.value
-      ? studioMessages.value.filter(item => item.sessionId === currentSessionId.value)
+      ? sortMessagesByCreatedAt(studioMessages.value.filter(item => item.sessionId === currentSessionId.value))
       : []
   ))
   const currentModeMeta = computed(() => studioModes.find(item => item.value === studioMode.value) || studioModes[0])
@@ -435,10 +443,26 @@ export function useHomeStudio() {
   const refreshStudioMessages = () => {
     studioMessages.value = [...studioMessages.value]
   }
-  const syncTimeline = () => nextTick(() => {
-    if (!studioTimeline.value) return
-    studioTimeline.value.scrollTop = studioTimeline.value.scrollHeight
-  })
+  const syncTimeline = () => {
+    // 切换 session / 模式 / 全屏时，HomeStudioMessages 可能正在挂载（v-if）或重挂（Teleport），
+    // ref 不一定立刻就绪 —— 重试到 ref 出现并完成布局再滚到底，最多 6 帧（≈100ms）。
+    let attempts = 0
+    const tryScroll = () => {
+      const el = studioTimeline.value
+      if (el && el.scrollHeight > 0) {
+        el.scrollTop = el.scrollHeight
+        return
+      }
+      if (++attempts < 6) {
+        if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+          window.requestAnimationFrame(() => nextTick(tryScroll))
+        } else {
+          nextTick(tryScroll)
+        }
+      }
+    }
+    nextTick(tryScroll)
+  }
   const scrollToStudio = (behavior = 'smooth') => nextTick(() => {
     studioSection.value?.scrollIntoView({ behavior, block: 'start' })
   })
@@ -596,7 +620,7 @@ export function useHomeStudio() {
 
   const persistMessages = () => {
     if (typeof window === 'undefined') return
-    const messages = sanitizeMessages(studioMessages.value)
+    const messages = sortMessagesByCreatedAt(sanitizeMessages(studioMessages.value))
     if (messages.length) {
       window.localStorage.setItem(historyKey.value, JSON.stringify(messages))
     } else {
@@ -611,7 +635,7 @@ export function useHomeStudio() {
       const parsed = raw ? JSON.parse(raw) : []
       const sanitized = sanitizeMessages(parsed)
       applyMessages(sanitized)
-      const latestMessage = sanitized.at(-1)
+      const latestMessage = sortMessagesByCreatedAt(sanitized).at(-1)
       if (latestMessage) {
         studioMode.value = latestMessage.mode === 'image' ? 'image' : 'chat'
         currentSessionId.value = latestMessage.sessionId
@@ -622,6 +646,8 @@ export function useHomeStudio() {
       applyMessages([])
       currentSessionId.value = createSessionId(studioMode.value)
     }
+    // 加载完历史后，默认对齐到最新一条消息（首次进入页面也生效）
+    syncTimeline()
   }
   const schedulePersistMessages = () => {
     if (typeof window === 'undefined') return
@@ -700,10 +726,19 @@ export function useHomeStudio() {
     syncTimeline()
   })
 
-  watch(historyPanelOpen, (open) => {
-    if (typeof document === 'undefined') return
-    document.body.style.overflow = open ? 'hidden' : ''
+  watch(historyPanelOpen, () => {
+    syncBodyScrollLock()
   })
+
+  watch(isStudioFullscreen, () => {
+    syncBodyScrollLock()
+  })
+
+  function syncBodyScrollLock() {
+    if (typeof document === 'undefined') return
+    const shouldLock = historyPanelOpen.value || isStudioFullscreen.value
+    document.body.style.overflow = shouldLock ? 'hidden' : ''
+  }
 
   const deleteTurn = (turnId) => {
     if (!turnId) return
@@ -729,6 +764,24 @@ export function useHomeStudio() {
     historyPanelOpen.value = false
   }
 
+  const toggleStudioFullscreen = () => {
+    isStudioFullscreen.value = !isStudioFullscreen.value
+    // Teleport 切换会重挂 DOM，滚动位置会丢，重新对齐到最新
+    syncTimeline()
+  }
+
+  const exitStudioFullscreen = () => {
+    isStudioFullscreen.value = false
+    syncTimeline()
+  }
+
+  const handleStudioKeydown = (event) => {
+    if (event.key !== 'Escape') return
+    if (!isStudioFullscreen.value) return
+    if (historyPanelOpen.value) return
+    exitStudioFullscreen()
+  }
+
   const setStudioMode = (mode) => {
     if (studioBusy.value) return
     if (!studioModes.some(item => item.value === mode)) return
@@ -740,6 +793,8 @@ export function useHomeStudio() {
     pendingAttachments.value = []
     studioError.value = ''
     selectedHistoryTurnId.value = ''
+    // 切换模式（聊天 / 生图）后默认显示该模式下的最新消息
+    syncTimeline()
   }
 
   const resetStudio = () => {
@@ -761,8 +816,16 @@ export function useHomeStudio() {
     syncTimeline()
   }
 
+  onMounted(() => {
+    if (typeof window === 'undefined') return
+    window.addEventListener('keydown', handleStudioKeydown)
+  })
+
   onBeforeUnmount(() => {
     interruptStudio()
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('keydown', handleStudioKeydown)
+    }
     if (typeof document !== 'undefined') {
       document.body.style.overflow = ''
     }
@@ -1520,6 +1583,7 @@ export function useHomeStudio() {
     pushUrls,
     studioSection,
     studioTimeline,
+    setStudioTimeline,
     composerInput,
     studioMode,
     pendingAttachments,
@@ -1581,5 +1645,8 @@ export function useHomeStudio() {
     editingDraft,
     highlightedTurnId,
     studioMessages,
+    isStudioFullscreen,
+    toggleStudioFullscreen,
+    exitStudioFullscreen,
   }
 }

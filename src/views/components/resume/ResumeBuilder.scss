@@ -606,21 +606,21 @@
 
 :deep(.btn--primary) {
   background: linear-gradient(135deg, #16b885, #d99829);
-  color: #ffffff;
+  color: #132238;
   border: none;
   font-weight: 700;
   box-shadow: 0 12px 24px rgba(22, 184, 133, 0.22);
 }
 
 :deep(.btn--accent) {
-  background: linear-gradient(120deg, rgba(22, 184, 133, 0.14), rgba(217, 152, 41, 0.16));
-  border-color: rgba(22, 184, 133, 0.24);
-  color: #0f8f68;
-  font-weight: 600;
+  background: linear-gradient(120deg, rgba(22, 184, 133, 0.24), rgba(217, 152, 41, 0.28));
+  border-color: rgba(22, 184, 133, 0.3);
+  color: #132238;
+  font-weight: 700;
 }
 
 :deep(.btn--accent:hover) {
-  background: linear-gradient(120deg, rgba(19, 195, 139, 0.32), rgba(228, 161, 47, 0.28));
+  background: linear-gradient(120deg, rgba(19, 195, 139, 0.38), rgba(228, 161, 47, 0.34));
 }
 
 :deep(.btn--primary:hover) {

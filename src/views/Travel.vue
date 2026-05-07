@@ -375,11 +375,12 @@ const charCount = computed(() => displayContent.value.length)
 .chip--active {
   background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
   border-color: transparent;
-  color: white;
+  color: #182235;
+  font-weight: 700;
 }
 
 .chip--active svg {
-  color: white;
+  color: #182235;
 }
 
 /* 按钮 */

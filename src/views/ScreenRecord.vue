@@ -353,7 +353,7 @@ const resetAll = () => {
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s;
-  color: var(--text-muted);
+  color: #475569;
   text-align: left;
 }
 
@@ -363,9 +363,9 @@ const resetAll = () => {
 }
 
 .audio-btn--active {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #f87171;
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.36);
+  color: #7f1d1d;
 }
 
 .audio-btn__text { display: flex; flex-direction: column; gap: 2px; }
@@ -410,7 +410,7 @@ const resetAll = () => {
   border-radius: 16px;
   font-size: 1.125rem;
   font-weight: 700;
-  color: white;
+  color: #111827;
   cursor: pointer;
   transition: all 0.4s;
 }
